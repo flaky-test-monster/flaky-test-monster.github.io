@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flakifier</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main class="app">
+    <h1 class="title">Flakifier</h1>
+
+    <section id="step-source" class="step" data-step="source">
+      <p class="lead">Take a photo or upload one. You will get a marble bust and a printable STL.</p>
+      <div class="cards">
+        <div class="card card-camera" id="camera-card">
+          <div class="camera-frame">
+            <video id="video" autoplay playsinline muted></video>
+            <div id="countdown" class="countdown" hidden></div>
+          </div>
+          <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
+          <span class="card-label">Use camera</span>
+        </div>
+        <label class="card card-upload" id="upload-card">
+          <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg" aria-label="Upload a PNG or JPG image">
+          <span class="upload-icon" aria-hidden="true">+</span>
+          <span class="card-label">Upload image</span>
+          <span class="hint">Click or drag and drop a PNG or JPG</span>
+        </label>
+      </div>
+    </section>
+
+    <section id="step-confirm" class="step" data-step="confirm" hidden>
+      <img id="preview" class="preview" alt="Your chosen photo">
+      <div class="actions">
+        <button type="button" id="retake" class="btn">Retake / Choose another</button>
+        <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
+      </div>
+    </section>
+
+    <section id="step-progress" class="step" data-step="progress" hidden>
+      <ol class="stepper" id="stepper">
+        <li data-stage="input">Input</li>
+        <li data-stage="statue">Statue</li>
+        <li data-stage="glb">3D model</li>
+        <li data-stage="stl">STL</li>
+      </ol>
+      <p id="error" class="error" hidden>
+        <span id="error-text"></span>
+        <a href="#" id="try-again">Try again</a>
+      </p>
+      <p class="hint" id="progress-hint">This usually takes one to three minutes.</p>
+      <img id="statue-preview" class="preview" alt="Marble statue" hidden>
+    </section>
+
+    <section id="step-result" class="step" data-step="result" hidden>
+      <div id="viewer" class="viewer"></div>
+      <div class="downloads">
+        <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
+        <a id="dl-glb" class="btn" download>Download GLB</a>
+        <a id="dl-statue" class="btn" download>Download statue image</a>
+        <a id="dl-original" class="btn" download>Download original</a>
+      </div>
+      <a href="#" id="start-over" class="link">Start over</a>
+    </section>
+  </main>
+  <script type="module" src="/public/app.js"></script>
+</body>
+</html>

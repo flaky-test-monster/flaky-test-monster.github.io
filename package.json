@@ -1,0 +1,13 @@
+{
+  "name": "flakifier",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn a photo into a marble bust and a 3D-printable STL.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
