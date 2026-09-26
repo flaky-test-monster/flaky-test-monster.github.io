@@ -2,11 +2,13 @@ import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
 const POLL_INTERVAL_MS = 2000;
+const POLL_MAX_RETRIES = 5;
+const POLL_BACKOFF_MAX_MS = 30000;
 const STAGES = ['input', 'statue', 'glb', 'stl'];
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
 const $ = (id) => document.getElementById(id);
-const state = { stream: null, blob: null, jobId: null, pollTimer: null, disposeViewer: null };
+const state = { stream: null, blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -88,6 +90,7 @@ async function startJob() {
 /** Clears stepper, preview and error state. */
 function resetProgress() {
   clearTimeout(state.pollTimer);
+  state.pollFailures = 0;
   $('error').hidden = true;
   $('statue-preview').hidden = true;
   $('progress-hint').hidden = false;
@@ -117,18 +120,31 @@ function renderStages(stages) {
   }
 }
 
-/** Polls the job until every stage exists or an error is reported. */
+/** Delay before the next poll: normal interval, or exponential backoff after failures. */
+function nextPollDelay(failures) {
+  return Math.min(POLL_INTERVAL_MS * 2 ** failures, POLL_BACKOFF_MAX_MS);
+}
+
+/**
+ * Polls the job until every stage exists or the server reports an error. A transient
+ * network or 5xx failure is retried with bounded backoff; only a 404 or exhausting the
+ * retries is treated as terminal, since the server-side job keeps running regardless.
+ */
 async function poll() {
   try {
     const res = await fetch(`/api/jobs/${state.jobId}`);
+    if (res.status === 404) return showError('Job not found');
     if (!res.ok) throw new Error(`Status check failed (${res.status})`);
     const { stages, error } = await res.json();
+    state.pollFailures = 0;
     renderStages(stages);
     if (error) return showError(error);
     if (STAGES.every((stage) => stages[stage])) return showResult(stages);
     state.pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
   } catch (err) {
-    showError(err.message);
+    state.pollFailures += 1;
+    if (state.pollFailures > POLL_MAX_RETRIES) return showError(`Lost contact with the server: ${err.message}`);
+    state.pollTimer = setTimeout(poll, nextPollDelay(state.pollFailures));
   }
 }
 
@@ -151,7 +167,7 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pollTimer: null, disposeViewer: null });
+  Object.assign(state, { blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null });
   $('file-input').value = '';
   showStep('source');
   startCamera();
