@@ -4,11 +4,16 @@ const COUNTDOWN_SECONDS = 3;
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_RETRIES = 5;
 const POLL_BACKOFF_MAX_MS = 30000;
-const STAGES = ['input', 'statue', 'glb', 'stl'];
+const STAGES = ['input', 'image', 'model', 'stl'];
+/** Per-pipeline wording for the stepper, image preview and downloads. */
+const PIPELINE_UI = {
+  marble: { image: 'Statue', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  lego: { image: 'LEGO image', imageDownload: 'Download LEGO image', modelDownload: null, viewerFile: 'model.stl' },
+};
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
 const $ = (id) => document.getElementById(id);
-const state = { stream: null, blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null };
+const state = { stream: null, blob: null, jobId: null, pipeline: 'marble', pollTimer: null, pollFailures: 0, disposeViewer: null };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -71,9 +76,11 @@ function chooseImage(blob) {
 async function startJob() {
   $('flakify').disabled = true;
   try {
-    const res = await fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
+    const pipeline = $('pipeline').value;
+    const res = await fetch(`/api/jobs?pipeline=${encodeURIComponent(pipeline)}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
     if (!res.ok) throw new Error((await res.json()).error ?? `Upload failed (${res.status})`);
     state.jobId = (await res.json()).id;
+    state.pipeline = pipeline;
     stopCamera();
     resetProgress();
     showStep('progress');
@@ -92,7 +99,8 @@ function resetProgress() {
   clearTimeout(state.pollTimer);
   state.pollFailures = 0;
   $('error').hidden = true;
-  $('statue-preview').hidden = true;
+  $('image-preview').hidden = true;
+  document.querySelector('#stepper li[data-stage="image"]').textContent = PIPELINE_UI[$('pipeline').value].image;
   $('progress-hint').hidden = false;
   for (const li of document.querySelectorAll('#stepper li')) li.classList.remove('done', 'active');
 }
@@ -114,9 +122,9 @@ function renderStages(stages) {
     li.classList.toggle('active', !done && nextPending);
     if (!done) nextPending = false;
   }
-  if (stages.statue && $('statue-preview').hidden) {
-    $('statue-preview').src = `/api/jobs/${state.jobId}/statue.png`;
-    $('statue-preview').hidden = false;
+  if (stages.image && $('image-preview').hidden) {
+    $('image-preview').src = `/api/jobs/${state.jobId}/${stages.image}`;
+    $('image-preview').hidden = false;
   }
 }
 
@@ -152,12 +160,18 @@ async function poll() {
 async function showResult(stages) {
   const file = (name) => `/api/jobs/${state.jobId}/${name}?download=1`;
   $('dl-stl').href = file('model.stl');
-  $('dl-glb').href = file('model.glb');
-  $('dl-statue').href = file('statue.png');
+  const ui = PIPELINE_UI[state.pipeline];
+  $('dl-image').href = file(stages.image);
+  $('dl-image').textContent = ui.imageDownload;
+  $('dl-model').hidden = !ui.modelDownload;
+  if (ui.modelDownload) {
+    $('dl-model').href = file(stages.model);
+    $('dl-model').textContent = ui.modelDownload;
+  }
   $('dl-original').href = file(stages.input);
   showStep('result');
   try {
-    state.disposeViewer = await mountViewer($('viewer'), `/api/jobs/${state.jobId}/model.glb`);
+    state.disposeViewer = await mountViewer($('viewer'), `/api/jobs/${state.jobId}/${ui.viewerFile}`);
   } catch (err) {
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
   }
@@ -167,7 +181,7 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null });
+  Object.assign(state, { blob: null, jobId: null, pipeline: 'marble', pollTimer: null, pollFailures: 0, disposeViewer: null });
   $('file-input').value = '';
   showStep('source');
   startCamera();

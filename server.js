@@ -1,16 +1,17 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { makeStatueImage } from './lib/openai.js';
+import { makeFigureScene, makeLegoImage, makeStatueImage } from './lib/openai.js';
+import { sceneToStl } from './lib/mesh.js';
 import { imageToStl } from './lib/tripo.js';
 import { JOB_FILE_TYPES, createJob, getJobStatus, resolveJobFile, writeJobError, writeJobFile } from './lib/jobs.js';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const HOST = 'localhost';
 const PUBLIC_DIR = path.join(import.meta.dirname, 'public');
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ERROR_MESSAGE_LIMIT = 300;
-const REQUIRED_ENV = ['OPENAI_API_KEY', 'TRIPO_API_KEY'];
+const DEFAULT_PIPELINE = 'marble';
 const INPUT_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg' };
 const STATIC_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -37,7 +38,52 @@ class HttpError extends Error {
 }
 
 /**
- * Loads .env and verifies the API keys are present. Exits with a clear message otherwise.
+ * The ways a photo can become an STL. Each run() persists its stages as job files.
+ * @type {Record<string, { env: string[], run: (id: string, input: Buffer, mimeType: string, log: (message: string) => void) => Promise<void> }>}
+ */
+const PIPELINES = {
+  // photo -> marble statue image -> Tripo3D GLB -> STL
+  marble: {
+    env: ['OPENAI_API_KEY', 'TRIPO_API_KEY'],
+    async run(id, input, mimeType, log) {
+      log('Generating statue image');
+      const statue = await makeStatueImage(input, mimeType);
+      await writeJobFile(id, 'statue.png', statue);
+      const { stl } = await imageToStl(statue, async (event) => {
+        log(event.message);
+        if (event.glb) await writeJobFile(id, 'model.glb', event.glb);
+      });
+      await writeJobFile(id, 'model.stl', stl);
+    },
+  },
+  // photo -> LEGO minifigure image -> GPT shape list -> STL, OpenAI only
+  lego: {
+    env: ['OPENAI_API_KEY'],
+    async run(id, input, mimeType, log) {
+      log('Generating LEGO image');
+      const lego = await makeLegoImage(input, mimeType);
+      await writeJobFile(id, 'lego.png', lego);
+      log('Generating 3D model');
+      const scene = await makeFigureScene(lego);
+      await writeJobFile(id, 'model.json', JSON.stringify(scene, null, 2));
+      log(`Building STL from ${scene.parts?.length ?? 0} parts`);
+      await writeJobFile(id, 'model.stl', sceneToStl(scene));
+    },
+  },
+};
+
+/**
+ * Lists the env variables a pipeline needs that are not set.
+ * @param {string} name
+ * @returns {string[]}
+ */
+function missingEnv(name) {
+  return PIPELINES[name].env.filter((key) => !process.env[key]);
+}
+
+/**
+ * Loads .env and checks the API keys. Exits when no pipeline can run, and warns about
+ * pipelines that are unavailable.
  */
 function loadConfig() {
   try {
@@ -47,11 +93,9 @@ function loadConfig() {
     console.error('No .env file found. Copy .env.example to .env and add your API keys.');
     process.exit(1);
   }
-  const missing = REQUIRED_ENV.filter((name) => !process.env[name]);
-  if (missing.length > 0) {
-    console.error(`Missing in .env: ${missing.join(', ')}`);
-    process.exit(1);
-  }
+  const unavailable = Object.keys(PIPELINES).filter((name) => missingEnv(name).length > 0);
+  for (const name of unavailable) console.warn(`Pipeline "${name}" disabled, missing in .env: ${missingEnv(name).join(', ')}`);
+  if (unavailable.length === Object.keys(PIPELINES).length) process.exit(1);
 }
 
 /**
@@ -114,22 +158,17 @@ function shortMessage(err) {
 }
 
 /**
- * Runs photo -> statue -> GLB -> STL for one job, persisting each stage as it completes.
+ * Runs the chosen pipeline for one job, recording a failure in error.txt.
  * @param {string} id
+ * @param {string} pipeline key of PIPELINES
  * @param {Buffer} input
  * @param {'image/png' | 'image/jpeg'} mimeType
  */
-async function runPipeline(id, input, mimeType) {
+async function runPipeline(id, pipeline, input, mimeType) {
   const log = (message) => console.log(`[${id}] ${message}`);
   try {
-    log('Generating statue image');
-    const statue = await makeStatueImage(input, mimeType);
-    await writeJobFile(id, 'statue.png', statue);
-    const { stl } = await imageToStl(statue, async (event) => {
-      log(event.message);
-      if (event.glb) await writeJobFile(id, 'model.glb', event.glb);
-    });
-    await writeJobFile(id, 'model.stl', stl);
+    log(`Running ${pipeline} pipeline`);
+    await PIPELINES[pipeline].run(id, input, mimeType, log);
     log('Done');
   } catch (err) {
     console.error(`[${id}] Pipeline failed:`, err);
@@ -150,15 +189,19 @@ async function serveStatic(req, res, url, [, relative]) {
   await sendFile(res, filePath, contentType);
 }
 
-/** POST /api/jobs */
-async function createJobRoute(req, res) {
+/** POST /api/jobs?pipeline=marble|lego */
+async function createJobRoute(req, res, url) {
   const mimeType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
   const extension = INPUT_EXTENSIONS[mimeType];
   if (!extension) throw new HttpError(415, 'Send the image as image/png or image/jpeg');
+  const pipeline = url.searchParams.get('pipeline') || DEFAULT_PIPELINE;
+  if (!Object.hasOwn(PIPELINES, pipeline)) throw new HttpError(400, `Unknown pipeline: ${pipeline}`);
+  const missing = missingEnv(pipeline);
+  if (missing.length > 0) throw new HttpError(400, `This pipeline needs ${missing.join(', ')} in .env`);
   const input = await readBody(req);
-  const id = await createJob(input, extension);
+  const id = await createJob(input, extension, pipeline);
   sendJson(res, 202, { id });
-  runPipeline(id, input, mimeType).catch((err) => console.error(`[${id}] Unhandled pipeline error:`, err));
+  runPipeline(id, pipeline, input, mimeType).catch((err) => console.error(`[${id}] Unhandled pipeline error:`, err));
 }
 
 /** GET /api/jobs/:id */

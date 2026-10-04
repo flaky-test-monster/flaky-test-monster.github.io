@@ -19,7 +19,7 @@
     <h1 class="title">Flakifier</h1>
 
     <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. You will get a marble bust and a printable STL.</p>
+      <p class="lead">Take a photo or upload one. You will get a 3D-printable STL of yourself as a marble bust or a LEGO minifigure.</p>
       <div class="cards">
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
@@ -41,6 +41,13 @@
     <section id="step-confirm" class="step" data-step="confirm" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
       <div class="actions">
+        <label class="pipeline-select">
+          <span>Style</span>
+          <select id="pipeline">
+            <option value="marble" selected>Marble bust (OpenAI + Tripo3D)</option>
+            <option value="lego">LEGO minifigure (ChatGPT only)</option>
+          </select>
+        </label>
         <button type="button" id="retake" class="btn">Retake / Choose another</button>
         <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
       </div>
@@ -49,24 +56,24 @@
     <section id="step-progress" class="step" data-step="progress" hidden>
       <ol class="stepper" id="stepper">
         <li data-stage="input">Input</li>
-        <li data-stage="statue">Statue</li>
-        <li data-stage="glb">3D model</li>
+        <li data-stage="image">Statue</li>
+        <li data-stage="model">3D model</li>
         <li data-stage="stl">STL</li>
       </ol>
       <p id="error" class="error" hidden>
         <span id="error-text"></span>
         <a href="#" id="try-again">Try again</a>
       </p>
-      <p class="hint" id="progress-hint">This usually takes one to three minutes.</p>
-      <img id="statue-preview" class="preview" alt="Marble statue" hidden>
+      <p class="hint" id="progress-hint">This usually takes one to four minutes.</p>
+      <img id="image-preview" class="preview" alt="Styled image" hidden>
     </section>
 
     <section id="step-result" class="step" data-step="result" hidden>
       <div id="viewer" class="viewer"></div>
       <div class="downloads">
         <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
-        <a id="dl-glb" class="btn" download>Download GLB</a>
-        <a id="dl-statue" class="btn" download>Download statue image</a>
+        <a id="dl-model" class="btn" download>Download GLB</a>
+        <a id="dl-image" class="btn" download>Download statue image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
       <a href="#" id="start-over" class="link">Start over</a>

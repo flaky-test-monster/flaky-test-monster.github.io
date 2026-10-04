@@ -1,20 +1,39 @@
-// Three.js viewer for the generated GLB. Loaded from a CDN via the import map in index.html.
+// Three.js viewer for the generated GLB or STL. Loaded from a CDN via the import map in index.html.
 const VIEWER_FOV = 40;
 const AUTO_ROTATE_SPEED = 1.2;
 const FRAME_PADDING = 1.1;
 const CAMERA_HEIGHT_RATIO = 0.15;
 
+const STL_COLOR = 0xf2c94c;
+const STL_ROUGHNESS = 0.35;
+
 /**
- * Renders a GLB inside `container` with soft three-point lighting, slow auto-rotation,
+ * Loads a GLB scene, or an STL as a single mesh stood upright (STL is Z-up, Three.js Y-up).
+ * @param {typeof import('three')} THREE
+ * @param {string} url
+ * @returns {Promise<import('three').Object3D>}
+ */
+async function loadModel(THREE, url) {
+  if (new URL(url, location.href).pathname.endsWith('.glb')) {
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+    return (await new GLTFLoader().loadAsync(url)).scene;
+  }
+  const { STLLoader } = await import('three/addons/loaders/STLLoader.js');
+  const geometry = await new STLLoader().loadAsync(url);
+  geometry.rotateX(-Math.PI / 2);
+  return new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: STL_COLOR, roughness: STL_ROUGHNESS }));
+}
+
+/**
+ * Renders a GLB or STL inside `container` with soft three-point lighting, slow auto-rotation,
  * and the model centered and framed. Resolves to a cleanup function.
  * @param {HTMLElement} container
  * @param {string} url
  * @returns {Promise<() => void>}
  */
 export async function mountViewer(container, url) {
-  const [THREE, { GLTFLoader }, { OrbitControls }] = await Promise.all([
+  const [THREE, { OrbitControls }] = await Promise.all([
     import('three'),
-    import('three/addons/loaders/GLTFLoader.js'),
     import('three/addons/controls/OrbitControls.js'),
   ]);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -38,7 +57,7 @@ export async function mountViewer(container, url) {
   controls.autoRotate = true;
   controls.autoRotateSpeed = AUTO_ROTATE_SPEED;
 
-  const { scene: model } = await new GLTFLoader().loadAsync(url);
+  const model = await loadModel(THREE, url);
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
   model.position.sub(box.getCenter(new THREE.Vector3()));

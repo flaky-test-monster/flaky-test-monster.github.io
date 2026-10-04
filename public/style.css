@@ -187,7 +187,16 @@ body {
   margin-top: 20px;
 }
 
-.actions { justify-content: flex-end; }
+.actions { justify-content: flex-end; align-items: center; }
+.pipeline-select { display: flex; align-items: center; gap: 8px; margin-right: auto; font-weight: 600; }
+.pipeline-select select {
+  padding: 9px 12px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 
 /* Step 2 and 3: previews */
 .preview {
@@ -200,7 +209,7 @@ body {
   border: 1px solid var(--border);
 }
 
-#statue-preview { margin-top: 24px; }
+#image-preview { margin-top: 24px; }
 
 /* Step 3: stepper */
 .stepper {
