@@ -4,11 +4,21 @@ const COUNTDOWN_SECONDS = 3;
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_RETRIES = 5;
 const POLL_BACKOFF_MAX_MS = 30000;
-const STAGES = ['input', 'statue', 'glb', 'stl'];
+const STAGES = ['input', 'image', 'model', 'stl'];
+/** Per-3D-method hint, intermediate model download and the file the viewer shows. */
+const PIPELINE_UI = {
+  tripo: { hint: 'This usually takes one to three minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  shapes: { hint: 'This usually takes one to four minutes.', modelDownload: null, viewerFile: 'model.stl' },
+  local: { hint: 'Running on this Mac usually takes 10 to 20 minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+};
+const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local' };
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
+const RECENT_LIMIT = 6;
+const INTERRUPTED_MESSAGE = 'This conversion was interrupted because the server stopped. Start a new one.';
+const JOB_HASH_PATTERN = /^#job=([0-9a-f-]{36})$/;
 
 const $ = (id) => document.getElementById(id);
-const state = { stream: null, blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null };
+const state = { figures: {}, stream: null, blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null, recent: [], showAllRecent: false };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -71,13 +81,13 @@ function chooseImage(blob) {
 async function startJob() {
   $('flakify').disabled = true;
   try {
-    const res = await fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
+    state.pipeline = $('pipeline').value;
+    state.figure = $('figure').value;
+    state.name = $('job-name').value.trim();
+    const query = new URLSearchParams({ pipeline: state.pipeline, figure: state.figure, name: state.name });
+    const res = await fetch(`/api/jobs?${query}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
     if (!res.ok) throw new Error((await res.json()).error ?? `Upload failed (${res.status})`);
-    state.jobId = (await res.json()).id;
-    stopCamera();
-    resetProgress();
-    showStep('progress');
-    poll();
+    openJob({ id: (await res.json()).id, pipeline: state.pipeline, figure: state.figure, name: state.name });
   } catch (err) {
     resetProgress();
     showStep('progress');
@@ -87,12 +97,167 @@ async function startJob() {
   }
 }
 
+/**
+ * Shows a stored or freshly started conversion: the result when it is finished, otherwise
+ * the progress view, which keeps polling. The id goes in the URL so a reload reopens it.
+ * @param {{ id: string, pipeline: string, figure: string, name: string | null }} job
+ */
+function openJob(job) {
+  clearTimeout(state.pollTimer);
+  state.disposeViewer?.();
+  const pipeline = job.pipeline in PIPELINE_UI ? job.pipeline : 'tripo';
+  Object.assign(state, { jobId: job.id, pipeline, figure: job.figure, name: job.name ?? '', disposeViewer: null });
+  history.replaceState(null, '', `#job=${job.id}`);
+  stopCamera();
+  resetProgress();
+  showStep('progress');
+  poll();
+}
+
+/** Display name of a figure key, falling back to the key for presets that were removed. */
+function figureLabel(figure) {
+  return state.figures[figure] ?? figure;
+}
+
+/** Fills the figure picker from the server's presets. */
+async function loadFigures() {
+  try {
+    const res = await fetch('/api/figures');
+    if (!res.ok) throw new Error(`Figures failed (${res.status})`);
+    const { figures, default: selected } = await res.json();
+    state.figures = Object.fromEntries(figures.map(({ id, label }) => [id, label]));
+    $('figure').replaceChildren(...figures.map(({ id, label }) => new Option(label, id, id === selected, id === selected)));
+  } catch {
+    // Keep the built-in marble option; the server still accepts it.
+  }
+}
+
+/** Formats a job's creation time for the recent list. */
+function formatDate(iso) {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+/** One-word status of a stored job for the recent list. */
+function jobState(job) {
+  if (job.error) return 'Failed';
+  if (STAGES.every((stage) => job.stages[stage])) return 'Done';
+  return job.running ? 'In progress' : 'Interrupted';
+}
+
+/** Renders the recent conversions, newest first, each opening its job when clicked. */
+function renderRecent() {
+  const jobs = state.showAllRecent ? state.recent : state.recent.slice(0, RECENT_LIMIT);
+  $('recent').hidden = state.recent.length === 0;
+  $('recent-more').hidden = state.showAllRecent || state.recent.length <= RECENT_LIMIT;
+  $('recent-more').textContent = `Show all ${state.recent.length}`;
+  $('recent-list').replaceChildren(...jobs.map((job) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'recent-item';
+    const thumb = job.stages.image ?? job.stages.input;
+    const img = document.createElement('img');
+    img.className = 'recent-thumb';
+    img.alt = '';
+    img.loading = 'lazy';
+    if (thumb) img.src = `/api/jobs/${job.id}/${thumb}`;
+    const text = document.createElement('span');
+    text.className = 'recent-text';
+    const title = document.createElement('span');
+    title.className = 'recent-name';
+    title.textContent = job.name || formatDate(job.createdAt);
+    const meta = document.createElement('span');
+    meta.className = 'recent-meta';
+    const status = document.createElement('span');
+    status.textContent = jobState(job);
+    status.dataset.state = status.textContent.toLowerCase().replace(' ', '-');
+    meta.append([figureLabel(job.figure), PIPELINE_LABELS[job.pipeline] ?? job.pipeline, job.name ? formatDate(job.createdAt) : null, ''].filter((part) => part !== null).join(' · '), status);
+    text.append(title, meta);
+    button.append(img, text);
+    button.addEventListener('click', () => openJob(job));
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'recent-delete';
+    remove.textContent = '×';
+    remove.title = 'Delete';
+    remove.setAttribute('aria-label', `Delete ${title.textContent}`);
+    remove.disabled = job.running === true;
+    remove.addEventListener('click', async () => {
+      if (!(await deleteJob(job))) return;
+      state.recent = state.recent.filter((other) => other.id !== job.id);
+      renderRecent();
+    });
+    const li = document.createElement('li');
+    li.className = 'recent-row';
+    li.append(button, remove);
+    return li;
+  }));
+}
+
+/**
+ * Deletes a stored conversion after the user confirms. Returns whether it was deleted.
+ * @param {{ id: string, name: string | null, createdAt?: string }} job
+ */
+async function deleteJob(job) {
+  const label = job.name || (job.createdAt ? `the conversion from ${formatDate(job.createdAt)}` : 'this conversion');
+  if (!confirm(`Delete ${label}? Its images and 3D files are removed for good.`)) return false;
+  const res = await fetch(`/api/jobs/${job.id}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 404) {
+    alert((await res.json().catch(() => ({}))).error ?? `Delete failed (${res.status})`);
+    return false;
+  }
+  return true;
+}
+
+/** Fetches the stored conversions for the recent list. A failure just hides the list. */
+async function loadRecent() {
+  try {
+    const res = await fetch('/api/jobs');
+    if (!res.ok) throw new Error(`List failed (${res.status})`);
+    state.recent = (await res.json()).jobs;
+  } catch {
+    state.recent = [];
+  }
+  renderRecent();
+}
+
+/** Reopens the conversion named in the URL, if any. Returns whether one was opened. */
+async function restoreFromUrl() {
+  const id = location.hash.match(JOB_HASH_PATTERN)?.[1];
+  if (!id) return false;
+  try {
+    const res = await fetch(`/api/jobs/${id}`);
+    if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);
+    openJob(await res.json());
+    return true;
+  } catch {
+    history.replaceState(null, '', location.pathname);
+    return false;
+  }
+}
+
+/** Same rule as the server's fileSlug(): an ASCII file name prefix for downloads. */
+function fileSlug(name) {
+  const slug = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug || 'flakifier';
+}
+
+/** Shows the job name as a heading, or hides the heading when there is none. */
+function showName(element, name) {
+  element.textContent = name;
+  element.hidden = !name;
+}
+
 /** Clears stepper, preview and error state. */
 function resetProgress() {
+  showName($('progress-name'), state.name);
   clearTimeout(state.pollTimer);
   state.pollFailures = 0;
   $('error').hidden = true;
-  $('statue-preview').hidden = true;
+  $('image-preview').hidden = true;
+  const ui = PIPELINE_UI[state.pipeline];
+  document.querySelector('#stepper li[data-stage="image"]').textContent = 'Figure';
+  $('progress-hint').textContent = ui.hint;
   $('progress-hint').hidden = false;
   for (const li of document.querySelectorAll('#stepper li')) li.classList.remove('done', 'active');
 }
@@ -114,9 +279,9 @@ function renderStages(stages) {
     li.classList.toggle('active', !done && nextPending);
     if (!done) nextPending = false;
   }
-  if (stages.statue && $('statue-preview').hidden) {
-    $('statue-preview').src = `/api/jobs/${state.jobId}/statue.png`;
-    $('statue-preview').hidden = false;
+  if (stages.image && $('image-preview').hidden) {
+    $('image-preview').src = `/api/jobs/${state.jobId}/${stages.image}`;
+    $('image-preview').hidden = false;
   }
 }
 
@@ -135,11 +300,12 @@ async function poll() {
     const res = await fetch(`/api/jobs/${state.jobId}`);
     if (res.status === 404) return showError('Job not found');
     if (!res.ok) throw new Error(`Status check failed (${res.status})`);
-    const { stages, error } = await res.json();
+    const { stages, error, running } = await res.json();
     state.pollFailures = 0;
     renderStages(stages);
     if (error) return showError(error);
     if (STAGES.every((stage) => stages[stage])) return showResult(stages);
+    if (running === false) return showError(INTERRUPTED_MESSAGE);
     state.pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
   } catch (err) {
     state.pollFailures += 1;
@@ -148,18 +314,38 @@ async function poll() {
   }
 }
 
-/** Fills in download links and loads the 3D viewer. */
+/** Shows every stage side by side, fills in download links and loads the 3D viewer. */
 async function showResult(stages) {
   const file = (name) => `/api/jobs/${state.jobId}/${name}?download=1`;
+  const view = (name) => `/api/jobs/${state.jobId}/${name}`;
   $('dl-stl').href = file('model.stl');
-  $('dl-glb').href = file('model.glb');
-  $('dl-statue').href = file('statue.png');
+  const ui = PIPELINE_UI[state.pipeline];
+  showName($('result-name'), state.name);
+  $('stage-original').src = view(stages.input);
+  $('stage-image').src = view(stages.image);
+  $('stage-image-label').textContent = figureLabel(state.figure);
+  $('stage-final-label').textContent = 'Final 3D figure';
+  $('stage-final').removeAttribute('src');
+  $('dl-final').hidden = true;
+  $('dl-image').href = file(stages.image);
+  $('dl-image').textContent = 'Download figure image';
+  $('dl-model').hidden = !ui.modelDownload;
+  if (ui.modelDownload) {
+    $('dl-model').href = file(stages.model);
+    $('dl-model').textContent = ui.modelDownload;
+  }
   $('dl-original').href = file(stages.input);
   showStep('result');
   try {
-    state.disposeViewer = await mountViewer($('viewer'), `/api/jobs/${state.jobId}/model.glb`);
+    const { dispose, still } = await mountViewer($('viewer'), view(ui.viewerFile));
+    state.disposeViewer = dispose;
+    $('stage-final').src = still;
+    $('dl-final').href = still;
+    $('dl-final').download = `${fileSlug(state.name)}-final.png`;
+    $('dl-final').hidden = false;
   } catch (err) {
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
+    $('stage-final').alt = 'No render: the 3D model could not be loaded';
   }
 }
 
@@ -167,10 +353,13 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pollTimer: null, pollFailures: 0, disposeViewer: null });
+  Object.assign(state, { blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
+  history.replaceState(null, '', location.pathname);
   $('file-input').value = '';
+  $('job-name').value = '';
   showStep('source');
   startCamera();
+  loadRecent();
 }
 
 $('take-photo').addEventListener('click', async () => {
@@ -192,6 +381,14 @@ $('retake').addEventListener('click', () => showStep('source'));
 $('flakify').addEventListener('click', startJob);
 $('try-again').addEventListener('click', (event) => { event.preventDefault(); startOver(); });
 $('start-over').addEventListener('click', (event) => { event.preventDefault(); startOver(); });
+$('delete-job').addEventListener('click', async () => {
+  if (await deleteJob({ id: state.jobId, name: state.name })) startOver();
+});
+$('recent-more').addEventListener('click', () => { state.showAllRecent = true; renderRecent(); });
 
-showStep('source');
-startCamera();
+await loadFigures();
+if (!(await restoreFromUrl())) {
+  showStep('source');
+  startCamera();
+}
+loadRecent();

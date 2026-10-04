@@ -19,7 +19,7 @@
     <h1 class="title">Flakifier</h1>
 
     <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. You will get a marble bust and a printable STL.</p>
+      <p class="lead">Take a photo or upload one. You will get a 3D-printable STL of yourself as a marble bust or a LEGO minifigure.</p>
       <div class="cards">
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
@@ -36,10 +36,35 @@
           <span class="hint">Click or drag and drop a PNG or JPG</span>
         </label>
       </div>
+      <div id="recent" class="recent" hidden>
+        <h2 class="recent-title">Recent conversions</h2>
+        <ul id="recent-list" class="recent-list"></ul>
+        <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
+      </div>
     </section>
 
     <section id="step-confirm" class="step" data-step="confirm" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
+      <label class="name-field">
+        <span>Name <span class="optional">(optional)</span></span>
+        <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday figure">
+      </label>
+      <div class="choices">
+        <label class="choice">
+          <span>Figure</span>
+          <select id="figure">
+            <option value="marble" selected>Marble bust</option>
+          </select>
+        </label>
+        <label class="choice">
+          <span>3D model</span>
+          <select id="pipeline">
+            <option value="tripo" selected>Tripo3D (OpenAI + Tripo3D)</option>
+            <option value="shapes">Simple shapes (OpenAI only)</option>
+            <option value="local">Local, on this Mac</option>
+          </select>
+        </label>
+      </div>
       <div class="actions">
         <button type="button" id="retake" class="btn">Retake / Choose another</button>
         <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
@@ -47,29 +72,52 @@
     </section>
 
     <section id="step-progress" class="step" data-step="progress" hidden>
+      <h2 id="progress-name" class="result-name" hidden></h2>
       <ol class="stepper" id="stepper">
         <li data-stage="input">Input</li>
-        <li data-stage="statue">Statue</li>
-        <li data-stage="glb">3D model</li>
+        <li data-stage="image">Statue</li>
+        <li data-stage="model">3D model</li>
         <li data-stage="stl">STL</li>
       </ol>
       <p id="error" class="error" hidden>
         <span id="error-text"></span>
         <a href="#" id="try-again">Try again</a>
       </p>
-      <p class="hint" id="progress-hint">This usually takes one to three minutes.</p>
-      <img id="statue-preview" class="preview" alt="Marble statue" hidden>
+      <p class="hint" id="progress-hint">This usually takes one to four minutes.</p>
+      <img id="image-preview" class="preview" alt="Styled image" hidden>
     </section>
 
     <section id="step-result" class="step" data-step="result" hidden>
-      <div id="viewer" class="viewer"></div>
+      <h2 id="result-name" class="result-name" hidden></h2>
+      <ol class="stages">
+        <li class="stage-card">
+          <span class="stage-label">Original</span>
+          <img id="stage-original" class="stage-media" alt="Your original photo">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label" id="stage-image-label">Statue</span>
+          <img id="stage-image" class="stage-media" alt="The restyled image">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label">3D model <span class="stage-note">drag to rotate</span></span>
+          <div id="viewer" class="stage-media viewer"></div>
+        </li>
+        <li class="stage-card">
+          <span class="stage-label" id="stage-final-label">Final figure</span>
+          <img id="stage-final" class="stage-media" alt="Render of the finished printable model">
+        </li>
+      </ol>
       <div class="downloads">
         <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
-        <a id="dl-glb" class="btn" download>Download GLB</a>
-        <a id="dl-statue" class="btn" download>Download statue image</a>
+        <a id="dl-model" class="btn" download>Download GLB</a>
+        <a id="dl-image" class="btn" download>Download statue image</a>
+        <a id="dl-final" class="btn" download hidden>Download final image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
-      <a href="#" id="start-over" class="link">Start over</a>
+      <div class="result-links">
+        <a href="#" id="start-over" class="link">Start over</a>
+        <button type="button" id="delete-job" class="link-button link-danger">Delete conversion</button>
+      </div>
     </section>
   </main>
   <script type="module" src="/public/app.js"></script>

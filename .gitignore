@@ -144,3 +144,8 @@ vite.config.ts.timestamp-*
 
 # Flakifier job output (one folder per job)
 jobs/
+
+# Local pipeline: built tools, model weights, logs (scripts/install.sh, scripts/start.sh)
+vendor/
+models/
+logs/
