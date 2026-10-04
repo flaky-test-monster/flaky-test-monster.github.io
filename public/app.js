@@ -18,7 +18,7 @@ const INTERRUPTED_MESSAGE = 'This conversion was interrupted because the server 
 const JOB_HASH_PATTERN = /^#job=([0-9a-f-]{36})$/;
 
 const $ = (id) => document.getElementById(id);
-const state = { figures: {}, stream: null, blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null, recent: [], showAllRecent: false };
+const state = { figures: {}, stream: null, blob: null, jobId: null, pipeline: 'tripo', figure: 'monster', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null, recent: [], showAllRecent: false };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -128,7 +128,7 @@ async function loadFigures() {
     state.figures = Object.fromEntries(figures.map(({ id, label }) => [id, label]));
     $('figure').replaceChildren(...figures.map(({ id, label }) => new Option(label, id, id === selected, id === selected)));
   } catch {
-    // Keep the built-in marble option; the server still accepts it.
+    // Keep the built-in monster option; the server still accepts it.
   }
 }
 
@@ -353,7 +353,7 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
+  Object.assign(state, { blob: null, jobId: null, pipeline: 'tripo', figure: 'monster', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
   history.replaceState(null, '', location.pathname);
   $('file-input').value = '';
   $('job-name').value = '';

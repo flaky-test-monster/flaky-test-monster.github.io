@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Flakifier</title>
+  <link rel="icon" href="/public/monster.jpg">
   <link rel="stylesheet" href="/public/style.css">
   <script type="importmap">
     {
@@ -16,10 +17,16 @@
 </head>
 <body>
   <main class="app">
-    <h1 class="title">Flakifier</h1>
+    <header class="masthead">
+      <img class="mascot" src="/public/monster.jpg" alt="The Flaky Test Monster: a green 3D-printed monster with messy black hair, big eyes and a mouth full of teeth">
+      <div class="masthead-text">
+        <h1 class="title">flakifier</h1>
+        <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow" aria-hidden="true">→</span> <span class="tag tag-flaky">flaky test monster</span></p>
+      </div>
+    </header>
 
     <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. You will get a 3D-printable STL of yourself as a marble bust or a LEGO minifigure.</p>
+      <p class="lead">Passed locally, failed on CI. Take a photo or upload one and get yourself back as a 3D-printable STL.</p>
       <div class="cards">
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
@@ -27,17 +34,17 @@
             <div id="countdown" class="countdown" hidden></div>
           </div>
           <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
-          <span class="card-label">Use camera</span>
+          <span class="card-label">camera</span>
         </div>
         <label class="card card-upload" id="upload-card">
           <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg" aria-label="Upload a PNG or JPG image">
           <span class="upload-icon" aria-hidden="true">+</span>
-          <span class="card-label">Upload image</span>
-          <span class="hint">Click or drag and drop a PNG or JPG</span>
+          <span class="card-label">upload</span>
+          <span class="hint">Click or drop a PNG or JPG</span>
         </label>
       </div>
       <div id="recent" class="recent" hidden>
-        <h2 class="recent-title">Recent conversions</h2>
+        <h2 class="section-title">Recent runs</h2>
         <ul id="recent-list" class="recent-list"></ul>
         <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
       </div>
@@ -45,19 +52,19 @@
 
     <section id="step-confirm" class="step" data-step="confirm" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
-      <label class="name-field">
-        <span>Name <span class="optional">(optional)</span></span>
+      <label class="field">
+        <span>name <span class="optional">optional</span></span>
         <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday figure">
       </label>
       <div class="choices">
-        <label class="choice">
-          <span>Figure</span>
+        <label class="field">
+          <span>figure</span>
           <select id="figure">
-            <option value="marble" selected>Marble bust</option>
+            <option value="monster" selected>Flaky Test Monster</option>
           </select>
         </label>
-        <label class="choice">
-          <span>3D model</span>
+        <label class="field">
+          <span>3d model</span>
           <select id="pipeline">
             <option value="tripo" selected>Tripo3D (OpenAI + Tripo3D)</option>
             <option value="shapes">Simple shapes (OpenAI only)</option>
@@ -66,7 +73,7 @@
         </label>
       </div>
       <div class="actions">
-        <button type="button" id="retake" class="btn">Retake / Choose another</button>
+        <button type="button" id="retake" class="btn">Choose another</button>
         <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
       </div>
     </section>
@@ -119,6 +126,11 @@
         <button type="button" id="delete-job" class="link-button link-danger">Delete conversion</button>
       </div>
     </section>
+
+    <footer class="footer">
+      <span>exit code: it depends</span>
+      <span>retries: 3</span>
+    </footer>
   </main>
   <script type="module" src="/public/app.js"></script>
 </body>
