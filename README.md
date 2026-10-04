@@ -118,14 +118,14 @@ screen, where you can reopen or delete them.
 
 ## Local pipeline (Apple Silicon)
 
-Runs the marble bust pipeline on your Mac with two open models. Tested hardware for the
-underlying projects is Apple Silicon with 24 to 32 GB of unified memory; on 32 GB, run
-nothing else heavy alongside. The two steps run one after the other, so their memory
+Runs the whole pipeline on your Mac with two open models, for every figure preset. Tested
+hardware for the underlying projects is Apple Silicon with 24 to 32 GB of unified memory;
+on 32 GB, run nothing else heavy alongside. The two steps run one after the other, so their memory
 needs don't add up.
 
 | Step | Model | Licence |
 |---|---|---|
-| Statue image | [FLUX.1 Kontext \[dev\]](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) via [mflux](https://github.com/filipstrand/mflux) | FLUX.1 \[dev\] Non-Commercial: personal use is fine, commercial use needs a licence from Black Forest Labs |
+| Figure image | [FLUX.1 Kontext \[dev\]](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) via [mflux](https://github.com/filipstrand/mflux) | FLUX.1 \[dev\] Non-Commercial: personal use is fine, commercial use needs a licence from Black Forest Labs |
 | Image to 3D | TRELLIS.2 via [pixal3d.cpp](https://github.com/LighthausInc/pixal3d.cpp) | MIT (code and TRELLIS.2 weights); the DINOv3 encoder is under Meta's DINOv3 licence |
 
 Neither is restricted to particular regions. Hunyuan3D was not chosen because its

@@ -67,7 +67,9 @@ node_major() { node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo
 if (( $(node_major) >= NODE_MAJOR_MIN )); then
   ok "node $(node --version)"
 else
-  brew_install node
+  # brew_install would skip an older node formula that is already installed, so upgrade it.
+  if brew list --formula node >/dev/null 2>&1; then brew upgrade node || true; else brew install node; fi
+  hash -r
   (( $(node_major) >= NODE_MAJOR_MIN )) || die "node on PATH is $(node --version 2>/dev/null || echo missing); need $NODE_MAJOR_MIN+."
   ok "node $(node --version)"
 fi
