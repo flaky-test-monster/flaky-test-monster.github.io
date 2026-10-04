@@ -2,7 +2,9 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { makeFigureScene, makeLegoImage, makeStatueImage } from './lib/openai.js';
+import { imageToGlbLocal, localUnavailableReason, makeStatueImageLocal } from './lib/local.js';
 import { sceneToStl } from './lib/mesh.js';
+import { glbToStl } from './lib/stl.js';
 import { imageToStl } from './lib/tripo.js';
 import { JOB_FILE_TYPES, createJob, getJobStatus, resolveJobFile, writeJobError, writeJobFile } from './lib/jobs.js';
 
@@ -38,13 +40,24 @@ class HttpError extends Error {
 }
 
 /**
- * The ways a photo can become an STL. Each run() persists its stages as job files.
- * @type {Record<string, { env: string[], run: (id: string, input: Buffer, mimeType: string, log: (message: string) => void) => Promise<void> }>}
+ * Returns an availability check that reports env variables which are not set.
+ * @param {string[]} keys
+ * @returns {() => Promise<string | null>}
+ */
+const requireEnv = (keys) => async () => {
+  const missing = keys.filter((key) => !process.env[key]);
+  return missing.length > 0 ? `This pipeline needs ${missing.join(', ')} in .env` : null;
+};
+
+/**
+ * The ways a photo can become an STL. unavailable() explains why a pipeline cannot run
+ * (or returns null), and run() persists its stages as job files.
+ * @type {Record<string, { unavailable: () => Promise<string | null>, run: (id: string, input: Buffer, mimeType: string, log: (message: string) => void) => Promise<void> }>}
  */
 const PIPELINES = {
   // photo -> marble statue image -> Tripo3D GLB -> STL
   marble: {
-    env: ['OPENAI_API_KEY', 'TRIPO_API_KEY'],
+    unavailable: requireEnv(['OPENAI_API_KEY', 'TRIPO_API_KEY']),
     async run(id, input, mimeType, log) {
       log('Generating statue image');
       const statue = await makeStatueImage(input, mimeType);
@@ -58,7 +71,7 @@ const PIPELINES = {
   },
   // photo -> LEGO minifigure image -> GPT shape list -> STL, OpenAI only
   lego: {
-    env: ['OPENAI_API_KEY'],
+    unavailable: requireEnv(['OPENAI_API_KEY']),
     async run(id, input, mimeType, log) {
       log('Generating LEGO image');
       const lego = await makeLegoImage(input, mimeType);
@@ -70,32 +83,37 @@ const PIPELINES = {
       await writeJobFile(id, 'model.stl', sceneToStl(scene));
     },
   },
+  // photo -> marble statue image (FLUX.1 Kontext) -> GLB (pixal3d.cpp) -> STL, all on this Mac
+  local: {
+    unavailable: localUnavailableReason,
+    async run(id, input, mimeType, log) {
+      log('Generating statue image with FLUX.1 Kontext');
+      const statue = await makeStatueImageLocal(resolveJobFile(id, `input.${INPUT_EXTENSIONS[mimeType]}`));
+      await writeJobFile(id, 'statue.png', statue);
+      log('Generating 3D model with the local trellis-server');
+      const glb = await imageToGlbLocal(statue);
+      await writeJobFile(id, 'model.glb', glb);
+      log('Converting GLB to STL');
+      await writeJobFile(id, 'model.stl', glbToStl(glb));
+    },
+  },
 };
 
 /**
- * Lists the env variables a pipeline needs that are not set.
- * @param {string} name
- * @returns {string[]}
+ * Loads .env when present and reports which pipelines cannot run yet. The server starts
+ * regardless: the local pipeline needs no keys, and its tools may be started later.
  */
-function missingEnv(name) {
-  return PIPELINES[name].env.filter((key) => !process.env[key]);
-}
-
-/**
- * Loads .env and checks the API keys. Exits when no pipeline can run, and warns about
- * pipelines that are unavailable.
- */
-function loadConfig() {
+async function loadConfig() {
   try {
     process.loadEnvFile();
   } catch (err) {
     if (err.code !== 'ENOENT') throw err;
-    console.error('No .env file found. Copy .env.example to .env and add your API keys.');
-    process.exit(1);
+    console.warn('No .env file found; only the local pipeline can run. See .env.example.');
   }
-  const unavailable = Object.keys(PIPELINES).filter((name) => missingEnv(name).length > 0);
-  for (const name of unavailable) console.warn(`Pipeline "${name}" disabled, missing in .env: ${missingEnv(name).join(', ')}`);
-  if (unavailable.length === Object.keys(PIPELINES).length) process.exit(1);
+  for (const [name, pipeline] of Object.entries(PIPELINES)) {
+    const reason = await pipeline.unavailable();
+    if (reason) console.warn(`Pipeline "${name}" unavailable: ${reason}`);
+  }
 }
 
 /**
@@ -189,15 +207,15 @@ async function serveStatic(req, res, url, [, relative]) {
   await sendFile(res, filePath, contentType);
 }
 
-/** POST /api/jobs?pipeline=marble|lego */
+/** POST /api/jobs?pipeline=marble|lego|local */
 async function createJobRoute(req, res, url) {
   const mimeType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
   const extension = INPUT_EXTENSIONS[mimeType];
   if (!extension) throw new HttpError(415, 'Send the image as image/png or image/jpeg');
   const pipeline = url.searchParams.get('pipeline') || DEFAULT_PIPELINE;
   if (!Object.hasOwn(PIPELINES, pipeline)) throw new HttpError(400, `Unknown pipeline: ${pipeline}`);
-  const missing = missingEnv(pipeline);
-  if (missing.length > 0) throw new HttpError(400, `This pipeline needs ${missing.join(', ')} in .env`);
+  const reason = await PIPELINES[pipeline].unavailable();
+  if (reason) throw new HttpError(400, reason);
   const input = await readBody(req);
   const id = await createJob(input, extension, pipeline);
   sendJson(res, 202, { id });
@@ -271,7 +289,7 @@ async function onRequest(req, res) {
   }
 }
 
-loadConfig();
+await loadConfig();
 createServer(onRequest).listen(PORT, HOST, () => {
   console.log(`Flakifier running at http://${HOST}:${PORT}`);
 });

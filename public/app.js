@@ -7,8 +7,9 @@ const POLL_BACKOFF_MAX_MS = 30000;
 const STAGES = ['input', 'image', 'model', 'stl'];
 /** Per-pipeline wording for the stepper, image preview and downloads. */
 const PIPELINE_UI = {
-  marble: { image: 'Statue', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
-  lego: { image: 'LEGO image', imageDownload: 'Download LEGO image', modelDownload: null, viewerFile: 'model.stl' },
+  marble: { image: 'Statue', hint: 'This usually takes one to three minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  local: { image: 'Statue', hint: 'Running on this Mac usually takes 10 to 20 minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  lego: { image: 'LEGO image', hint: 'This usually takes one to four minutes.', imageDownload: 'Download LEGO image', modelDownload: null, viewerFile: 'model.stl' },
 };
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
@@ -100,7 +101,9 @@ function resetProgress() {
   state.pollFailures = 0;
   $('error').hidden = true;
   $('image-preview').hidden = true;
-  document.querySelector('#stepper li[data-stage="image"]').textContent = PIPELINE_UI[$('pipeline').value].image;
+  const ui = PIPELINE_UI[$('pipeline').value];
+  document.querySelector('#stepper li[data-stage="image"]').textContent = ui.image;
+  $('progress-hint').textContent = ui.hint;
   $('progress-hint').hidden = false;
   for (const li of document.querySelectorAll('#stepper li')) li.classList.remove('done', 'active');
 }
