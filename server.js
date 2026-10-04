@@ -13,6 +13,7 @@ const HOST = 'localhost';
 const PUBLIC_DIR = path.join(import.meta.dirname, 'public');
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ERROR_MESSAGE_LIMIT = 300;
+const NAME_LIMIT = 60;
 const DEFAULT_PIPELINE = 'marble';
 const INPUT_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg' };
 const STATIC_TYPES = {
@@ -194,6 +195,26 @@ async function runPipeline(id, pipeline, input, mimeType) {
   }
 }
 
+/**
+ * Cleans the user-given job name: no control characters, single spaces, bounded length.
+ * @param {string | null} raw
+ * @returns {string}
+ */
+function cleanName(raw) {
+  return (raw ?? '').replace(/[\p{Cc}\p{Cf}]/gu, '').replace(/\s+/g, ' ').trim().slice(0, NAME_LIMIT);
+}
+
+/**
+ * Turns a job name into an ASCII file name prefix, e.g. "Zoë's bust" -> "zoes-bust".
+ * @param {string | null} name
+ * @returns {string} the slug, or "flakifier" when nothing usable is left
+ */
+function fileSlug(name) {
+  const slug = (name ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug || 'flakifier';
+}
+
 /** GET / */
 async function serveIndex(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'index.html'), STATIC_TYPES['.html']);
@@ -207,7 +228,7 @@ async function serveStatic(req, res, url, [, relative]) {
   await sendFile(res, filePath, contentType);
 }
 
-/** POST /api/jobs?pipeline=marble|lego|local */
+/** POST /api/jobs?pipeline=marble|lego|local&name=... */
 async function createJobRoute(req, res, url) {
   const mimeType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
   const extension = INPUT_EXTENSIONS[mimeType];
@@ -217,7 +238,7 @@ async function createJobRoute(req, res, url) {
   const reason = await PIPELINES[pipeline].unavailable();
   if (reason) throw new HttpError(400, reason);
   const input = await readBody(req);
-  const id = await createJob(input, extension, pipeline);
+  const id = await createJob(input, extension, pipeline, cleanName(url.searchParams.get('name')));
   sendJson(res, 202, { id });
   runPipeline(id, pipeline, input, mimeType).catch((err) => console.error(`[${id}] Unhandled pipeline error:`, err));
 }
@@ -234,7 +255,8 @@ async function jobFileRoute(req, res, url, [, id, name]) {
   const filePath = resolveJobFile(id, name);
   if (!filePath) throw new HttpError(404, 'Not found');
   const download = url.searchParams.get('download') === '1';
-  await sendFile(res, filePath, JOB_FILE_TYPES[name], download ? `flakifier-${name}` : undefined);
+  const prefix = download ? fileSlug((await getJobStatus(id))?.name) : null;
+  await sendFile(res, filePath, JOB_FILE_TYPES[name], download ? `${prefix}-${name}` : undefined);
 }
 
 const ROUTES = [

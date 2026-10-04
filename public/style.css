@@ -198,6 +198,21 @@ body {
   border-radius: 8px;
 }
 
+.name-field { display: flex; flex-direction: column; gap: 6px; margin-top: 20px; font-weight: 600; }
+.name-field .optional { font-weight: 400; color: var(--muted); }
+.name-field input {
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.name-field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+.result-name { font-size: 1.5rem; margin: 0 0 20px; overflow-wrap: anywhere; }
+
 /* Step 2 and 3: previews */
 .preview {
   display: block;

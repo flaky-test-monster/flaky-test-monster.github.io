@@ -14,7 +14,7 @@ const PIPELINE_UI = {
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
 const $ = (id) => document.getElementById(id);
-const state = { stream: null, blob: null, jobId: null, pipeline: 'marble', pollTimer: null, pollFailures: 0, disposeViewer: null };
+const state = { stream: null, blob: null, jobId: null, pipeline: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -78,10 +78,13 @@ async function startJob() {
   $('flakify').disabled = true;
   try {
     const pipeline = $('pipeline').value;
-    const res = await fetch(`/api/jobs?pipeline=${encodeURIComponent(pipeline)}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
+    const name = $('job-name').value.trim();
+    const query = new URLSearchParams({ pipeline, name });
+    const res = await fetch(`/api/jobs?${query}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
     if (!res.ok) throw new Error((await res.json()).error ?? `Upload failed (${res.status})`);
     state.jobId = (await res.json()).id;
     state.pipeline = pipeline;
+    state.name = name;
     stopCamera();
     resetProgress();
     showStep('progress');
@@ -95,8 +98,22 @@ async function startJob() {
   }
 }
 
+/** Same rule as the server's fileSlug(): an ASCII file name prefix for downloads. */
+function fileSlug(name) {
+  const slug = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug || 'flakifier';
+}
+
+/** Shows the job name as a heading, or hides the heading when there is none. */
+function showName(element, name) {
+  element.textContent = name;
+  element.hidden = !name;
+}
+
 /** Clears stepper, preview and error state. */
 function resetProgress() {
+  showName($('progress-name'), state.name);
   clearTimeout(state.pollTimer);
   state.pollFailures = 0;
   $('error').hidden = true;
@@ -165,6 +182,7 @@ async function showResult(stages) {
   const view = (name) => `/api/jobs/${state.jobId}/${name}`;
   $('dl-stl').href = file('model.stl');
   const ui = PIPELINE_UI[state.pipeline];
+  showName($('result-name'), state.name);
   $('stage-original').src = view(stages.input);
   $('stage-image').src = view(stages.image);
   $('stage-image-label').textContent = ui.image;
@@ -185,6 +203,7 @@ async function showResult(stages) {
     state.disposeViewer = dispose;
     $('stage-final').src = still;
     $('dl-final').href = still;
+    $('dl-final').download = `${fileSlug(state.name)}-final.png`;
     $('dl-final').hidden = false;
   } catch (err) {
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
@@ -196,8 +215,9 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pipeline: 'marble', pollTimer: null, pollFailures: 0, disposeViewer: null });
+  Object.assign(state, { blob: null, jobId: null, pipeline: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
   $('file-input').value = '';
+  $('job-name').value = '';
   showStep('source');
   startCamera();
 }

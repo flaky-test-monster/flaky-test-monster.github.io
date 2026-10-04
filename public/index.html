@@ -40,6 +40,10 @@
 
     <section id="step-confirm" class="step" data-step="confirm" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
+      <label class="name-field">
+        <span>Name <span class="optional">(optional)</span></span>
+        <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday bust">
+      </label>
       <div class="actions">
         <label class="pipeline-select">
           <span>Style</span>
@@ -55,6 +59,7 @@
     </section>
 
     <section id="step-progress" class="step" data-step="progress" hidden>
+      <h2 id="progress-name" class="result-name" hidden></h2>
       <ol class="stepper" id="stepper">
         <li data-stage="input">Input</li>
         <li data-stage="image">Statue</li>
@@ -70,6 +75,7 @@
     </section>
 
     <section id="step-result" class="step" data-step="result" hidden>
+      <h2 id="result-name" class="result-name" hidden></h2>
       <ol class="stages">
         <li class="stage-card">
           <span class="stage-label">Original</span>
@@ -92,7 +98,7 @@
         <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
         <a id="dl-model" class="btn" download>Download GLB</a>
         <a id="dl-image" class="btn" download>Download statue image</a>
-        <a id="dl-final" class="btn" download="flakifier-final.png" hidden>Download final image</a>
+        <a id="dl-final" class="btn" download hidden>Download final image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
       <a href="#" id="start-over" class="link">Start over</a>
