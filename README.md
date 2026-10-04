@@ -17,7 +17,7 @@ Figures, defined with their prompts in `lib/figures.js`:
 - **Monster LEGO minifigure** and **Monster Playmobil pirate:** the monster as a toy
 
 The three monster prompts refer to the reference image in
-`figures/flaky-test-monster.png`, which the OpenAI pipelines send along with the photo;
+`figures/flaky-test-monster.jpg`, which the OpenAI pipelines send along with the photo;
 without it, the prompt's own description has to carry the look. The local pipeline
 uses only the photo, because FLUX.1 Kontext takes a single image.
 
