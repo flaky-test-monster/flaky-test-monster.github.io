@@ -1,22 +1,38 @@
 # Flakifier
 
-Turn a webcam photo or an uploaded portrait into a 3D-printable STL, either as a
-classical marble bust or as a LEGO-style minifigure. The app itself is plain Node and
-vanilla JavaScript: no npm dependencies, no bundler, no database. The models run in the
-cloud (OpenAI, Tripo3D) or, with the local pipeline, entirely on your Mac.
+Turn a webcam photo or an uploaded portrait into a 3D-printable STL figure: a marble
+bust, a LEGO-style minifigure, or the Flaky Test Monster in one of three looks. The app
+itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
+database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
+entirely on your Mac.
 
-Pick the style from the **Style** dropdown before clicking **Flakify**:
+Before clicking **Flakify**, pick a **Figure** (what the photo turns into) and a
+**3D model** method (how that image becomes a 3D model). Any figure works with any method.
 
-- **Marble bust (default):** photo → OpenAI Images (marble bust PNG) → Tripo3D (image to
-  3D, GLB) → STL.
-- **LEGO minifigure (ChatGPT only):** photo → OpenAI Images (LEGO minifigure PNG) → GPT
-  vision model (figure as a list of solid shapes, JSON) → local mesher (STL).
-- **Marble bust (local, on this Mac):** photo → FLUX.1 Kontext via mflux (marble bust
-  PNG) → pixal3d.cpp `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud,
-  no cost per run. See [Local pipeline](#local-pipeline-apple-silicon).
+Figures, defined with their prompts in `lib/figures.js`:
 
-OpenAI has no image-to-3D API, so in the LEGO pipeline the GPT model doesn't return a
-mesh directly. It looks at the minifigure image and describes the figure as 20 to 100
+- **Marble bust** (default)
+- **LEGO minifigure**
+- **Flaky Test Monster:** a green monster figurine with your hair, glasses and beard
+- **Monster LEGO minifigure** and **Monster Playmobil pirate:** the monster as a toy
+
+The three monster prompts refer to a reference image. Save one as
+`figures/flaky-test-monster.png` and the OpenAI pipelines send it along with the photo;
+without it, the prompt's own description has to carry the look. The local pipeline
+uses only the photo, because FLUX.1 Kontext takes a single image.
+
+3D methods:
+
+- **Tripo3D (default):** photo → OpenAI Images (figure PNG) → Tripo3D (image to 3D, GLB)
+  → STL.
+- **Simple shapes (OpenAI only):** photo → OpenAI Images (figure PNG) → GPT vision model
+  (figure as a list of solid shapes, JSON) → local mesher (STL).
+- **Local, on this Mac:** photo → FLUX.1 Kontext via mflux (figure PNG) → pixal3d.cpp
+  `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
+  [Local pipeline](#local-pipeline-apple-silicon).
+
+OpenAI has no image-to-3D API, so with simple shapes the GPT model doesn't return a
+mesh directly. It looks at the figure image and describes the figure as 20 to 100
 simple solids: ellipsoids, boxes, cylinders or cones, and tori, with sizes and positions
 in millimetres. `lib/mesh.js` turns those solids into triangles, centers the result on
 the build plate and scales it to 100 mm tall. Expect a stylised toy look, not a sculpted
@@ -27,9 +43,9 @@ likeness.
 - macOS (the install script) and Node 22 or newer, which the script installs
 - For the local pipeline: an Apple Silicon Mac, ideally with 32 GB of memory, and about
   50 GB of free disk space
-- An OpenAI API key with access to `gpt-image-1` and, for the LEGO pipeline, a vision
+- An OpenAI API key with access to `gpt-image-1` and, for the simple-shapes method, a vision
   model that supports structured outputs (default `gpt-5`)
-- A Tripo3D API key for the marble bust pipeline
+- A Tripo3D API key for the Tripo3D method
 
 ## Get the API keys
 
@@ -68,9 +84,9 @@ TRIPO_API_KEY=tsk_...
 ```
 
 The server always starts and logs which pipelines are unavailable and why: without
-`TRIPO_API_KEY` the marble pipeline is off, and without any `.env` only the local
+`TRIPO_API_KEY` the Tripo3D method is off, and without any `.env` only the local
 pipeline can run. Optional overrides: `OPENAI_IMAGE_MODEL`
-(default `gpt-image-1`), `OPENAI_MODEL` (default `gpt-5`), `TARGET_HEIGHT_MM` (LEGO
+(default `gpt-image-1`), `OPENAI_MODEL` (default `gpt-5`), `TARGET_HEIGHT_MM` (simple-shapes
 figure height, default `100`) and `PORT` (default `3000`, read from the shell).
 
 The keys are read on the server with `process.loadEnvFile()` and never sent to the
@@ -87,16 +103,18 @@ This starts the local 3D server in the background when the local pipeline is ins
 stops both. A 3D server you already started yourself is reused and left running.
 `node server.js` still works when you only use the cloud pipelines.
 
-Open <http://localhost:3000>. Take a photo or drop a PNG/JPG (max 10 MB), choose a style,
-and click **Flakify**. The stepper lights up as each stage finishes, the styled image
+Open <http://localhost:3000>. Take a photo or drop a PNG/JPG (max 10 MB), choose a figure
+and a 3D method, and click **Flakify**. The stepper lights up as each stage finishes, the styled image
 appears as soon as it is ready, and the final screen shows the model in a rotating 3D
 viewer with download buttons for the STL, the styled image and the original photo, plus
-the GLB for the marble bust.
+the GLB from Tripo3D or the local pipeline.
 
-Every run writes its files to `jobs/<uuid>/`: `pipeline.txt`, `input.png` or `input.jpg`,
-then `statue.png` and `model.glb` (marble and local) or `lego.png` and `model.json` (LEGO, the
-shape list the model returned), then `model.stl`, and `error.txt` if something went
-wrong. Delete the folder whenever you like.
+Every run writes its files to `jobs/<uuid>/`: `pipeline.txt`, `figure.txt`, `name.txt`
+(when named), `input.png` or `input.jpg`, then `figure.png`, then `model.glb` (Tripo3D
+and local) or `model.json` (simple shapes, the shape list the model returned), then
+`model.stl`, and `error.txt` if something went wrong. Older runs have `statue.png` or
+`lego.png` instead of `figure.png` and still open. Past runs are listed on the start
+screen, where you can reopen or delete them.
 
 ## Local pipeline (Apple Silicon)
 
@@ -146,9 +164,9 @@ licence excludes the EU, UK and South Korea.
 
 ### Use it
 
-Pick **Marble bust (local, on this Mac)**. If the 3D server isn't reachable or the mflux
+Pick **Local, on this Mac** as the 3D model method. If the 3D server isn't reachable or the mflux
 command isn't found, Flakifier says so as soon as you click **Flakify**. Expect roughly
-10 to 20 minutes per bust: 1 to 2 minutes for the image and the rest for the 3D model.
+10 to 20 minutes per figure: 1 to 2 minutes for the image and the rest for the 3D model.
 These times are estimates from the projects' published benchmarks, not measured with
 Flakifier.
 
@@ -158,19 +176,19 @@ Flakifier.
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied,
   the camera card is hidden and you can still upload an image.
 - **Run time is about 1 to 4 minutes.** The OpenAI image edit takes 20 to 60 seconds.
-  The marble pipeline then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
-  server polls Tripo3D every 3 seconds and gives up after 10 minutes. The LEGO pipeline
-  spends 30 seconds to 3 minutes generating the shape list, depending on the model.
+  The Tripo3D method then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
+  server polls Tripo3D every 3 seconds and gives up after 10 minutes. The simple-shapes
+  method spends 30 seconds to 3 minutes generating the shape list, depending on the model.
 - **Approximate cost per run.** Roughly $0.10 to $0.30 for the OpenAI image edit
-  (1024×1024, high input fidelity). The marble pipeline adds roughly 20 to 30 Tripo3D
+  (1024×1024, high input fidelity). The Tripo3D method adds roughly 20 to 30 Tripo3D
   credits for the model plus the STL conversion, in the region of $0.30 to $0.60 on paid
-  plans. The LEGO pipeline adds a few cents for the shape generation. Check the
+  plans. The simple-shapes method adds a few cents for the shape generation. Check the
   providers' current pricing pages for exact numbers.
-- The local pipeline, and the marble pipeline when Tripo3D's STL export is unavailable,
+- The local pipeline, and the Tripo3D method when Tripo3D's STL export is unavailable,
   use the built-in GLB→STL converter (`lib/stl.js`). It reads the mesh positions and
   indices, turns the Y-up glTF model upright for Z-up slicers, and writes a binary STL.
   The mesh is not repaired or checked for watertightness.
-- **Printing the LEGO figure.** Each solid is its own closed, outward-facing shell, and
+- **Printing a simple-shapes figure.** Each solid is its own closed, outward-facing shell, and
   the solids overlap. Slicers such as PrusaSlicer, Cura and Bambu Studio merge
   overlapping shells when slicing. If a tool needs one manifold mesh, run a boolean
   union or "repair" first. Add supports under the arms if your slicer asks for them.

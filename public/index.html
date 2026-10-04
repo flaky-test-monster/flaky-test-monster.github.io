@@ -36,23 +36,36 @@
           <span class="hint">Click or drag and drop a PNG or JPG</span>
         </label>
       </div>
+      <div id="recent" class="recent" hidden>
+        <h2 class="recent-title">Recent conversions</h2>
+        <ul id="recent-list" class="recent-list"></ul>
+        <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
+      </div>
     </section>
 
     <section id="step-confirm" class="step" data-step="confirm" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
       <label class="name-field">
         <span>Name <span class="optional">(optional)</span></span>
-        <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday bust">
+        <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday figure">
       </label>
-      <div class="actions">
-        <label class="pipeline-select">
-          <span>Style</span>
-          <select id="pipeline">
-            <option value="marble" selected>Marble bust (OpenAI + Tripo3D)</option>
-            <option value="lego">LEGO minifigure (ChatGPT only)</option>
-            <option value="local">Marble bust (local, on this Mac)</option>
+      <div class="choices">
+        <label class="choice">
+          <span>Figure</span>
+          <select id="figure">
+            <option value="marble" selected>Marble bust</option>
           </select>
         </label>
+        <label class="choice">
+          <span>3D model</span>
+          <select id="pipeline">
+            <option value="tripo" selected>Tripo3D (OpenAI + Tripo3D)</option>
+            <option value="shapes">Simple shapes (OpenAI only)</option>
+            <option value="local">Local, on this Mac</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
         <button type="button" id="retake" class="btn">Retake / Choose another</button>
         <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
       </div>
@@ -101,7 +114,10 @@
         <a id="dl-final" class="btn" download hidden>Download final image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
-      <a href="#" id="start-over" class="link">Start over</a>
+      <div class="result-links">
+        <a href="#" id="start-over" class="link">Start over</a>
+        <button type="button" id="delete-job" class="link-button link-danger">Delete conversion</button>
+      </div>
     </section>
   </main>
   <script type="module" src="/public/app.js"></script>
