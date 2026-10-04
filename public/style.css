@@ -260,15 +260,38 @@ body {
 .error { color: var(--danger); margin: 0 0 12px; font-size: 0.9375rem; }
 .error a { color: inherit; margin-left: 6px; }
 
-/* Step 4: result */
-.viewer {
+/* Step 4: result, one numbered card per stage */
+.stages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: stage;
+}
+
+.stage-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.stage-label { font-size: 0.875rem; font-weight: 600; }
+.stage-label::before {
+  counter-increment: stage;
+  content: counter(stage) ". ";
+  color: var(--muted);
+}
+.stage-note { font-weight: 400; color: var(--muted); }
+
+.stage-media {
+  display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
+  object-fit: contain;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
-  overflow: hidden;
 }
+
+.viewer { overflow: hidden; }
 
 .viewer canvas { display: block; }
 .viewer:not(:has(canvas)) { padding: 16px; color: var(--muted); font-size: 0.875rem; }
@@ -278,5 +301,6 @@ body {
 @media (max-width: 560px) {
   .app { padding: 40px 16px 64px; }
   .cards { grid-template-columns: 1fr; }
+  .stages { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }
 }

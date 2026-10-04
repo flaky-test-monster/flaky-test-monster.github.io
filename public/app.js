@@ -7,9 +7,9 @@ const POLL_BACKOFF_MAX_MS = 30000;
 const STAGES = ['input', 'image', 'model', 'stl'];
 /** Per-pipeline wording for the stepper, image preview and downloads. */
 const PIPELINE_UI = {
-  marble: { image: 'Statue', hint: 'This usually takes one to three minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
-  local: { image: 'Statue', hint: 'Running on this Mac usually takes 10 to 20 minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
-  lego: { image: 'LEGO image', hint: 'This usually takes one to four minutes.', imageDownload: 'Download LEGO image', modelDownload: null, viewerFile: 'model.stl' },
+  marble: { image: 'Statue', final: 'Final bust', hint: 'This usually takes one to three minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  local: { image: 'Statue', final: 'Final bust', hint: 'Running on this Mac usually takes 10 to 20 minutes.', imageDownload: 'Download statue image', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  lego: { image: 'LEGO image', final: 'Final LEGO figure', hint: 'This usually takes one to four minutes.', imageDownload: 'Download LEGO image', modelDownload: null, viewerFile: 'model.stl' },
 };
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
 
@@ -159,11 +159,18 @@ async function poll() {
   }
 }
 
-/** Fills in download links and loads the 3D viewer. */
+/** Shows every stage side by side, fills in download links and loads the 3D viewer. */
 async function showResult(stages) {
   const file = (name) => `/api/jobs/${state.jobId}/${name}?download=1`;
+  const view = (name) => `/api/jobs/${state.jobId}/${name}`;
   $('dl-stl').href = file('model.stl');
   const ui = PIPELINE_UI[state.pipeline];
+  $('stage-original').src = view(stages.input);
+  $('stage-image').src = view(stages.image);
+  $('stage-image-label').textContent = ui.image;
+  $('stage-final-label').textContent = ui.final;
+  $('stage-final').removeAttribute('src');
+  $('dl-final').hidden = true;
   $('dl-image').href = file(stages.image);
   $('dl-image').textContent = ui.imageDownload;
   $('dl-model').hidden = !ui.modelDownload;
@@ -174,9 +181,14 @@ async function showResult(stages) {
   $('dl-original').href = file(stages.input);
   showStep('result');
   try {
-    state.disposeViewer = await mountViewer($('viewer'), `/api/jobs/${state.jobId}/${ui.viewerFile}`);
+    const { dispose, still } = await mountViewer($('viewer'), view(ui.viewerFile));
+    state.disposeViewer = dispose;
+    $('stage-final').src = still;
+    $('dl-final').href = still;
+    $('dl-final').hidden = false;
   } catch (err) {
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
+    $('stage-final').alt = 'No render: the 3D model could not be loaded';
   }
 }
 

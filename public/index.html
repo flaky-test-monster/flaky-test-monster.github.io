@@ -70,11 +70,29 @@
     </section>
 
     <section id="step-result" class="step" data-step="result" hidden>
-      <div id="viewer" class="viewer"></div>
+      <ol class="stages">
+        <li class="stage-card">
+          <span class="stage-label">Original</span>
+          <img id="stage-original" class="stage-media" alt="Your original photo">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label" id="stage-image-label">Statue</span>
+          <img id="stage-image" class="stage-media" alt="The restyled image">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label">3D model <span class="stage-note">drag to rotate</span></span>
+          <div id="viewer" class="stage-media viewer"></div>
+        </li>
+        <li class="stage-card">
+          <span class="stage-label" id="stage-final-label">Final figure</span>
+          <img id="stage-final" class="stage-media" alt="Render of the finished printable model">
+        </li>
+      </ol>
       <div class="downloads">
         <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
         <a id="dl-model" class="btn" download>Download GLB</a>
         <a id="dl-image" class="btn" download>Download statue image</a>
+        <a id="dl-final" class="btn" download="flakifier-final.png" hidden>Download final image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
       <a href="#" id="start-over" class="link">Start over</a>

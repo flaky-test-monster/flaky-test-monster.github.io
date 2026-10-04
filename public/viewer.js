@@ -3,6 +3,7 @@ const VIEWER_FOV = 40;
 const AUTO_ROTATE_SPEED = 1.2;
 const FRAME_PADDING = 1.1;
 const CAMERA_HEIGHT_RATIO = 0.15;
+const STILL_SIZE_PX = 1024;
 
 const STL_COLOR = 0xf2c94c;
 const STL_ROUGHNESS = 0.35;
@@ -26,10 +27,10 @@ async function loadModel(THREE, url) {
 
 /**
  * Renders a GLB or STL inside `container` with soft three-point lighting, slow auto-rotation,
- * and the model centered and framed. Resolves to a cleanup function.
+ * and the model centered and framed. Also renders one front-facing still of the model.
  * @param {HTMLElement} container
  * @param {string} url
- * @returns {Promise<() => void>}
+ * @returns {Promise<{ dispose: () => void, still: string }>} cleanup function and a PNG data URL
  */
 export async function mountViewer(container, url) {
   const [THREE, { OrbitControls }] = await Promise.all([
@@ -65,6 +66,15 @@ export async function mountViewer(container, url) {
   const distance = (size.length() / 2) / Math.tan((VIEWER_FOV * Math.PI) / 360) * FRAME_PADDING;
   camera.position.set(0, size.y * CAMERA_HEIGHT_RATIO, distance);
 
+  // Read the canvas right after rendering: without preserveDrawingBuffer it is cleared
+  // once the frame is presented.
+  renderer.setSize(STILL_SIZE_PX, STILL_SIZE_PX, false);
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+  camera.lookAt(controls.target);
+  renderer.render(scene, camera);
+  const still = renderer.domElement.toDataURL('image/png');
+
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = container;
     renderer.setSize(w, h, false);
@@ -75,5 +85,6 @@ export async function mountViewer(container, url) {
   observer.observe(container);
   resize();
   renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
-  return () => { observer.disconnect(); renderer.setAnimationLoop(null); renderer.dispose(); container.replaceChildren(); };
+  const dispose = () => { observer.disconnect(); renderer.setAnimationLoop(null); renderer.dispose(); container.replaceChildren(); };
+  return { dispose, still };
 }
