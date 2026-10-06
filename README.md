@@ -132,6 +132,7 @@ needs don't add up.
 | Step | Model | Licence |
 |---|---|---|
 | Figure image | [FLUX.1 Kontext \[dev\]](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) via [mflux](https://github.com/filipstrand/mflux) | FLUX.1 \[dev\] Non-Commercial: personal use is fine, commercial use needs a licence from Black Forest Labs |
+| LEGO style (LEGO figures only) | [Kontext-Style/LEGO_lora](https://huggingface.co/Kontext-Style/LEGO_lora), a LoRA for FLUX.1 Kontext | Check the model page; as a FLUX.1 \[dev\] add-on it is non-commercial at most |
 | Image to 3D | TRELLIS.2 via [pixal3d.cpp](https://github.com/LighthausInc/pixal3d.cpp) | MIT (code and TRELLIS.2 weights); the DINOv3 encoder is under Meta's DINOv3 licence |
 
 Neither is restricted to particular regions. Hunyuan3D was not chosen because its
@@ -150,6 +151,8 @@ licence excludes the EU, UK and South Korea.
 - **FLUX.1 Kontext weights** (about 34 GB), cached by running one tiny edit, so the first
   bust doesn't stall on the download. The model is gated, so the installer asks you to
   accept its licence on Hugging Face first.
+- **LEGO style LoRA** (about 360 MB), cached the same way. If it fails to load, the
+  installer says so and carries on.
 
 `vendor/`, `models/` and `logs/` are gitignored. Delete them and
 `~/.cache/huggingface` to reclaim the space.
@@ -159,6 +162,11 @@ licence excludes the EU, UK and South Korea.
 - `LOCAL_FAST=1` (or `scripts/start.sh --fast`) renders the statue image at 512×512 with
   8 steps instead of 1024×1024 with 20, roughly 10x less work, for testing the pipeline.
   The result is rougher.
+- **LEGO figures** (*LEGO minifigure* and *Monster LEGO minifigure*) run FLUX.1 Kontext with
+  the [LEGO style LoRA](https://huggingface.co/Kontext-Style/LEGO_lora), and their prompt
+  starts with its trigger sentence, "Turn this image into the LEGO style." mflux downloads
+  the LoRA on first use if the installer didn't. `LOCAL_LORAS=0` turns it off; those
+  figures then use their plain prompt.
 - `MFLUX_QUANTIZE` (default `8`) can be lowered to `4` to save memory at some cost in
   quality.
 - `LOCAL_3D_RESOLUTION` (default `512`) can be `1024` or `1536` for more detail and
@@ -196,7 +204,7 @@ runs work without downloading again. WebGPU is used when the browser offers it (
 Chrome and Edge); otherwise the models run on the CPU through WebAssembly, which is slower
 but works everywhere.
 
-How the STL is built: the cut-out's outline becomes a grid of square cells (the **Detail**
+How the smooth STL is built: the cut-out's outline becomes a grid of square cells (the **Detail**
 setting picks 100, 160 or 240 cells across the subject). Each cell gets a front face raised
 by the depth map plus a dome that rounds the outline, a back face, and side walls along the
 outline, so the mesh is closed and watertight. Only the largest connected piece of the
@@ -206,6 +214,13 @@ subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the f
   and it prints without supports.
 - **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
   cropped at the shoulders gives it a flat bottom to stand on.
+- **LEGO-style bricks:** the same relief built from bricks. Each grid point inside the
+  outline becomes a stud-wide column, as thick as the relief there rounded to whole plates
+  (LEGO proportions: a plate is 0.4 of the stud pitch), with a stud on its front. **Detail**
+  sets 20, 32 or 48 studs across the subject. Flat back, so it prints lying down with the
+  studs up. The columns form one closed mesh; each stud is its own closed shell sunk
+  slightly into its column, which slicers merge when slicing. It is a printed look-alike,
+  not a buildable LEGO set.
 
 Results stay in the page: they are not listed under recent conversions and are gone after
 a reload, so download what you want to keep. Depth from a single photo is an estimate:

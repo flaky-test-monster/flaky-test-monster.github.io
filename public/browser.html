@@ -20,7 +20,7 @@
     <h1 class="title">Flakifier <span class="title-note">in your browser</span></h1>
 
     <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. Free, open models run right here in your browser and turn it into a 3D-printable relief of you. No server, no API keys, and the photo never leaves this device. The first run downloads about 125 MB of models; later runs use the browser's cache.</p>
+      <p class="lead">Take a photo or upload one. Free, open models run right here in your browser and turn it into a 3D-printable relief of you, smooth or built from LEGO-style bricks. No server, no API keys, and the photo never leaves this device. The first run downloads about 125 MB of models; later runs use the browser's cache.</p>
       <div class="cards">
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
@@ -48,6 +48,7 @@
           <select id="shape">
             <option value="relief" selected>Relief, flat back</option>
             <option value="rounded">Rounded on both sides</option>
+            <option value="bricks">LEGO-style bricks</option>
           </select>
         </label>
         <label class="choice">
@@ -101,7 +102,7 @@
       </ol>
       <p class="hint" id="result-hint"></p>
       <div class="downloads">
-        <a id="dl-stl" class="btn btn-primary" download="flakifier-relief.stl">Download STL</a>
+        <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
         <a id="dl-cutout" class="btn" download="flakifier-cutout.png">Download cut-out</a>
         <a id="dl-depth" class="btn" download="flakifier-depth.png">Download depth map</a>
         <a id="dl-final" class="btn" download="flakifier-final.png" hidden>Download render</a>

@@ -16,7 +16,7 @@ const STAGE_HINTS = {
 const DEVICE_LABELS = { webgpu: 'WebGPU', wasm: 'WebAssembly (CPU, slower)' };
 
 const $ = (id) => document.getElementById(id);
-const state = { stream: null, blob: null, worker: null, urls: [], files: {}, downloads: new Map(), device: null, disposeViewer: null };
+const state = { shape: 'relief', stream: null, blob: null, worker: null, urls: [], files: {}, downloads: new Map(), device: null, disposeViewer: null };
 
 /** Reveals one step section with a fade and hides the rest. */
 function showStep(name) {
@@ -98,11 +98,12 @@ function getWorker() {
 /** Sends the photo and options to the worker. */
 function startRun() {
   stopCamera();
+  state.shape = $('shape').value;
   resetProgress();
   showStep('progress');
   getWorker().postMessage({
     blob: state.blob,
-    options: { shape: $('shape').value, resolution: Number($('resolution').value) },
+    options: { shape: state.shape, resolution: Number($('resolution').value) },
   });
 }
 
@@ -177,6 +178,7 @@ async function showResult() {
   $('dl-final').hidden = true;
   const sizeMb = (state.files.stl.size / MB).toFixed(1);
   $('result-hint').textContent = `${state.triangles.toLocaleString()} triangles, ${sizeMb} MB, 100 mm tall. Ran on ${DEVICE_LABELS[state.device] ?? state.device}.`;
+  $('dl-stl').download = `flakifier-${state.shape}.stl`;
   showStep('result');
   try {
     const { dispose, still } = await mountViewer($('viewer'), stlUrl);

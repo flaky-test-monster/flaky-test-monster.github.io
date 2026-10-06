@@ -168,6 +168,19 @@ mflux-generate-kontext --image-path "$WARMUP_DIR/in.png" --prompt "Make it white
 [[ -f "$WARMUP_DIR/out.png" ]] || die "mflux did not produce an image; check the licence was accepted and try again."
 ok "cached"
 
+step "LEGO style LoRA for FLUX.1 Kontext (about 360 MB)"
+# Same tiny edit with the LoRA the LEGO figures use (lib/figures.js), so it is cached and
+# known to load. Not fatal: without it, set LOCAL_LORAS=0 and the LEGO figures run on plain
+# FLUX.1 Kontext.
+rm -f "$WARMUP_DIR/out.png"
+if mflux-generate-kontext --image-path "$WARMUP_DIR/in.png" --prompt "Turn this image into the LEGO style." \
+  --lora-paths "Kontext-Style/LEGO_lora:LEGO_lora_weights.safetensors" --lora-scales 1 \
+  --steps 1 --width 256 --height 256 -q 8 --output "$WARMUP_DIR/out.png" && [[ -f "$WARMUP_DIR/out.png" ]]; then
+  ok "cached"
+else
+  ok "Could not load the LEGO LoRA. Add LOCAL_LORAS=0 to .env to make LEGO figures without it."
+fi
+
 step "Done"
 [[ -f "$ROOT/.env" ]] || echo "    Optional: cp .env.example .env and add API keys for the cloud pipelines."
 echo "    Start with: scripts/start.sh"

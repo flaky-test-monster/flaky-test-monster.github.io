@@ -1,7 +1,9 @@
 // Turns a cut-out mask and a depth map into a closed, printable STL. The subject's outline
 // becomes a grid of square cells; each cell gets a front face lifted by the depth map, a back
-// face, and side walls along the outline, so the mesh is watertight. Runs in the browser and
-// in Node (no DOM): the in-browser pipeline calls it from its worker.
+// face, and side walls along the outline, so the mesh is watertight. The 'bricks' shape builds
+// the same relief from LEGO-style bricks instead: one column per stud, stacked in plate-height
+// steps, with a stud on top. Runs in the browser and in Node (no DOM): the in-browser pipeline
+// calls it from its worker.
 
 const STL_HEADER_BYTES = 80;
 const STL_COUNT_BYTES = 4;
@@ -15,9 +17,20 @@ const DEPTH_WEIGHT = 0.7;
 /** Back of a rounded figure, as a share of the front dome. */
 const ROUNDED_BACK_RATIO = 0.6;
 const MAX_PINCH_PASSES = 8;
+/** LEGO proportions as a share of the stud pitch (8 mm): plate 3.2, stud 4.8 wide, 1.7 high. */
+const PLATE_RATIO = 0.4;
+const STUD_RADIUS_RATIO = 0.3;
+const STUD_HEIGHT_RATIO = 0.2125;
+/** How far a stud reaches into its brick, so the two shells overlap and slicers merge them. */
+const STUD_OVERLAP_RATIO = 0.05;
+const STUD_SEGMENTS = 16;
+/** Grid cells per stud: the bricks shape uses resolution / this many studs. */
+const CELLS_PER_STUD = 5;
 
 export const RELIEF_DEFAULTS = {
-  shape: 'relief', // 'relief': flat back, prints lying down; 'rounded': domed on both sides
+  // 'relief': flat back, prints lying down; 'rounded': domed on both sides;
+  // 'bricks': flat back, built from LEGO-style bricks with studs on the front
+  shape: 'relief',
   resolution: 160, // cells along the subject's longer side
   heightMm: 100,
   reliefMm: 14,
@@ -42,6 +55,10 @@ export function reliefToStl(input, options = {}) {
   const opts = { ...RELIEF_DEFAULTS, ...options };
   const box = subjectBounds(input);
   if (!box) throw new Error('No subject found in the photo');
+  if (opts.shape === 'bricks') {
+    const grid = sampleGrid(input, box, Math.max(4, Math.round(opts.resolution / CELLS_PER_STUD)));
+    return writeBricks(grid, opts);
+  }
   const grid = sampleGrid(input, box, opts.resolution);
   const cells = selectCells(grid);
   const heights = vertexHeights(grid, cells, opts);
@@ -97,8 +114,7 @@ function sampleGrid(input, box, resolution) {
 
 /**
  * Picks the cells to build: those whose four corners are inside the subject, reduced to the
- * largest edge-connected piece. Cells that touch only at a corner would share a wall edge
- * between four faces, so such pinches are bridged with one extra cell.
+ * largest edge-connected piece, with corner-only contacts bridged.
  * @returns {Uint8Array} one flag per cell, (cols - 1) x (rows - 1)
  */
 function selectCells({ cols, rows, inside }) {
@@ -110,7 +126,14 @@ function selectCells({ cols, rows, inside }) {
       cells[j * cw + i] = inside[v] & inside[v + 1] & inside[v + cols] & inside[v + cols + 1];
     }
   }
-  const kept = largestComponent(cells, cw, ch);
+  return bridgePinches(largestComponent(cells, cw, ch), cw, ch);
+}
+
+/**
+ * Cells that touch only at a corner would share a wall edge between four faces, so each such
+ * pinch is bridged with one extra cell. Modifies and returns `kept`.
+ */
+function bridgePinches(kept, cw, ch) {
   for (let pass = 0, changed = true; changed && pass < MAX_PINCH_PASSES; pass++) {
     changed = false;
     for (let j = 1; j < ch - 2; j++) {
@@ -152,10 +175,7 @@ function largestComponent(cells, cw, ch) {
   return Uint8Array.from(label, (l) => (l === best && best !== -1 ? 1 : 0));
 }
 
-/**
- * Front and back offsets in mm for every vertex used by a kept cell. The front combines the
- * normalised depth map with a dome that rounds the outline; the back is flat or a lower dome.
- */
+/** Front and back offsets in mm for every vertex used by a kept cell. */
 function vertexHeights({ cols, rows, depth }, cells, opts) {
   const cw = cols - 1;
   const used = new Uint8Array(cols * rows);
@@ -165,6 +185,14 @@ function vertexHeights({ cols, rows, depth }, cells, opts) {
     used[v] = used[v + 1] = used[v + cols] = used[v + cols + 1] = 1;
   });
 
+  return surfaceHeights(depth, used, cols, rows, opts);
+}
+
+/**
+ * Front and back offsets in mm for the grid points flagged in `used`. The front combines the
+ * normalised depth map with a dome that rounds the outline; the back is flat or a lower dome.
+ */
+function surfaceHeights(depth, used, cols, rows, opts) {
   const smooth = boxBlur(depth, used, cols, rows);
   const values = [];
   used.forEach((u, v) => { if (u) values.push(smooth[v]); });
@@ -243,72 +271,158 @@ function outlineDistance(used, cols, rows) {
 function writeStl({ cols, rows }, cells, { front, back }, heightMm) {
   const cw = cols - 1, ch = rows - 1;
   const isCell = (i, j) => i >= 0 && j >= 0 && i < cw && j < ch && cells[j * cw + i] === 1;
-  let walls = 0, faces = 0;
-  for (let j = 0; j < ch; j++) {
-    for (let i = 0; i < cw; i++) {
-      if (!isCell(i, j)) continue;
-      faces++;
-      walls += !isCell(i - 1, j) + !isCell(i + 1, j) + !isCell(i, j - 1) + !isCell(i, j + 1);
-    }
-  }
-  const triangles = faces * 4 + walls * 2;
-  const stl = new ArrayBuffer(STL_HEADER_BYTES + STL_COUNT_BYTES + triangles * STL_TRIANGLE_BYTES);
-  const view = new DataView(stl);
-  for (let k = 0; k < STL_HEADER_TEXT.length; k++) view.setUint8(k, STL_HEADER_TEXT.charCodeAt(k));
-  view.setUint32(STL_HEADER_BYTES, triangles, true);
-
-  let left = cw, right = 0, top = ch, bottom = 0;
-  for (let j = 0; j < ch; j++) {
-    for (let i = 0; i < cw; i++) {
-      if (!isCell(i, j)) continue;
-      left = Math.min(left, i); right = Math.max(right, i + 1);
-      top = Math.min(top, j); bottom = Math.max(bottom, j + 1);
-    }
-  }
-  const cellMm = heightMm / (bottom - top);
-  const x = (i) => (i - (left + right) / 2) * cellMm;
-  const z = (j) => (bottom - j) * cellMm;
+  const { left, right, top, bottom } = extent(cw, ch, isCell);
+  const cellMm = heightMm / (bottom + 1 - top);
+  const x = (i) => (i - (left + right + 1) / 2) * cellMm;
+  const z = (j) => (bottom + 1 - j) * cellMm;
   const frontPoint = (i, j) => [x(i), -front[j * cols + i], z(j)];
   const backPoint = (i, j) => [x(i), back[j * cols + i], z(j)];
 
-  let offset = STL_HEADER_BYTES + STL_COUNT_BYTES;
-  /** Writes a triangle wound so its normal points along `outward`. */
-  const emit = (a, b, c, outward) => {
-    let n = cross(sub(b, a), sub(c, a));
-    if (n[0] * outward[0] + n[1] * outward[1] + n[2] * outward[2] < 0) {
-      [b, c] = [c, b];
-      n = n.map((value) => -value);
-    }
-    const length = Math.hypot(n[0], n[1], n[2]) || 1;
-    for (const value of [n[0] / length, n[1] / length, n[2] / length, ...a, ...b, ...c]) {
-      view.setFloat32(offset, value, true);
-      offset += 4;
-    }
-    view.setUint16(offset, 0, true);
-    offset += 2;
-  };
-  const quad = (p, q, r, s, outward) => { emit(p, q, r, outward); emit(p, r, s, outward); };
-
+  const mesh = createMesh();
   for (let j = 0; j < ch; j++) {
     for (let i = 0; i < cw; i++) {
       if (!isCell(i, j)) continue;
       const corners = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
-      quad(...corners.map(([ci, cj]) => frontPoint(ci, cj)), [0, -1, 0]);
-      quad(...corners.map(([ci, cj]) => backPoint(ci, cj)), [0, 1, 0]);
-      // Each side: neighbour cell offset, the side's two corners, outward direction (Z is up, rows go down).
-      const sides = [
-        [-1, 0, corners[3], corners[0], [-1, 0, 0]],
-        [1, 0, corners[1], corners[2], [1, 0, 0]],
-        [0, -1, corners[0], corners[1], [0, 0, 1]],
-        [0, 1, corners[2], corners[3], [0, 0, -1]],
-      ];
-      for (const [di, dj, [pi, pj], [qi, qj], outward] of sides) {
+      mesh.quad(...corners.map(([ci, cj]) => frontPoint(ci, cj)), [0, -1, 0]);
+      mesh.quad(...corners.map(([ci, cj]) => backPoint(ci, cj)), [0, 1, 0]);
+      for (const [di, dj, [pi, pj], [qi, qj], outward] of cellSides(corners)) {
         if (isCell(i + di, j + dj)) continue;
-        quad(frontPoint(pi, pj), frontPoint(qi, qj), backPoint(qi, qj), backPoint(pi, pj), outward);
+        mesh.quad(frontPoint(pi, pj), frontPoint(qi, qj), backPoint(qi, qj), backPoint(pi, pj), outward);
       }
     }
   }
-  return { stl, triangles };
+  return mesh.toStl();
+}
+
+/**
+ * Builds the relief from bricks: every grid point inside the subject is one stud-wide column,
+ * as thick as the relief there rounded to whole plates, with a stud on its front. The back is
+ * flat, so it prints lying down with the studs up. Neighbouring columns of different height
+ * share the step between them; studs are separate shells sunk slightly into their column.
+ * Walls are split at every column height meeting at their corners, so no edge ends in the
+ * middle of another and the mesh stays manifold.
+ */
+function writeBricks({ cols, rows, inside, depth }, opts) {
+  const kept = bridgePinches(largestComponent(inside, cols, rows), cols, rows);
+  const { front } = surfaceHeights(depth, kept, cols, rows, { ...opts, shape: 'relief' });
+  const isBrick = (i, j) => i >= 0 && j >= 0 && i < cols && j < rows && kept[j * cols + i] === 1;
+  const { left, right, top, bottom } = extent(cols, rows, isBrick);
+  const studMm = opts.heightMm / (bottom + 1 - top);
+  const plateMm = studMm * PLATE_RATIO;
+  const thickness = Float32Array.from(front, (t, b) => (kept[b] ? Math.max(1, Math.round(t / plateMm)) * plateMm : 0));
+  const x = (i) => (i - (left + right + 1) / 2) * studMm;
+  const z = (j) => (bottom + 1 - j) * studMm;
+  const heightAt = (i, j) => (isBrick(i, j) ? thickness[j * cols + i] : 0);
+  /** Every column height meeting at corner (ci, cj), which sits between columns ci-1..ci, cj-1..cj. */
+  const levelsAt = ([ci, cj]) => [heightAt(ci - 1, cj - 1), heightAt(ci, cj - 1), heightAt(ci - 1, cj), heightAt(ci, cj)];
+
+  const mesh = createMesh();
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      if (!isBrick(i, j)) continue;
+      const t = thickness[j * cols + i];
+      // The brick spans the square from corner (i, j) to (i + 1, j + 1) in this numbering.
+      const corners = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+      const point = ([ci, cj], y) => [x(ci), y, z(cj)];
+      mesh.quad(...corners.map((c) => point(c, -t)), [0, -1, 0]);
+      mesh.quad(...corners.map((c) => point(c, 0)), [0, 1, 0]);
+      for (const [di, dj, p, q, outward] of cellSides(corners)) {
+        const neighbour = heightAt(i + di, j + dj);
+        if (neighbour >= t) continue;
+        const chain = (c) => [neighbour, ...levelsAt(c).filter((l) => l > neighbour && l < t).sort((a, b) => a - b), t]
+          .filter((l, k, all) => k === 0 || l !== all[k - 1]).map((l) => point(c, -l));
+        mesh.strip(chain(p), chain(q), outward);
+      }
+      addStud(mesh, [x(i + 0.5), -t, z(j + 0.5)], studMm);
+    }
+  }
+  return mesh.toStl();
+}
+
+/** Closed cylinder pointing along -Y from `base`, sunk a little into the surface below it. */
+function addStud(mesh, [cx, y, cz], studMm) {
+  const r = studMm * STUD_RADIUS_RATIO;
+  const yBack = y + studMm * STUD_OVERLAP_RATIO;
+  const yFront = y - studMm * STUD_HEIGHT_RATIO;
+  const ring = (yy) => Array.from({ length: STUD_SEGMENTS }, (_, k) => {
+    const angle = (2 * Math.PI * k) / STUD_SEGMENTS;
+    return [cx + r * Math.cos(angle), yy, cz + r * Math.sin(angle)];
+  });
+  const back = ring(yBack), front = ring(yFront);
+  for (let k = 0; k < STUD_SEGMENTS; k++) {
+    const n = (k + 1) % STUD_SEGMENTS;
+    const mid = (2 * Math.PI * (k + 0.5)) / STUD_SEGMENTS;
+    mesh.quad(back[k], back[n], front[n], front[k], [Math.cos(mid), 0, Math.sin(mid)]);
+    mesh.emit([cx, yFront, cz], front[k], front[n], [0, -1, 0]);
+    mesh.emit([cx, yBack, cz], back[k], back[n], [0, 1, 0]);
+  }
+}
+
+/** Bounding box, in grid indices, of the cells for which `isSet` holds. */
+function extent(cw, ch, isSet) {
+  let left = cw, right = 0, top = ch, bottom = 0;
+  for (let j = 0; j < ch; j++) {
+    for (let i = 0; i < cw; i++) {
+      if (!isSet(i, j)) continue;
+      left = Math.min(left, i); right = Math.max(right, i);
+      top = Math.min(top, j); bottom = Math.max(bottom, j);
+    }
+  }
+  return { left, right, top, bottom };
+}
+
+/**
+ * The four sides of a cell given its corners (top-left, top-right, bottom-right, bottom-left):
+ * neighbour offset, the side's two corners, and its outward direction (Z is up, rows go down).
+ */
+function cellSides(corners) {
+  return [
+    [-1, 0, corners[3], corners[0], [-1, 0, 0]],
+    [1, 0, corners[1], corners[2], [1, 0, 0]],
+    [0, -1, corners[0], corners[1], [0, 0, 1]],
+    [0, 1, corners[2], corners[3], [0, 0, -1]],
+  ];
+}
+
+/** Collects triangles, each wound so its normal points along a given outward direction. */
+function createMesh() {
+  const coords = [];
+  const emit = (a, b, c, outward) => {
+    const n = cross(sub(b, a), sub(c, a));
+    if (n[0] * outward[0] + n[1] * outward[1] + n[2] * outward[2] < 0) [b, c] = [c, b];
+    coords.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  };
+  const quad = (p, q, r, s, outward) => { emit(p, q, r, outward); emit(p, r, s, outward); };
+  /** Triangulates the band between two point chains that run side by side in the same direction. */
+  const strip = (a, b, outward) => {
+    for (let i = 0, j = 0; i < a.length - 1 || j < b.length - 1; ) {
+      const advanceA = j === b.length - 1 || (i < a.length - 1 && Math.abs(a[i + 1][1]) <= Math.abs(b[j + 1][1]));
+      if (advanceA) emit(a[i], a[++i], b[j], outward);
+      else emit(a[i], b[++j], b[j - 1], outward);
+    }
+  };
+  /** Encodes the triangles as binary STL. */
+  const toStl = () => {
+    const triangles = coords.length / 9;
+    const stl = new ArrayBuffer(STL_HEADER_BYTES + STL_COUNT_BYTES + triangles * STL_TRIANGLE_BYTES);
+    const view = new DataView(stl);
+    for (let k = 0; k < STL_HEADER_TEXT.length; k++) view.setUint8(k, STL_HEADER_TEXT.charCodeAt(k));
+    view.setUint32(STL_HEADER_BYTES, triangles, true);
+    let offset = STL_HEADER_BYTES + STL_COUNT_BYTES;
+    for (let t = 0; t < triangles; t++) {
+      const v = coords.slice(t * 9, t * 9 + 9);
+      const n = cross(sub(v.slice(3, 6), v), sub(v.slice(6, 9), v));
+      const length = Math.hypot(n[0], n[1], n[2]) || 1;
+      for (const value of [n[0] / length, n[1] / length, n[2] / length, ...v]) {
+        view.setFloat32(offset, value, true);
+        offset += 4;
+      }
+      view.setUint16(offset, 0, true);
+      offset += 2;
+    }
+    return { stl, triangles };
+  };
+  return { emit, quad, strip, toStl };
 }
 
 function sub(a, b) {
