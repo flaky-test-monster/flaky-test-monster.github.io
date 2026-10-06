@@ -21,7 +21,7 @@
       <img class="mascot" src="/public/monster.jpg" alt="The Flaky Test Monster: a green 3D-printed monster with messy black hair, big eyes and a mouth full of teeth">
       <div class="masthead-text">
         <h1 class="title">flakifier</h1>
-        <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow" aria-hidden="true">→</span> <span class="tag tag-flaky">flaky test monster</span></p>
+        <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
       </div>
     </header>
 
@@ -74,7 +74,7 @@
       </div>
       <div class="actions">
         <button type="button" id="retake" class="btn">Choose another</button>
-        <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
+        <button type="button" id="flakify" class="btn btn-primary btn-next">Flakify</button>
       </div>
     </section>
 
@@ -91,7 +91,7 @@
         <a href="#" id="try-again">Try again</a>
       </p>
       <p class="hint" id="progress-hint">This usually takes one to four minutes.</p>
-      <img id="image-preview" class="preview" alt="Styled image" hidden>
+      <img id="image-preview" class="preview preview-spaced" alt="Styled image" hidden>
     </section>
 
     <section id="step-result" class="step" data-step="result" hidden>
@@ -115,7 +115,7 @@
         </li>
       </ol>
       <div class="downloads">
-        <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
+        <a id="dl-stl" class="btn btn-primary btn-download" download>Download STL</a>
         <a id="dl-model" class="btn" download>Download GLB</a>
         <a id="dl-image" class="btn" download>Download statue image</a>
         <a id="dl-final" class="btn" download hidden>Download final image</a>
