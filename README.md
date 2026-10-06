@@ -31,6 +31,12 @@ uses only the photo, because FLUX.1 Kontext takes a single image.
   `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
   [Local pipeline](#local-pipeline-apple-silicon).
 
+There is also a separate **in-browser pipeline** at <http://localhost:3000/browser>: photo →
+background removal → depth map → relief STL, with free open models that the browser
+downloads and runs itself. No API keys, no install and no GPU server; the photo never
+leaves the device. It makes a 3D relief rather than a full statue, and does not use the
+figure presets. See [In-browser pipeline](#in-browser-pipeline).
+
 OpenAI has no image-to-3D API, so with simple shapes the GPT model doesn't return a
 mesh directly. It looks at the figure image and describes the figure as 20 to 100
 simple solids: ellipsoids, boxes, cylinders or cones, and tori, with sizes and positions
@@ -170,7 +176,41 @@ command isn't found, Flakifier says so as soon as you click **Flakify**. Expect 
 These times are estimates from the projects' published benchmarks, not measured with
 Flakifier.
 
-## Notes
+## In-browser pipeline
+
+Open <http://localhost:3000/browser> (or the **entirely in your browser** link on the start
+screen). Everything runs in a Web Worker in the page; the server only hands out the files.
+`public/` has no server dependency, so the page also works from any static host, for
+example GitHub Pages serving `public/browser.html`.
+
+| Step | Model | Licence | Download |
+|---|---|---|---|
+| Background removal | [MODNet](https://huggingface.co/Xenova/modnet) (ONNX) | Apache-2.0 | about 25 MB |
+| Depth estimation | [Depth Anything V2 Small](https://huggingface.co/onnx-community/depth-anything-v2-small) (ONNX) | Apache-2.0 | about 100 MB |
+| Relief mesh and STL | `public/relief.js`, no model | MIT (this repo) | none |
+
+Both models run with [Transformers.js](https://github.com/huggingface/transformers.js)
+3.8.1, loaded from the jsDelivr CDN. They are fetched from the Hugging Face Hub on the
+first run (the page shows download progress) and kept in the browser's cache, so later
+runs work without downloading again. WebGPU is used when the browser offers it (current
+Chrome and Edge); otherwise the models run on the CPU through WebAssembly, which is slower
+but works everywhere.
+
+How the STL is built: the cut-out's outline becomes a grid of square cells (the **Detail**
+setting picks 100, 160 or 240 cells across the subject). Each cell gets a front face raised
+by the depth map plus a dome that rounds the outline, a back face, and side walls along the
+outline, so the mesh is closed and watertight. Only the largest connected piece of the
+subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the front.
+
+- **Relief, flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
+  and it prints without supports.
+- **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
+  cropped at the shoulders gives it a flat bottom to stand on.
+
+Results stay in the page: they are not listed under recent conversions and are gone after
+a reload, so download what you want to keep. Depth from a single photo is an estimate:
+faces come out recognisable but flattened, and the back of a rounded figure is invented.
+
 
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied,
@@ -193,6 +233,7 @@ Flakifier.
   overlapping shells when slicing. If a tool needs one manifold mesh, run a boolean
   union or "repair" first. Add supports under the arms if your slicer asks for them.
 - The 3D viewer loads Three.js from the jsDelivr CDN through an import map, so the result
-  page needs internet access. Everything else is served locally.
+  page needs internet access. The in-browser pipeline also loads Transformers.js from
+  jsDelivr and its models from Hugging Face. Everything else is served locally.
 - The printed model is only as good as the photo: face the camera, use even lighting and
   keep the background plain.

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flakifier in your browser</title>
+  <!-- Relative URLs only: this page also works from any static host, without server.js. -->
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main class="app">
+    <h1 class="title">Flakifier <span class="title-note">in your browser</span></h1>
+
+    <section id="step-source" class="step" data-step="source">
+      <p class="lead">Take a photo or upload one. Free, open models run right here in your browser and turn it into a 3D-printable relief of you. No server, no API keys, and the photo never leaves this device. The first run downloads about 125 MB of models; later runs use the browser's cache.</p>
+      <div class="cards">
+        <div class="card card-camera" id="camera-card">
+          <div class="camera-frame">
+            <video id="video" autoplay playsinline muted></video>
+            <div id="countdown" class="countdown" hidden></div>
+          </div>
+          <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
+          <span class="card-label">Use camera</span>
+        </div>
+        <label class="card card-upload" id="upload-card">
+          <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg" aria-label="Upload a PNG or JPG image">
+          <span class="upload-icon" aria-hidden="true">+</span>
+          <span class="card-label">Upload image</span>
+          <span class="hint">Click or drag and drop a PNG or JPG</span>
+        </label>
+      </div>
+      <p class="hint switch-link">Want a full statue or minifigure instead? Use the <a class="link" href="/">server pipelines</a>.</p>
+    </section>
+
+    <section id="step-confirm" class="step" data-step="confirm" hidden>
+      <img id="preview" class="preview" alt="Your chosen photo">
+      <div class="choices">
+        <label class="choice">
+          <span>Shape</span>
+          <select id="shape">
+            <option value="relief" selected>Relief, flat back</option>
+            <option value="rounded">Rounded on both sides</option>
+          </select>
+        </label>
+        <label class="choice">
+          <span>Detail</span>
+          <select id="resolution">
+            <option value="100">Coarse (fast, small STL)</option>
+            <option value="160" selected>Normal</option>
+            <option value="240">Fine (larger STL)</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" id="retake" class="btn">Retake / Choose another</button>
+        <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
+      </div>
+    </section>
+
+    <section id="step-progress" class="step" data-step="progress" hidden>
+      <ol class="stepper" id="stepper">
+        <li data-stage="input">Models</li>
+        <li data-stage="cutout">Cut-out</li>
+        <li data-stage="depth">Depth</li>
+        <li data-stage="stl">STL</li>
+      </ol>
+      <p id="error" class="error" hidden>
+        <span id="error-text"></span>
+        <a href="#" id="try-again">Try again</a>
+      </p>
+      <p class="hint" id="progress-hint" aria-live="polite">Starting…</p>
+      <img id="image-preview" class="preview" alt="Cut-out of your photo" hidden>
+    </section>
+
+    <section id="step-result" class="step" data-step="result" hidden>
+      <ol class="stages">
+        <li class="stage-card">
+          <span class="stage-label">Original</span>
+          <img id="stage-original" class="stage-media" alt="Your original photo">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label">Cut-out</span>
+          <img id="stage-cutout" class="stage-media" alt="Your photo with the background removed">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label">Depth map <span class="stage-note">brighter is closer</span></span>
+          <img id="stage-depth" class="stage-media" alt="Estimated depth of your photo">
+        </li>
+        <li class="stage-card">
+          <span class="stage-label">3D model <span class="stage-note">drag to rotate</span></span>
+          <div id="viewer" class="stage-media viewer"></div>
+        </li>
+      </ol>
+      <p class="hint" id="result-hint"></p>
+      <div class="downloads">
+        <a id="dl-stl" class="btn btn-primary" download="flakifier-relief.stl">Download STL</a>
+        <a id="dl-cutout" class="btn" download="flakifier-cutout.png">Download cut-out</a>
+        <a id="dl-depth" class="btn" download="flakifier-depth.png">Download depth map</a>
+        <a id="dl-final" class="btn" download="flakifier-final.png" hidden>Download render</a>
+      </div>
+      <div class="result-links">
+        <a href="#" id="start-over" class="link">Start over</a>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="browser.js"></script>
+</body>
+</html>

@@ -239,6 +239,12 @@ async function serveIndex(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'index.html'), STATIC_TYPES['.html']);
 }
 
+/** GET /browser: the in-browser pipeline page, which loads its files relative to /public/ */
+async function redirectBrowser(req, res) {
+  res.writeHead(302, { Location: '/public/browser.html' });
+  res.end();
+}
+
 /** GET /public/* */
 async function serveStatic(req, res, url, [, relative]) {
   const filePath = path.resolve(PUBLIC_DIR, relative);
@@ -302,6 +308,7 @@ async function jobFileRoute(req, res, url, [, id, name]) {
 
 const ROUTES = [
   { pattern: /^\/$/, handlers: { GET: serveIndex } },
+  { pattern: /^\/browser\/?$/, handlers: { GET: redirectBrowser } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },
   { pattern: /^\/api\/figures$/, handlers: { GET: listFiguresRoute } },
   { pattern: /^\/api\/jobs$/, handlers: { GET: listJobsRoute, POST: createJobRoute } },
