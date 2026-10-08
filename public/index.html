@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Flakifier</title>
+  <meta name="description" content="Turn a photo of yourself into a 3D-printable Flaky Test Monster.">
+  <meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e100d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/jpeg" href="/public/monster.jpg">
   <link rel="stylesheet" href="/public/style.css">
   <script type="importmap">
     {
@@ -15,49 +19,56 @@
   </script>
 </head>
 <body>
-  <main class="app">
-    <h1 class="title">Flakifier</h1>
+  <div class="app">
+    <header class="masthead">
+      <img class="mascot" src="/public/monster.jpg" width="72" height="72" alt="The Flaky Test Monster: a green 3D-printed monster with messy black hair, big eyes and a mouth full of teeth">
+      <div class="masthead-text">
+        <h1 class="title">flakifier</h1>
+        <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
+      </div>
+    </header>
 
-    <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. You will get a 3D-printable STL of yourself as a marble bust or a LEGO minifigure.</p>
+    <main>
+    <section id="step-source" class="step" data-step="source" aria-label="Choose a photo" tabindex="-1">
+      <p class="lead">Passed locally, failed on CI. Take a photo or upload one and get yourself back as a 3D-printable STL.</p>
       <div class="cards">
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
-            <video id="video" autoplay playsinline muted></video>
-            <div id="countdown" class="countdown" hidden></div>
+            <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
+            <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
           </div>
           <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
-          <span class="card-label">Use camera</span>
+          <span class="card-label">camera</span>
         </div>
         <label class="card card-upload" id="upload-card">
           <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg" aria-label="Upload a PNG or JPG image">
           <span class="upload-icon" aria-hidden="true">+</span>
-          <span class="card-label">Upload image</span>
-          <span class="hint">Click or drag and drop a PNG or JPG</span>
+          <span class="card-label">upload</span>
+          <span class="hint" id="upload-hint">Click or drop a PNG or JPG</span>
         </label>
       </div>
       <div id="recent" class="recent" hidden>
-        <h2 class="recent-title">Recent conversions</h2>
+        <h2 class="section-title">Recent runs</h2>
         <ul id="recent-list" class="recent-list"></ul>
         <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
       </div>
     </section>
 
-    <section id="step-confirm" class="step" data-step="confirm" hidden>
+    <section id="step-confirm" class="step" data-step="confirm" aria-label="Check the photo and settings" tabindex="-1" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
-      <label class="name-field">
-        <span>Name <span class="optional">(optional)</span></span>
+      <label class="field">
+        <span>name <span class="optional">optional</span></span>
         <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday figure">
       </label>
       <div class="choices">
-        <label class="choice">
-          <span>Figure</span>
+        <label class="field">
+          <span>figure</span>
           <select id="figure">
-            <option value="marble" selected>Marble bust</option>
+            <option value="monster" selected>Flaky Test Monster</option>
           </select>
         </label>
-        <label class="choice">
-          <span>3D model</span>
+        <label class="field">
+          <span>3d model</span>
           <select id="pipeline">
             <option value="tripo" selected>Tripo3D (OpenAI + Tripo3D)</option>
             <option value="shapes">Simple shapes (OpenAI only)</option>
@@ -66,28 +77,29 @@
         </label>
       </div>
       <div class="actions">
-        <button type="button" id="retake" class="btn">Retake / Choose another</button>
-        <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
+        <button type="button" id="retake" class="btn">Choose another</button>
+        <button type="button" id="flakify" class="btn btn-primary btn-next">Flakify</button>
       </div>
     </section>
 
-    <section id="step-progress" class="step" data-step="progress" hidden>
+    <section id="step-progress" class="step" data-step="progress" aria-label="Progress" tabindex="-1" hidden>
       <h2 id="progress-name" class="result-name" hidden></h2>
       <ol class="stepper" id="stepper">
         <li data-stage="input">Input</li>
-        <li data-stage="image">Statue</li>
+        <li data-stage="image">Figure</li>
         <li data-stage="model">3D model</li>
         <li data-stage="stl">STL</li>
       </ol>
-      <p id="error" class="error" hidden>
+      <p id="progress-status" class="visually-hidden" role="status"></p>
+      <p id="error" class="error" role="alert" hidden>
         <span id="error-text"></span>
-        <a href="#" id="try-again">Try again</a>
+        <button type="button" id="try-again" class="link-button">Try again</button>
       </p>
       <p class="hint" id="progress-hint">This usually takes one to four minutes.</p>
-      <img id="image-preview" class="preview" alt="Styled image" hidden>
+      <img id="image-preview" class="preview preview-spaced" alt="The generated figure image" hidden>
     </section>
 
-    <section id="step-result" class="step" data-step="result" hidden>
+    <section id="step-result" class="step" data-step="result" aria-label="Result" tabindex="-1" hidden>
       <h2 id="result-name" class="result-name" hidden></h2>
       <ol class="stages">
         <li class="stage-card">
@@ -95,31 +107,37 @@
           <img id="stage-original" class="stage-media" alt="Your original photo">
         </li>
         <li class="stage-card">
-          <span class="stage-label" id="stage-image-label">Statue</span>
+          <span class="stage-label" id="stage-image-label">Figure</span>
           <img id="stage-image" class="stage-media" alt="The restyled image">
         </li>
         <li class="stage-card">
           <span class="stage-label">3D model <span class="stage-note">drag to rotate</span></span>
-          <div id="viewer" class="stage-media viewer"></div>
+          <div id="viewer" class="stage-media viewer" role="img" aria-label="Rotating 3D model of the figure"></div>
         </li>
         <li class="stage-card">
-          <span class="stage-label" id="stage-final-label">Final figure</span>
+          <span class="stage-label">Final 3D figure</span>
           <img id="stage-final" class="stage-media" alt="Render of the finished printable model">
         </li>
       </ol>
       <div class="downloads">
-        <a id="dl-stl" class="btn btn-primary" download>Download STL</a>
+        <a id="dl-stl" class="btn btn-primary btn-download" download>Download STL</a>
         <a id="dl-model" class="btn" download>Download GLB</a>
-        <a id="dl-image" class="btn" download>Download statue image</a>
+        <a id="dl-image" class="btn" download>Download figure image</a>
         <a id="dl-final" class="btn" download hidden>Download final image</a>
         <a id="dl-original" class="btn" download>Download original</a>
       </div>
       <div class="result-links">
-        <a href="#" id="start-over" class="link">Start over</a>
+        <button type="button" id="start-over" class="link-button">Start over</button>
         <button type="button" id="delete-job" class="link-button link-danger">Delete conversion</button>
       </div>
     </section>
-  </main>
+    </main>
+
+    <footer class="footer">
+      <span>exit code: it depends</span>
+      <span>retries: 3</span>
+    </footer>
+  </div>
   <script type="module" src="/public/app.js"></script>
 </body>
 </html>

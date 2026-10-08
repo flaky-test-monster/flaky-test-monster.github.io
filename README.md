@@ -1,7 +1,7 @@
 # Flakifier
 
-Turn a webcam photo or an uploaded portrait into a 3D-printable STL figure: a marble
-bust, a LEGO-style minifigure, or the Flaky Test Monster in one of three looks. The app
+Turn a webcam photo or an uploaded portrait into a 3D-printable STL figure: the Flaky
+Test Monster in one of three looks, a marble bust, or a LEGO-style minifigure. The app
 itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
 database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
 entirely on your Mac.
@@ -11,13 +11,13 @@ Before clicking **Flakify**, pick a **Figure** (what the photo turns into) and a
 
 Figures, defined with their prompts in `lib/figures.js`:
 
-- **Marble bust** (default)
+- **Marble bust**
 - **LEGO minifigure**
-- **Flaky Test Monster:** a green monster figurine with your hair, glasses and beard
+- **Flaky Test Monster** (default): a green monster figurine with your hair, glasses and beard
 - **Monster LEGO minifigure** and **Monster Playmobil pirate:** the monster as a toy
 
-The three monster prompts refer to a reference image. Save one as
-`figures/flaky-test-monster.png` and the OpenAI pipelines send it along with the photo;
+The three monster prompts refer to the reference image in
+`figures/flaky-test-monster.jpg`, which the OpenAI pipelines send along with the photo;
 without it, the prompt's own description has to carry the look. The local pipeline
 uses only the photo, because FLUX.1 Kontext takes a single image.
 
