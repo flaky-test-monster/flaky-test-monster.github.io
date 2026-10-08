@@ -116,6 +116,36 @@ and local) or `model.json` (simple shapes, the shape list the model returned), t
 `lego.png` instead of `figure.png` and still open. Past runs are listed on the start
 screen, where you can reopen or delete them.
 
+## Monster scan
+
+The **Monster scan** button on the camera card runs a vision language model in the
+browser on the live webcam video and keeps a **monster score** from 0 (human) to 100
+(Flaky Test Monster). Nothing is uploaded and no API key is needed: the model is
+downloaded once and cached by the browser.
+
+The model answers five yes or no questions per frame; the score starts at 35 and each
+trait it sees adds its points (see `public/monster-score.js`):
+
+| Trait | Points |
+| --- | --- |
+| smiling | −45 |
+| angry, frowning or scowling | +45 |
+| long hair | +15 |
+| beard | +15 |
+| glasses | +10 |
+
+Below 40 is human, 60 and up is a monster, in between is suspicious. Each scan is blended
+with the previous score so a single odd answer does not flip the verdict. Smile and you
+pass; scowl and you fail.
+
+Two model backends, tried in order (`public/monster-detector.js`):
+
+- **Gemini Nano** through Chrome's built-in Prompt API, when the browser offers it with
+  image input
+- **SmolVLM-256M-Instruct** through [Transformers.js](https://huggingface.co/docs/transformers.js),
+  on WebGPU when available and WebAssembly otherwise. The first scan downloads about
+  250 MB from Hugging Face.
+
 ## Local pipeline (Apple Silicon)
 
 Runs the whole pipeline on your Mac with two open models, for every figure preset. Tested

@@ -1,3 +1,4 @@
+import { isMonsterScanning, startMonsterScan, stopMonsterScan } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -51,6 +52,7 @@ async function startCamera() {
 
 /** Stops the webcam so the indicator light goes off. */
 function stopCamera() {
+  stopMonsterScan();
   state.stream?.getTracks().forEach((track) => track.stop());
   state.stream = null;
 }
@@ -406,6 +408,10 @@ $('take-photo').addEventListener('click', async () => {
   await runCountdown();
   chooseImage(await captureFrame());
   $('take-photo').disabled = false;
+});
+$('scan-toggle').addEventListener('click', () => {
+  if (isMonsterScanning()) stopMonsterScan();
+  else startMonsterScan($('video'));
 });
 $('file-input').addEventListener('change', (event) => chooseImage(event.target.files[0]));
 const uploadCard = $('upload-card');

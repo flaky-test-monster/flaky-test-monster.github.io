@@ -38,6 +38,7 @@
             <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
           </div>
           <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
+          <button type="button" id="scan-toggle" class="btn btn-large" aria-pressed="false" aria-controls="scan-panel">Monster scan</button>
           <span class="card-label">camera</span>
         </div>
         <label class="card card-upload" id="upload-card">
@@ -47,6 +48,18 @@
           <span class="hint" id="upload-hint">Click or drop a PNG or JPG</span>
         </label>
       </div>
+      <section id="scan-panel" class="scan" aria-labelledby="scan-title" hidden>
+        <h2 class="section-title" id="scan-title">Monster scan</h2>
+        <div class="scan-readout">
+          <p class="scan-score"><span id="scan-score">--</span><span class="scan-max">/100</span></p>
+          <span id="scan-verdict" class="tag scan-verdict">scanning</span>
+        </div>
+        <div id="scan-meter" class="scan-meter" role="meter" aria-labelledby="scan-title" aria-valuemin="0" aria-valuemax="100"><span class="scan-fill"></span></div>
+        <div class="scan-scale" aria-hidden="true"><span>human</span><span>monster</span></div>
+        <ul id="scan-traits" class="scan-traits"></ul>
+        <p class="hint">Smile to pass as human, scowl to fail. Runs in your browser with <span id="scan-model">a local vision model</span>; the video never leaves this device.</p>
+        <p id="scan-status" class="hint scan-status" role="status"></p>
+      </section>
       <div id="recent" class="recent" hidden>
         <h2 class="section-title">Recent runs</h2>
         <ul id="recent-list" class="recent-list"></ul>
