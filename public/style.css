@@ -250,7 +250,6 @@ body {
 }
 
 /* Monster scan: live score from the in-browser vision model */
-.card-camera .btn-large + .btn-large { margin-top: -4px; }
 .btn[aria-pressed="true"] { border-color: var(--danger); color: var(--danger); }
 
 .scan {

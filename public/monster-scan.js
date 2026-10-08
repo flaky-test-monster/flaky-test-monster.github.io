@@ -14,6 +14,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let detectorPromise = null;
 /** Bumped on every start and stop, so a scan loop can tell it has been replaced. */
 let runId = 0;
+let scanning = false;
 let score = null;
 let lastVerdict = null;
 
@@ -37,7 +38,7 @@ function renderTraitList() {
     const name = document.createElement('span');
     name.textContent = label;
     const seen = document.createElement('span');
-    seen.className = 'visually-hidden';
+    seen.className = 'scan-seen visually-hidden';
     const value = document.createElement('span');
     value.className = 'scan-points';
     value.textContent = points > 0 ? `+${points}` : `−${-points}`;
@@ -61,7 +62,7 @@ function render(traits) {
   for (const li of $('scan-traits').children) {
     const seen = traits[li.dataset.trait];
     li.dataset.seen = String(seen);
-    li.children[1].textContent = seen ? ': yes' : ': no';
+    li.querySelector('.scan-seen').textContent = seen ? ': yes' : ': no';
   }
   // Announce only a change of verdict, not every new score.
   if (result.key !== lastVerdict) setStatus(`Verdict: ${result.label}`);
@@ -81,7 +82,8 @@ function setRunning(running) {
 async function scanLoop(id, video, detector) {
   const canvas = Object.assign(document.createElement('canvas'), { width: FRAME_SIZE, height: FRAME_SIZE });
   while (id === runId) {
-    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth) {
+    // Wait for the first frame, and rest while the tab is in the background.
+    if (document.hidden || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
       await sleep(VIDEO_WAIT_MS);
       continue;
     }
@@ -94,11 +96,24 @@ async function scanLoop(id, video, detector) {
 }
 
 /**
+ * Loads the model once per page; a failed load is forgotten so the next scan retries.
+ * @returns {Promise<import('./monster-detector.js').Detector>}
+ */
+function getDetector() {
+  detectorPromise ??= loadDetector(setStatus).catch((err) => {
+    detectorPromise = null;
+    throw err;
+  });
+  return detectorPromise;
+}
+
+/**
  * Starts scanning the webcam video, loading the model on first use.
  * @param {HTMLVideoElement} video
  */
-export async function startMonsterScan(video) {
+async function startMonsterScan(video) {
   const id = ++runId;
+  scanning = true;
   score = null;
   lastVerdict = null;
   $('scan-panel').hidden = false;
@@ -110,15 +125,12 @@ export async function startMonsterScan(video) {
   renderTraitList();
   setRunning(true);
   try {
-    detectorPromise ??= loadDetector((message) => { if (id === runId) setStatus(message); });
-    const detector = await detectorPromise;
+    const detector = await getDetector();
     if (id !== runId) return;
     $('scan-model').textContent = detector.name;
     setStatus('Scanning');
     await scanLoop(id, video, detector);
   } catch (err) {
-    // A failed download should not stick: the next attempt loads again.
-    detectorPromise = null;
     if (id !== runId) return;
     console.error('Monster scan failed:', err);
     stopMonsterScan();
@@ -129,10 +141,15 @@ export async function startMonsterScan(video) {
 /** Stops scanning; the last result stays on screen. */
 export function stopMonsterScan() {
   runId += 1;
+  scanning = false;
   setRunning(false);
 }
 
-/** Whether a scan is running. */
-export function isMonsterScanning() {
-  return $('scan-toggle').getAttribute('aria-pressed') === 'true';
+/**
+ * Starts a scan of the webcam video, or stops the one that is running.
+ * @param {HTMLVideoElement} video
+ */
+export function toggleMonsterScan(video) {
+  if (scanning) stopMonsterScan();
+  else startMonsterScan(video);
 }
