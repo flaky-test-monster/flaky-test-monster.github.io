@@ -235,7 +235,22 @@ body {
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1);
+  /* --poster runs 0..1 with the monster score: from webcam to stark black-and-white poster. */
+  filter: grayscale(var(--poster, 0)) contrast(calc(1 + var(--poster, 0) * 6)) brightness(calc(1 + var(--poster, 0) * 0.15));
+  transition: filter 0.4s ease;
 }
+
+.camera-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #2fd12f;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.card-camera.is-monster .camera-frame::after { opacity: 1; }
 
 .countdown {
   position: absolute;
@@ -292,29 +307,7 @@ body {
 .scan[data-verdict="suspicious"] .scan-fill { background: var(--muted); }
 .scan[data-verdict="monster"] .scan-fill { background: var(--danger); }
 
-.scan-scale { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.75rem; color: var(--muted); }
-
-.scan-traits {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
-  padding: 0;
-  margin: 14px 0;
-}
-.scan-traits li {
-  display: flex;
-  gap: 6px;
-  padding: 2px 10px;
-  font-size: 0.8125rem;
-  color: var(--muted);
-  border: 1px dashed var(--border);
-  border-radius: 999px;
-}
-.scan-traits li[data-seen="true"] { color: var(--fg); border: 1px solid var(--fg); }
-.scan-points { font-variant-numeric: tabular-nums; }
-.scan-traits li[data-seen="true"] .scan-points { color: var(--danger); }
-.scan-traits li[data-trait="smiling"][data-seen="true"] .scan-points { color: var(--pass); }
+.scan-scale { display: flex; justify-content: space-between; margin: 4px 0 14px; font-size: 0.75rem; color: var(--muted); }
 
 .scan-status:empty { display: none; }
 .scan-status { margin-top: 6px; }
@@ -580,7 +573,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .title::after, .tag-flaky, .tag-flaky::before, .stepper li.active::before { animation: none; }
   .step { transition: none; }
-  .scan-fill { transition: none; }
+  .scan-fill, .camera-frame video, .camera-frame::after { transition: none; }
 }
 
 @media (max-width: 560px) {

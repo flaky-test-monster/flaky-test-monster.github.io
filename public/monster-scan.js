@@ -1,5 +1,5 @@
 import { loadDetector } from './monster-detector.js';
-import { TRAITS, monsterScore, smoothScore, verdict } from './monster-score.js';
+import { monsterScore, smoothScore, verdict } from './monster-score.js';
 
 /** Side of the square frame the model looks at; small keeps scans quick. */
 const FRAME_SIZE = 384;
@@ -8,6 +8,19 @@ const SCAN_PAUSE_MS = 300;
 const VIDEO_WAIT_MS = 200;
 
 const $ = (id) => document.getElementById(id);
+/** Score where the webcam starts turning into a high-contrast poster. */
+const POSTER_FROM = 40;
+
+/**
+ * Styles the webcam by score: harsher contrast as it rises, green poster once it is a monster.
+ * @param {number | null} score running score, or null to show the plain webcam
+ */
+function setCameraLook(score) {
+  const card = $('camera-card');
+  const strength = score === null ? 0 : Math.min(1, Math.max(0, (score - POSTER_FROM) / (100 - POSTER_FROM)));
+  card.style.setProperty('--poster', strength.toFixed(2));
+  card.classList.toggle('is-monster', score !== null && verdict(score).key === 'monster');
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Loaded once per page, on the first scan, since the model download is large. */
@@ -28,29 +41,10 @@ function grabFrame(video, canvas) {
   return canvas;
 }
 
-/** One line per trait with its points; lit when the model saw it. */
-function renderTraitList() {
-  $('scan-traits').replaceChildren(...TRAITS.map(({ key, label, points }) => {
-    const li = document.createElement('li');
-    li.dataset.trait = key;
-    li.dataset.seen = 'false';
-    const name = document.createElement('span');
-    name.textContent = label;
-    const seen = document.createElement('span');
-    seen.className = 'visually-hidden';
-    const value = document.createElement('span');
-    value.className = 'scan-points';
-    value.textContent = points > 0 ? `+${points}` : `−${-points}`;
-    li.append(name, seen, value);
-    return li;
-  }));
-}
-
 /**
- * Shows the newest scan: the running score on the meter and which traits were seen.
- * @param {import('./monster-score.js').Traits} traits
+ * Shows the running score on the meter.
  */
-function render(traits) {
+function render() {
   const result = verdict(score);
   $('scan-score').textContent = score;
   $('scan-meter').setAttribute('aria-valuenow', score);
@@ -58,11 +52,7 @@ function render(traits) {
   $('scan-meter').style.setProperty('--score', score);
   $('scan-panel').dataset.verdict = result.key;
   $('scan-verdict').textContent = result.label;
-  for (const li of $('scan-traits').children) {
-    const seen = traits[li.dataset.trait];
-    li.dataset.seen = String(seen);
-    li.children[1].textContent = seen ? ': yes' : ': no';
-  }
+  setCameraLook(score);
   // Announce only a change of verdict, not every new score.
   if (result.key !== lastVerdict) setStatus(`Verdict: ${result.label}`);
   lastVerdict = result.key;
@@ -88,7 +78,7 @@ async function scanLoop(id, video, detector) {
     const traits = await detector.detect(grabFrame(video, canvas));
     if (id !== runId) return;
     score = smoothScore(score, monsterScore(traits));
-    render(traits);
+    render();
     await sleep(SCAN_PAUSE_MS);
   }
 }
@@ -107,7 +97,7 @@ export async function startMonsterScan(video) {
   $('scan-verdict').textContent = 'scanning';
   $('scan-meter').style.setProperty('--score', 0);
   $('scan-meter').removeAttribute('aria-valuenow');
-  renderTraitList();
+  setCameraLook(null);
   setRunning(true);
   try {
     detectorPromise ??= loadDetector((message) => { if (id === runId) setStatus(message); });
@@ -126,9 +116,10 @@ export async function startMonsterScan(video) {
   }
 }
 
-/** Stops scanning; the last result stays on screen. */
+/** Stops scanning; the last result stays on screen but the webcam goes back to normal. */
 export function stopMonsterScan() {
   runId += 1;
+  setCameraLook(null);
   setRunning(false);
 }
 
