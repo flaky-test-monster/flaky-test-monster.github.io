@@ -168,6 +168,20 @@ mflux-generate-kontext --image-path "$WARMUP_DIR/in.png" --prompt "Make it white
 [[ -f "$WARMUP_DIR/out.png" ]] || die "mflux did not produce an image; check the licence was accepted and try again."
 ok "cached"
 
+step "LEGO style LoRA for FLUX.1 Kontext (about 360 MB)"
+# Same tiny edit with the LoRA the LEGO figures use, read from lib/figures.js so the two
+# cannot drift apart, so it is cached and known to load. Not fatal: without it, set
+# LOCAL_LORAS=0 and the LEGO figures run on plain FLUX.1 Kontext.
+lego_lora() { node --input-type=module -e "import * as f from '$ROOT/lib/figures.js'; console.log($1);"; }
+rm -f "$WARMUP_DIR/out.png"
+if mflux-generate-kontext --image-path "$WARMUP_DIR/in.png" --prompt "$(lego_lora f.LEGO_LORA_TRIGGER)" \
+  --lora-paths "$(lego_lora f.LEGO_LORA.path)" --lora-scales "$(lego_lora f.LEGO_LORA.scale)" \
+  --steps 1 --width 256 --height 256 -q 8 --output "$WARMUP_DIR/out.png" && [[ -f "$WARMUP_DIR/out.png" ]]; then
+  ok "cached"
+else
+  ok "Could not load the LEGO LoRA. Add LOCAL_LORAS=0 to .env to make LEGO figures without it."
+fi
+
 step "Done"
 [[ -f "$ROOT/.env" ]] || echo "    Optional: cp .env.example .env and add API keys for the cloud pipelines."
 echo "    Start with: scripts/start.sh"

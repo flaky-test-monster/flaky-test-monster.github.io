@@ -6,10 +6,13 @@ itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
 database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
 entirely on your Mac.
 
-Before clicking **Flakify**, pick a **Figure** (what the photo turns into) and a
-**3D model** method (how that image becomes a 3D model). Any figure works with any method.
+Before clicking **Flakify**, pick **how to make it** (the 3D method, each explained in
+plain words on the form) and then a **figure** (what the photo turns into). Methods that
+cannot run here are greyed out with the reason, for example a missing API key or no server
+on the GitHub Pages preview. The figure list depends on the method: the server methods offer
+the figures below, the in-browser method offers its relief shapes.
 
-Figures, defined with their prompts in `lib/figures.js`:
+Figures for the server methods, defined with their prompts in `lib/figures.js`:
 
 - **Marble bust**
 - **LEGO minifigure**
@@ -30,6 +33,17 @@ uses only the photo, because FLUX.1 Kontext takes a single image.
 - **Local, on this Mac:** photo → FLUX.1 Kontext via mflux (figure PNG) → pixal3d.cpp
   `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
   [Local pipeline](#local-pipeline-apple-silicon).
+
+- **Free and private, in this browser:** photo → background removal → depth map → relief
+  STL, with free open models that the browser downloads and runs itself. No API keys, no
+  install and no GPU server; the photo never leaves the device. It makes a 3D relief
+  (smooth, rounded or LEGO-style bricks) rather than a full statue. See
+  [In-browser pipeline](#in-browser-pipeline).
+
+The form lists them as *Best quality, in the cloud* (Tripo3D), *Chunky toy look, in the
+cloud* (simple shapes), *Private, on the Flakifier Mac* (local) and *Free and private, in
+this browser*, and picks the first one that can run. `GET /api/pipelines` tells the page
+which server methods are set up.
 
 OpenAI has no image-to-3D API, so with simple shapes the GPT model doesn't return a
 mesh directly. It looks at the figure image and describes the figure as 20 to 100
@@ -103,8 +117,8 @@ This starts the local 3D server in the background when the local pipeline is ins
 stops both. A 3D server you already started yourself is reused and left running.
 `node server.js` still works when you only use the cloud pipelines.
 
-Open <http://localhost:3000>. Take a photo or drop a PNG/JPG (max 10 MB), choose a figure
-and a 3D method, and click **Flakify**. The stepper lights up as each stage finishes, the styled image
+Open <http://localhost:3000>. Take a photo, choose how to make it and a figure, and click
+**Flakify**. The stepper lights up as each stage finishes, the styled image
 appears as soon as it is ready, and the final screen shows the model in a rotating 3D
 viewer with download buttons for the STL, the styled image and the original photo, plus
 the GLB from Tripo3D or the local pipeline.
@@ -154,6 +168,7 @@ needs don't add up.
 | Step | Model | Licence |
 |---|---|---|
 | Figure image | [FLUX.1 Kontext \[dev\]](https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev) via [mflux](https://github.com/filipstrand/mflux) | FLUX.1 \[dev\] Non-Commercial: personal use is fine, commercial use needs a licence from Black Forest Labs |
+| LEGO style (LEGO figures only) | [Kontext-Style/LEGO_lora](https://huggingface.co/Kontext-Style/LEGO_lora), a LoRA for FLUX.1 Kontext | Check the model page; as a FLUX.1 \[dev\] add-on it is non-commercial at most |
 | Image to 3D | TRELLIS.2 via [pixal3d.cpp](https://github.com/LighthausInc/pixal3d.cpp) | MIT (code and TRELLIS.2 weights); the DINOv3 encoder is under Meta's DINOv3 licence |
 
 Neither is restricted to particular regions. Hunyuan3D was not chosen because its
@@ -172,6 +187,8 @@ licence excludes the EU, UK and South Korea.
 - **FLUX.1 Kontext weights** (about 34 GB), cached by running one tiny edit, so the first
   bust doesn't stall on the download. The model is gated, so the installer asks you to
   accept its licence on Hugging Face first.
+- **LEGO style LoRA** (about 360 MB), cached the same way. If it fails to load, the
+  installer says so and carries on.
 
 `vendor/`, `models/` and `logs/` are gitignored. Delete them and
 `~/.cache/huggingface` to reclaim the space.
@@ -181,6 +198,11 @@ licence excludes the EU, UK and South Korea.
 - `LOCAL_FAST=1` (or `scripts/start.sh --fast`) renders the statue image at 512×512 with
   8 steps instead of 1024×1024 with 20, roughly 10x less work, for testing the pipeline.
   The result is rougher.
+- **LEGO figures** (*LEGO minifigure* and *Monster LEGO minifigure*) run FLUX.1 Kontext with
+  the [LEGO style LoRA](https://huggingface.co/Kontext-Style/LEGO_lora), and their prompt
+  starts with its trigger sentence, "Turn this image into the LEGO style." mflux downloads
+  the LoRA on first use if the installer didn't. `LOCAL_LORAS=0` turns it off; those
+  figures then use their plain prompt.
 - `MFLUX_QUANTIZE` (default `8`) can be lowered to `4` to save memory at some cost in
   quality.
 - `LOCAL_3D_RESOLUTION` (default `512`) can be `1024` or `1536` for more detail and
@@ -198,14 +220,58 @@ command isn't found, Flakifier says so as soon as you click **Flakify**. Expect 
 These times are estimates from the projects' published benchmarks, not measured with
 Flakifier.
 
+## In-browser pipeline
+
+Pick **Free and private, in this browser** on the form. Everything runs in a Web Worker in
+the page (`public/browser-worker.js`); the server only hands out the files, so this method
+also works on the [GitHub Pages build](#github-pages-and-pr-previews), which has no server.
+The progress steps read Models, Cut-out, Depth and STL, and the result shows the cut-out in
+place of the figure image, with the depth map as an extra download.
+
+| Step | Model | Licence | Download |
+|---|---|---|---|
+| Background removal | [MODNet](https://huggingface.co/Xenova/modnet) (ONNX) | Apache-2.0 | about 25 MB |
+| Depth estimation | [Depth Anything V2 Small](https://huggingface.co/onnx-community/depth-anything-v2-small) (ONNX) | Apache-2.0 | about 100 MB |
+| Relief mesh and STL | `public/relief.js`, no model | MIT (this repo) | none |
+
+Both models run with [Transformers.js](https://github.com/huggingface/transformers.js)
+3.8.1, loaded from the jsDelivr CDN. They are fetched from the Hugging Face Hub on the
+first run (the page shows download progress) and kept in the browser's cache, so later
+runs work without downloading again. WebGPU is used when the browser offers it (current
+Chrome and Edge); otherwise the models run on the CPU through WebAssembly, which is slower
+but works everywhere.
+
+How the smooth STL is built: the cut-out's outline becomes a grid of square cells, 160
+across the subject. Each cell gets a front face raised
+by the depth map plus a dome that rounds the outline, a back face, and side walls along the
+outline, so the mesh is closed and watertight. Only the largest connected piece of the
+subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the front.
+
+- **Relief with a flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
+  and it prints without supports.
+- **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
+  cropped at the shoulders gives it a flat bottom to stand on.
+- **LEGO-style bricks:** the same relief built from bricks. Each grid point inside the
+  outline becomes a stud-wide column, as thick as the relief there rounded to whole plates
+  (LEGO proportions: a plate is 0.4 of the stud pitch), with a stud on its front, 32 studs
+  across the subject. Flat back, so it prints lying down with the
+  studs up. The columns form one closed mesh; each stud is its own closed shell sunk
+  slightly into its column, which slicers merge when slicing. It is a printed look-alike,
+  not a buildable LEGO set.
+
+Results stay in the page: they are not listed under recent runs and are gone after a
+reload or **Start over**, so download what you want to keep. Depth from a single photo is an estimate:
+faces come out recognisable but flattened, and the back of a rounded figure is invented.
+
 ## GitHub Pages and PR previews
 
 The frontend is published as a static site on GitHub Pages, so changes to the UI can be
 tried without installing anything. Pages has no backend, so the build marks the page with
 `data-backend="none"` and the app runs browser-only: the camera and the
 [monster scan](#monster-scan) work, a taken photo can be downloaded, and a notice says
-that the rest needs the Node server (`npm start`). Flakify, the figure and 3D model
-pickers, and saving scan photos are disabled; the recent runs are hidden.
+that the rest needs the Node server (`npm start`). Flakify works with the
+[in-browser method](#in-browser-pipeline); the server methods are greyed out on the form,
+saving scan photos is disabled and the recent runs are hidden.
 
 - `.github/workflows/pages.yml` deploys `main` to the `gh-pages` branch.
 - `.github/workflows/pr-preview.yml` deploys each pull request to
@@ -244,6 +310,7 @@ the first deploy.
   overlapping shells when slicing. If a tool needs one manifold mesh, run a boolean
   union or "repair" first. Add supports under the arms if your slicer asks for them.
 - The 3D viewer loads Three.js from the jsDelivr CDN through an import map, so the result
-  page needs internet access. Everything else is served locally.
+  page needs internet access. The in-browser pipeline also loads Transformers.js from
+  jsDelivr and its models from Hugging Face. Everything else is served locally.
 - The printed model is only as good as the photo: face the camera, use even lighting and
   keep the background plain.

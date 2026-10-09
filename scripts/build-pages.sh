@@ -2,7 +2,8 @@
 # Builds the static frontend into _site for GitHub Pages. Pages serves the site under a
 # sub-path (/flakifier/, /flakifier/pr-preview/pr-N/), which is why index.html links its
 # assets relatively. There is no backend there, so the page is marked data-backend="none":
-# the camera and the monster scan work, and what needs `npm start` is disabled.
+# the camera, the monster scan and the in-browser 3D method work, and what needs
+# `npm start` is disabled.
 # JS, CSS and HTML are minified with pinned tools fetched by npx; the app itself keeps no
 # npm dependencies, and the Node server still serves public/ unminified.
 set -euo pipefail
