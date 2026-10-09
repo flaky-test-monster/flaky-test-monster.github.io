@@ -198,6 +198,24 @@ command isn't found, Flakifier says so as soon as you click **Flakify**. Expect 
 These times are estimates from the projects' published benchmarks, not measured with
 Flakifier.
 
+## GitHub Pages and PR previews
+
+The frontend is published as a static site on GitHub Pages, so changes to the UI can be
+tried without installing anything. Pages has no backend: the camera and the
+[monster scan](#monster-scan) work, while Flakify and the recent list need the Node
+server (`npm start`).
+
+- `.github/workflows/pages.yml` deploys `main` to the `gh-pages` branch.
+- `.github/workflows/pr-preview.yml` deploys each pull request to
+  `pr-preview/pr-<number>/` on the same branch, comments the preview URL on the PR, and
+  removes the preview when the PR is closed. PRs from forks get no preview, because
+  their token cannot push.
+- `scripts/build-pages.sh` builds the site into `_site/`.
+
+One-time setup: in the repository's **Settings → Pages**, set **Source** to
+**Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
+the first deploy.
+
 ## Notes
 
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
