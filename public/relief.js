@@ -404,8 +404,8 @@ function writeStl(grid, cells, { front, back }, heightMm, parts) {
 /**
  * Positions of every grid vertex in grid units, with the outline smoothed: each vertex on the
  * outline moves toward the middle of its two outline neighbours (Taubin smoothing, which does
- * not shrink the shape), by less than half a cell, so no cell folds over. Only positions
- * change, not which faces exist, so the mesh stays watertight.
+ * not shrink the shape), by less than half a cell, and any cell that folds is put back on the
+ * grid. Only positions change, not which faces exist, so the mesh stays watertight.
  */
 function smoothOutline(cols, rows, cw, ch, isCell) {
   const gi = new Float32Array(cols * rows), gj = new Float32Array(cols * rows);
@@ -445,6 +445,26 @@ function smoothOutline(cols, rows, cw, ch, isCell) {
       gi[v] = hi + di * shrink;
       gj[v] = hj + dj * shrink;
     });
+  }
+  // The shift limit alone does not stop a cell folding when its neighbouring corners move
+  // toward each other on a ragged outline: put the corners of any folded cell back on the
+  // grid, until no cell is folded (all corners home is never folded, so this ends).
+  const area = (a, b, c) => (gi[b] - gi[a]) * (gj[c] - gj[a]) - (gj[b] - gj[a]) * (gi[c] - gi[a]);
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (let j = 0; j < ch; j++) {
+      for (let i = 0; i < cw; i++) {
+        if (!isCell(i, j)) continue;
+        const p = j * cols + i, q = p + 1, r = q + cols, s = p + cols;
+        if (area(p, q, r) > 0 && area(p, r, s) > 0) continue;
+        for (const v of [p, q, r, s]) {
+          if (gi[v] === v % cols && gj[v] === Math.floor(v / cols)) continue;
+          gi[v] = v % cols;
+          gj[v] = Math.floor(v / cols);
+          changed = true;
+        }
+      }
+    }
   }
   return { gi, gj };
 }
