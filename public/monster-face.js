@@ -183,7 +183,9 @@ export function snapshotPreview(video, look) {
   ctx.drawImage(video, 0, 0);
   if (look.strength > 0 || look.green) posterize(ctx, canvas.width, canvas.height, look);
   // The eye canvas has the video's own size, so it lines up unscaled.
-  ctx.drawImage($('eyes'), 0, 0);
+  // It is 0 x 0 when a scan stopped before the video had a size; drawing it would throw.
+  const eyes = $('eyes');
+  if (eyes.width && eyes.height) ctx.drawImage(eyes, 0, 0);
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 

@@ -679,7 +679,8 @@ function runInBrowser() {
   getWorker().postMessage({ run, preload: true });
   const timeout = new Promise((resolve) => setTimeout(() => resolve([]), FACE_TIMEOUT_MS));
   Promise.race([findFaces(blob), timeout]).then((faces) => {
-    if (run !== state.run || !state.browser) return;
+    // A worker that failed to start has already shown its error and finished the run.
+    if (run !== state.run || !state.browser || state.browser.finished) return;
     getWorker().postMessage({ run, blob, faces, options: { shape: figure } });
   });
 }
