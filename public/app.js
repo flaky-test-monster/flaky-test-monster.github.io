@@ -1,4 +1,4 @@
-import { stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
+import { onSaveMonsterPhoto, stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -12,8 +12,9 @@ const PIPELINE_UI = {
   shapes: { hint: 'This usually takes one to four minutes.', modelDownload: null, viewerFile: 'model.stl' },
   local: { hint: 'Running on this Mac usually takes 10 to 20 minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
 };
-const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local' };
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
+const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local', photo: 'Monster scan' };
+/** Pipeline of a run that only holds a monster scan photo; opening it offers the photo to flakify. */
+const PHOTO_PIPELINE = 'photo';
 const RECENT_LIMIT = 6;
 const INTERRUPTED_MESSAGE = 'This conversion was interrupted because the server stopped. Start a new one.';
 const JOB_HASH_PATTERN = /^#job=([0-9a-f-]{36})$/;
@@ -38,20 +39,34 @@ function showStep(name, { focus = true } = {}) {
   }
 }
 
-/** Starts the webcam preview; hides the camera card when access is refused. */
+/** Starts the webcam preview; says how to fix it when access is refused or there is no camera. */
 async function startCamera() {
   if (state.stream) return;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
+    setCameraBlocked(false);
   } catch {
-    $('camera-card').hidden = true;
-    document.querySelector('.cards').classList.add('single');
+    setCameraBlocked(true);
   }
+}
+
+/** Shows the camera error and disables the buttons that need the camera, or undoes that. */
+function setCameraBlocked(blocked) {
+  $('camera-error').hidden = !blocked;
+  $('take-photo').disabled = blocked;
+  $('scan-toggle').disabled = blocked;
+}
+
+/** Shows the camera preview full screen, with the logo on top, or leaves full screen. */
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else $('camera-frame').requestFullscreen().catch(() => {});
 }
 
 /** Stops the webcam so the indicator light goes off. */
 function stopCamera() {
+  if (document.fullscreenElement) document.exitFullscreen();
   stopMonsterScan();
   state.stream?.getTracks().forEach((track) => track.stop());
   state.stream = null;
@@ -87,14 +102,9 @@ function setPreview(blob) {
   else $('preview').removeAttribute('src');
 }
 
-/** Moves to the confirm step with the chosen image; says so when the file type is wrong. */
+/** Moves to the confirm step with the chosen image. */
 function chooseImage(blob) {
   if (!blob) return;
-  if (!ACCEPTED_TYPES.includes(blob.type)) {
-    $('upload-hint').textContent = 'That file is not a PNG or JPG. Try another one.';
-    return;
-  }
-  $('upload-hint').textContent = 'Click or drop a PNG or JPG';
   setPreview(blob);
   stopCamera();
   showStep('confirm');
@@ -168,6 +178,7 @@ function formatDate(iso) {
 
 /** One-word status of a stored job for the recent list. */
 function jobState(job) {
+  if (job.pipeline === PHOTO_PIPELINE) return 'Photo';
   if (job.error) return 'Failed';
   if (STAGES.every((stage) => job.stages[stage])) return 'Done';
   return job.running ? 'In progress' : 'Interrupted';
@@ -202,7 +213,7 @@ function renderRecent() {
     meta.append([figureLabel(job.figure), PIPELINE_LABELS[job.pipeline] ?? job.pipeline, job.name ? formatDate(job.createdAt) : null, ''].filter((part) => part !== null).join(' · '), status);
     text.append(title, meta);
     button.append(img, text);
-    button.addEventListener('click', () => openJob(job));
+    button.addEventListener('click', () => (job.pipeline === PHOTO_PIPELINE ? openPhoto(job) : openJob(job)));
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'recent-delete';
@@ -251,6 +262,40 @@ async function loadRecent() {
   renderRecent();
 }
 
+/**
+ * Opens a monster photo run at the confirm step, ready to flakify.
+ * @param {{ id: string, stages: { input: string | null } }} job
+ * @returns {Promise<boolean>} whether the photo opened
+ */
+async function openPhoto(job) {
+  try {
+    const res = await fetch(`/api/jobs/${job.id}/${job.stages.input}`);
+    if (!res.ok) throw new Error(await responseError(res, 'Could not load the photo'));
+    chooseImage(await res.blob());
+    return true;
+  } catch (err) {
+    alert(err.message);
+    return false;
+  }
+}
+
+/**
+ * Saves a monster photo the user picked as a run of its own in the recent runs.
+ * @param {Blob} photo PNG
+ * @returns {Promise<boolean>} whether it was saved
+ */
+async function saveMonsterPhoto(photo) {
+  try {
+    const res = await fetch('/api/photos', { method: 'POST', headers: { 'Content-Type': photo.type }, body: photo });
+    if (!res.ok) throw new Error(await responseError(res, 'Saving the monster photo failed'));
+    await loadRecent();
+    return true;
+  } catch (err) {
+    console.warn(err.message);
+    return false;
+  }
+}
+
 /** Reopens the conversion named in the URL, if any. Returns whether one was opened. */
 async function restoreFromUrl() {
   const id = location.hash.match(JOB_HASH_PATTERN)?.[1];
@@ -258,7 +303,13 @@ async function restoreFromUrl() {
   try {
     const res = await fetch(`/api/jobs/${id}`);
     if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);
-    openJob(await res.json());
+    const job = await res.json();
+    if (job.pipeline === PHOTO_PIPELINE) {
+      history.replaceState(null, '', location.pathname);
+      // When the photo cannot load, startup goes on to the camera as with no link at all.
+      return await openPhoto(job);
+    }
+    openJob(job);
     return true;
   } catch {
     history.replaceState(null, '', location.pathname);
@@ -396,7 +447,6 @@ function startOver() {
   setPreview(null);
   Object.assign(state, freshJobState());
   history.replaceState(null, '', location.pathname);
-  $('file-input').value = '';
   $('job-name').value = '';
   showStep('source');
   startCamera();
@@ -409,21 +459,22 @@ $('take-photo').addEventListener('click', async () => {
   chooseImage(await captureFrame());
   $('take-photo').disabled = false;
 });
+// Not every browser can show an element full screen (iPhone Safari cannot); there the button stays hidden.
+$('fullscreen-toggle').hidden = !document.fullscreenEnabled;
+$('fullscreen-toggle').addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', () => {
+  $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-frame')));
+});
 $('scan-toggle').addEventListener('click', () => toggleMonsterScan($('video')));
-$('file-input').addEventListener('change', (event) => chooseImage(event.target.files[0]));
-const uploadCard = $('upload-card');
-uploadCard.addEventListener('dragover', (event) => { event.preventDefault(); uploadCard.classList.add('is-dragover'); });
-uploadCard.addEventListener('dragleave', (event) => {
-  // Moving over the card's own children fires dragleave too; only react to leaving the card.
-  if (!uploadCard.contains(event.relatedTarget)) uploadCard.classList.remove('is-dragover');
-});
-uploadCard.addEventListener('drop', (event) => {
-  event.preventDefault();
-  uploadCard.classList.remove('is-dragover');
-  chooseImage(event.dataTransfer.files[0]);
-});
+onSaveMonsterPhoto(saveMonsterPhoto);
 $('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
 $('flakify').addEventListener('click', startJob);
+$('home-link').addEventListener('click', (event) => {
+  // Let the browser open a new tab or window as usual; a plain click resets in place.
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  startOver();
+});
 $('try-again').addEventListener('click', startOver);
 $('start-over').addEventListener('click', startOver);
 $('delete-job').addEventListener('click', async () => {

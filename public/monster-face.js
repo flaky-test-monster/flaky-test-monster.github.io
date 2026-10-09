@@ -18,6 +18,11 @@ const PUPIL_RADIUS = 0.3;
 const UPPER_INNER_LIP = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308];
 const LOWER_INNER_LIP = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308];
 const TONGUE_COLOR = '#e0182d';
+/** The preview's poster look at full strength (--poster: 1 in style.css): contrast and brightness. */
+const POSTER_CONTRAST = 7;
+const POSTER_BRIGHTNESS = 1.15;
+/** The green tint over a monster's preview, as in style.css. */
+const MONSTER_GREEN = [0x2f, 0xd1, 0x2f];
 
 const $ = (id) => document.getElementById(id);
 
@@ -107,4 +112,52 @@ function drawMouth(ctx, point) {
   ctx.ellipse(bottom.x, bottom.y, Math.hypot(right.x - left.x, right.y - left.y) * 0.35, gap * 0.45, Math.atan2(right.y - left.y, right.x - left.x), 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+/**
+ * A photo of the preview as it looks at a score of 100: cropped and mirrored like the
+ * preview, in the green poster look, with the monster faces painted on.
+ * @param {HTMLVideoElement} video
+ * @returns {Promise<Blob | null>} a PNG
+ */
+export function snapshotMonster(video) {
+  // The preview fills its frame, cutting off whatever does not fit, so crop the same way.
+  const frame = video.parentElement;
+  const aspect = frame.clientWidth / frame.clientHeight || 4 / 3;
+  let width = video.videoWidth;
+  let height = video.videoHeight;
+  if (width / height > aspect) width = height * aspect;
+  else height = width / aspect;
+  const x = (video.videoWidth - width) / 2;
+  const y = (video.videoHeight - height) / 2;
+
+  const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(width), height: Math.round(height) });
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, x, y, width, height, 0, 0, canvas.width, canvas.height);
+  posterize(ctx, canvas.width, canvas.height);
+  ctx.drawImage($('eyes'), x, y, width, height, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+/**
+ * Turns the picture into the green poster: grayscale, then contrast and brightness like
+ * the CSS filters, then the green multiplied over it.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} width
+ * @param {number} height
+ */
+function posterize(ctx, width, height) {
+  const image = ctx.getImageData(0, 0, width, height);
+  const pixels = image.data;
+  const clamp = (value) => Math.min(255, Math.max(0, value));
+  for (let i = 0; i < pixels.length; i += 4) {
+    const gray = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
+    const level = clamp(clamp((gray - 127.5) * POSTER_CONTRAST + 127.5) * POSTER_BRIGHTNESS) / 255;
+    pixels[i] = level * MONSTER_GREEN[0];
+    pixels[i + 1] = level * MONSTER_GREEN[1];
+    pixels[i + 2] = level * MONSTER_GREEN[2];
+  }
+  ctx.putImageData(image, 0, 0);
 }

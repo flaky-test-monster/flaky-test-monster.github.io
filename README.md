@@ -1,6 +1,6 @@
 # Flakifier
 
-Turn a webcam photo or an uploaded portrait into a 3D-printable STL figure: the Flaky
+Turn a webcam photo into a 3D-printable STL figure: the Flaky
 Test Monster in one of three looks, a marble bust, or a LEGO-style minifigure. The app
 itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
 database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
@@ -131,8 +131,14 @@ suspicious. Each frame is blended with the previous score so the meter does not 
 
 As the score climbs the preview turns into a high-contrast poster. Once you are a monster
 it goes green, and every monster face gets white eyes with small black pupils and a red
-tongue in its open mouth. Only the preview changes; a photo taken mid-scan comes out
-normal.
+tongue in its open mouth. Only the preview changes; **Take photo** mid-scan still gives
+you the plain photo.
+
+When the score hits 100 the scan takes a **monster photo** of the preview, effects and
+all, with a white flash and a shutter click. While the score stays at 100 it takes another
+every 5 seconds, and the scan panel keeps the last 6 to choose from. Pick one to download
+it or save it to **Recent runs** as a "Monster photo" run, which holds only the photo and
+costs nothing; open that run to flakify the photo. Saving goes through `POST /api/photos`.
 
 Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
 (`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage on
@@ -195,8 +201,9 @@ Flakifier.
 ## Notes
 
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
-  `getUserMedia` on plain `http://` for any other host. If camera permission is denied,
-  the camera card is hidden and you can still upload an image.
+  `getUserMedia` on plain `http://` for any other host. If camera permission is denied
+  or there is no camera, the camera card says so and its buttons are disabled; allow the
+  camera and reload.
 - **Run time is about 1 to 4 minutes.** The OpenAI image edit takes 20 to 60 seconds.
   The Tripo3D method then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
   server polls Tripo3D every 3 seconds and gives up after 10 minutes. The simple-shapes

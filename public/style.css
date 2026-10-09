@@ -72,8 +72,15 @@ body {
   display: flex;
   align-items: center;
   gap: 18px;
+  width: fit-content;
+  max-width: 100%;
   margin: 0 0 40px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius);
 }
+.masthead:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.masthead:hover .mascot { border-color: var(--fg); }
 
 .mascot {
   flex: none;
@@ -166,22 +173,13 @@ body {
 /* Steps take focus when shown so keyboard and screen reader users land in the new content. */
 .step:focus { outline: none; }
 
-/* Step 1: source cards */
-.cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.cards.single { grid-template-columns: 1fr; }
-
+/* Step 1: the camera, as large as the page allows */
 .card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  min-height: 280px;
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -195,31 +193,10 @@ body {
   letter-spacing: 0.08em;
 }
 
-.card-upload {
-  position: relative;
-  cursor: pointer;
-  border-style: dashed;
-  text-align: center;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
+.camera-actions { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
+.camera-actions .btn-large { flex: 1 1 200px; }
 
-.card-upload:hover, .card-upload.is-dragover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
-}
-
-.card-upload:focus-within {
-  border-color: var(--accent);
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.upload-icon {
-  font-size: 2.5rem;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--accent);
-}
+.camera-error { margin: 0; color: var(--danger); text-align: center; }
 
 .camera-frame {
   position: relative;
@@ -239,7 +216,8 @@ body {
 }
 
 .camera-frame video {
-  /* --poster runs 0..1 with the monster score: from webcam to stark black-and-white poster. */
+  /* --poster runs 0..1 with the monster score: from webcam to stark black-and-white poster.
+     The automatic monster photo repeats this look at full strength, see monster-face.js. */
   filter: grayscale(var(--poster, 0)) contrast(calc(1 + var(--poster, 0) * 6)) brightness(calc(1 + var(--poster, 0) * 0.15));
   transition: filter 0.4s ease;
 }
@@ -248,7 +226,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: #2fd12f;
+  background: #2fd12f; /* also MONSTER_GREEN in monster-face.js */
   mix-blend-mode: multiply;
   opacity: 0;
   pointer-events: none;
@@ -264,6 +242,87 @@ body {
   z-index: 1;
   pointer-events: none;
 }
+
+/* White flash over the preview when the scan takes a monster photo; run from monster-scan.js. */
+.camera-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Full screen preview: the camera frame fills the screen, with the logo on top. */
+.camera-frame:fullscreen {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.camera-logo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgb(0 0 0 / 60%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.camera-logo img { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
+.camera-logo span::before { content: "$ "; content: "$ " / ""; color: var(--accent); }
+.camera-frame:fullscreen .camera-logo { display: flex; }
+
+/* The scan score over the full screen preview; the scan panel stays the accessible readout. */
+.camera-score {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  z-index: 4;
+  display: none;
+  padding: 12px 20px;
+  color: #fff;
+  background: rgb(0 0 0 / 60%);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+.camera-frame:fullscreen .camera-score:not([hidden]) { display: block; }
+.camera-score p { margin: 0; }
+.camera-score-value { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.camera-score-max { font-size: 0.4em; font-weight: 400; opacity: 0.7; }
+.camera-score-meta { margin-top: 6px; font-size: 1rem; }
+.camera-score[data-verdict="monster"] .camera-score-value { color: #ff5b72; }
+
+.camera-fullscreen {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.camera-fullscreen[hidden] { display: none; }
+.camera-fullscreen:hover { background: rgb(0 0 0 / 75%); }
+.camera-fullscreen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.camera-frame:fullscreen .camera-fullscreen { top: 16px; right: 16px; }
+.camera-fullscreen[aria-pressed="false"] .icon-exit,
+.camera-fullscreen[aria-pressed="true"] .icon-enter { display: none; }
 
 .countdown {
   position: absolute;
@@ -326,6 +385,25 @@ body {
 .scan-count { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
 .scan-tracker[data-monsters="true"] .scan-count { color: var(--danger); }
 .scan-of { color: var(--muted); }
+
+.scan-photo { margin: 0 0 14px; }
+.scan-photo img { display: block; width: 100%; height: auto; border-radius: 4px; }
+.scan-photo-strip { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; }
+.scan-photo-choice {
+  display: block;
+  width: 72px;
+  padding: 0;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.scan-photo .scan-photo-choice img { border-radius: 4px; }
+.scan-photo-choice:hover { border-color: var(--border); }
+.scan-photo-choice[aria-pressed="true"] { border-color: var(--accent); }
+.scan-photo-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scan-photo figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.scan-photo .hint { margin: 0; }
 
 .scan-status:empty { display: none; }
 .scan-status { margin-top: 6px; }
@@ -598,8 +676,6 @@ body {
   .app { padding: 32px 16px 48px; }
   .masthead { gap: 14px; margin-bottom: 32px; }
   .mascot { width: 56px; height: 56px; }
-  .cards { grid-template-columns: 1fr; }
-  .card { min-height: 200px; }
   .stages { grid-template-columns: 1fr; }
   .choices { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }
