@@ -1,5 +1,5 @@
 import { findFaces } from './monster-face.js';
-import { onSaveMonsterPhoto, stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
+import { onSaveMonsterPhoto, startMonsterScan, stopMonsterScan, takePreviewPhoto } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -62,6 +62,8 @@ const BROWSER_HINTS = {
 /** Stepper stage each in-browser stage completes. */
 const BROWSER_STAGES = { input: 'input', cutout: 'image', depth: 'model', stl: 'stl' };
 const MB = 1024 * 1024;
+/** Longest wait for the face landmarks; the figure is made without them after that. */
+const FACE_TIMEOUT_MS = 20000;
 /** Pipeline of a run that only holds a monster scan photo; opening it offers the photo to flakify. */
 const PHOTO_PIPELINE = 'photo';
 const RECENT_LIMIT = 6;
@@ -116,6 +118,8 @@ async function startCamera() {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
     setCameraBlocked(false);
+    // The monster scan is always on while the camera is.
+    startMonsterScan($('video'));
   } catch {
     setCameraBlocked(true);
   }
@@ -125,7 +129,6 @@ async function startCamera() {
 function setCameraBlocked(blocked) {
   $('camera-error').hidden = !blocked;
   $('take-photo').disabled = blocked;
-  $('scan-toggle').disabled = blocked;
 }
 
 /** Shows the camera preview full screen, with the logo on top, or leaves full screen. */
@@ -153,14 +156,9 @@ async function runCountdown() {
   overlay.hidden = true;
 }
 
-/** Grabs the current video frame as a PNG blob. */
+/** Grabs the current video frame as a PNG blob, with the monster look the preview has. */
 function captureFrame() {
-  const video = $('video');
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  return takePreviewPhoto($('video'));
 }
 
 /** Shows the chosen photo, or replaces the previous one, freeing its object URL. */
@@ -676,7 +674,10 @@ function runInBrowser() {
   $('progress-hint').textContent = BROWSER_HINTS.faces;
   const { run, blob, figure } = state;
   // The face tracker needs the page (WebGL), so it runs here and the worker gets the landmarks.
-  findFaces(blob).then((faces) => {
+  // The worker downloads its models in the meantime.
+  getWorker().postMessage({ run, preload: true });
+  const timeout = new Promise((resolve) => setTimeout(() => resolve([]), FACE_TIMEOUT_MS));
+  Promise.race([findFaces(blob), timeout]).then((faces) => {
     if (run !== state.run || !state.browser) return;
     getWorker().postMessage({ run, blob, faces, options: { shape: figure } });
   });
@@ -784,7 +785,6 @@ $('fullscreen-toggle').addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', () => {
   $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-frame')));
 });
-$('scan-toggle').addEventListener('click', () => toggleMonsterScan($('video')));
 onSaveMonsterPhoto(NO_BACKEND ? null : saveMonsterPhoto);
 $('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
 $('flakify').addEventListener('click', startJob);

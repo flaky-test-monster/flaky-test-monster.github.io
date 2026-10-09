@@ -1,4 +1,4 @@
-import { drawFaces, loadFaceTracker, snapshotMonster } from './monster-face.js';
+import { drawFaces, loadFaceTracker, snapshotMonster, snapshotPreview } from './monster-face.js';
 import { smoothScore, trackFaces, verdict } from './monster-score.js';
 
 const $ = (id) => document.getElementById(id);
@@ -12,6 +12,8 @@ const SHUTTER_CLICKS = [[0, 0.03], [0.07, 0.05]];
 const PHOTO_EVERY_MS = 5000;
 /** Photos kept to choose from; the oldest goes when another is taken. */
 const PHOTO_LIMIT = 6;
+/** Wait before a failed scan tries again; there is no button to restart it. */
+const RETRY_MS = 5000;
 
 /** Bumped on every start and stop, so a scan loop can tell it has been replaced. */
 let runId = 0;
@@ -29,7 +31,7 @@ let lastPhotoAt = -Infinity;
 const photos = [];
 /** @type {typeof photos[number] | null} */
 let selectedPhoto = null;
-/** Made on the click that starts a scan, since browsers only allow sound after a user gesture. */
+/** Made when the page loads; browsers only let it play after the first click or tap. */
 let audio = null;
 /**
  * Saves the photo the user picked to the recent runs; resolves to whether it worked. Null
@@ -39,15 +41,25 @@ let audio = null;
 let savePhoto = async () => false;
 
 /**
- * Styles the webcam by score: harsher contrast as it rises, green poster once it is a
- * monster.
+ * The webcam look for a score: harsher contrast as it rises, green poster once it is a monster.
+ * @param {number | null} score running score, or null for the plain webcam
+ */
+function lookFor(score) {
+  return {
+    strength: score === null ? 0 : Math.min(1, Math.max(0, (score - POSTER_FROM) / (100 - POSTER_FROM))),
+    green: score !== null && verdict(score).key === 'monster',
+  };
+}
+
+/**
+ * Styles the webcam by score.
  * @param {number | null} score running score, or null to show the plain webcam
  */
 function setCameraLook(score) {
   const card = $('camera-card');
-  const strength = score === null ? 0 : Math.min(1, Math.max(0, (score - POSTER_FROM) / (100 - POSTER_FROM)));
+  const { strength, green } = lookFor(score);
   card.style.setProperty('--poster', strength.toFixed(2));
-  card.classList.toggle('is-monster', score !== null && verdict(score).key === 'monster');
+  card.classList.toggle('is-monster', green);
 }
 
 /**
@@ -99,11 +111,6 @@ function setStatus(message) {
   $('scan-status').textContent = message;
 }
 
-function setRunning(running) {
-  $('scan-toggle').textContent = running ? 'Stop monster scan' : 'Monster scan';
-  $('scan-toggle').setAttribute('aria-pressed', String(running));
-}
-
 /**
  * Tracks the faces on every new video frame until stopped or replaced by another run. Each
  * face has its own score and only monster faces get the monster's eyes and tongue. The
@@ -119,7 +126,7 @@ function scanLoop(id, video, tracker) {
         scanFrame(video, tracker);
       }
     } catch (err) {
-      failScan(err);
+      failScan(err, video);
       return;
     }
     requestAnimationFrame(tick);
@@ -221,11 +228,18 @@ async function keepSelectedPhoto() {
   renderPhotos();
 }
 
-/** Stops the scan and says why, so a failure never leaves a frozen scan on screen. */
-function failScan(err) {
+/**
+ * Stops the scan and says why, so a failure never leaves a frozen scan on screen, then tries
+ * again in a while, unless the camera has been stopped or the scan restarted since.
+ */
+function failScan(err, video) {
   console.error('Monster scan failed:', err);
   stopMonsterScan();
-  setStatus(`Monster scan failed: ${err.message}`);
+  const id = runId;
+  setStatus(`Monster scan failed: ${err.message}. Trying again in a few seconds.`);
+  setTimeout(() => {
+    if (id === runId && video.srcObject?.active) startMonsterScan(video);
+  }, RETRY_MS);
 }
 
 /** Flashes the preview white, unless the user asked for reduced motion. */
@@ -234,7 +248,7 @@ function flashCamera() {
   $('camera-flash').animate([{ opacity: 0.9 }, { opacity: 0 }], { duration: FLASH_MS, easing: 'ease-out' });
 }
 
-/** Gets the sound ready; call from the click that starts a scan. */
+/** Gets the sound ready; it only starts playing once the page has had a click or tap. */
 function prepareShutter() {
   try {
     audio ??= new AudioContext();
@@ -261,10 +275,12 @@ function playShutter() {
 }
 
 /**
- * Starts scanning the webcam video, loading the face tracker on first use.
+ * Starts scanning the webcam video, loading the face tracker on first use. The scan is always
+ * on while the camera is: a call while it runs does nothing.
  * @param {HTMLVideoElement} video
  */
-async function startMonsterScan(video) {
+export async function startMonsterScan(video) {
+  if (scanning) return;
   const id = ++runId;
   scanning = true;
   prepareShutter();
@@ -281,7 +297,6 @@ async function startMonsterScan(video) {
   renderTracker();
   setCameraLook(null);
   renderCameraScore(null);
-  setRunning(true);
   try {
     setStatus('Loading face tracker');
     const tracker = await loadFaceTracker();
@@ -289,7 +304,7 @@ async function startMonsterScan(video) {
     setStatus('Scanning');
     scanLoop(id, video, tracker);
   } catch (err) {
-    if (id === runId) failScan(err);
+    if (id === runId) failScan(err, video);
   }
 }
 
@@ -300,16 +315,15 @@ export function stopMonsterScan() {
   setCameraLook(null);
   renderCameraScore(null);
   drawFaces($('video'), []);
-  setRunning(false);
 }
 
 /**
- * Starts a scan of the webcam video, or stops the one that is running.
+ * A photo of the webcam as the preview shows it, monster look and all, for Take photo.
  * @param {HTMLVideoElement} video
+ * @returns {Promise<Blob | null>} a PNG
  */
-export function toggleMonsterScan(video) {
-  if (scanning) stopMonsterScan();
-  else startMonsterScan(video);
+export function takePreviewPhoto(video) {
+  return snapshotPreview(video, lookFor(scanning && score !== null ? Math.round(score) : null));
 }
 
 /**
@@ -322,3 +336,7 @@ export function onSaveMonsterPhoto(saver) {
 }
 
 $('scan-photo-keep').addEventListener('click', keepSelectedPhoto);
+// The scan starts on its own, without a click, so the shutter sound waits for the first click,
+// tap or key press.
+document.addEventListener('pointerdown', prepareShutter, { passive: true });
+document.addEventListener('keydown', prepareShutter);

@@ -132,6 +132,9 @@ async function run({ blob, options, faces }) {
 
 self.addEventListener('message', async (event) => {
   currentRun = event.data.run;
+  // Sent while the page looks for the face, so the models download meanwhile; the run that
+  // follows uses them, and reports a failed load itself.
+  if (event.data.preload) return loadModels().catch(() => {});
   try {
     await run(event.data);
     send({ type: 'done' });

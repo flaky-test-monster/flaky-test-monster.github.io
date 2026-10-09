@@ -133,8 +133,8 @@ screen, where you can reopen or delete them.
 
 ## Monster scan
 
-The **Monster scan** button on the camera card tracks your face in the live webcam video
-and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
+The monster scan is always on while the camera is: it tracks your face in the live webcam
+video and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
 uploaded and no API key is needed.
 
 The score is all in the mouth: closed is 0, wide open is 100. Up to four faces are
@@ -146,8 +146,9 @@ suspicious. Each frame is blended with the previous score so the meter does not 
 
 As the score climbs the preview turns into a high-contrast poster. Once you are a monster
 it goes green, and every monster face gets white eyes with small black pupils and a red
-tongue in its open mouth. Only the preview changes; **Take photo** mid-scan still gives
-you the plain photo.
+tongue in its open mouth. **Take photo** keeps what the preview shows: the photo it hands
+to the 3D methods has the poster look at the strength the score has reached, and the green,
+eyes and tongue if you are a monster. Keep your mouth closed for a plain photo.
 
 When the score hits 100 the scan takes a **monster photo** of the preview, effects and
 all, with a white flash and a shutter click. While the score stays at 100 it takes another
@@ -156,8 +157,9 @@ it or save it to **Recent runs** as a "Monster photo" run, which holds only the 
 costs nothing; open that run to flakify the photo. Saving goes through `POST /api/photos`.
 
 Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
-(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage on
-the first scan (a few MB, then cached by the browser).
+(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage when
+the camera first starts (a few MB, then cached by the browser). The shutter click plays
+from the first click or tap on the page on, since browsers keep pages silent until then.
 
 ## Local pipeline (Apple Silicon)
 
