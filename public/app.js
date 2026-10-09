@@ -6,13 +6,59 @@ const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_RETRIES = 5;
 const POLL_BACKOFF_MAX_MS = 30000;
 const STAGES = ['input', 'image', 'model', 'stl'];
-/** Per-3D-method hint, intermediate model download and the file the viewer shows. */
+const STAGE_LABELS = ['Input', 'Figure', '3D model', 'STL'];
+/** Per-3D-method hint, stepper labels, intermediate model download and the file the viewer shows. */
 const PIPELINE_UI = {
   tripo: { hint: 'This usually takes one to three minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
   shapes: { hint: 'This usually takes one to four minutes.', modelDownload: null, viewerFile: 'model.stl' },
   local: { hint: 'Running on this Mac usually takes 10 to 20 minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
+  browser: { hint: 'Loading the models…', stageLabels: ['Models', 'Cut-out', 'Depth', 'STL'] },
 };
-const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local', photo: 'Monster scan' };
+const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local', browser: 'In this browser', photo: 'Monster scan' };
+/** The pipeline that runs in this page (browser-worker.js) instead of on the server. */
+const BROWSER_PIPELINE = 'browser';
+/**
+ * The ways to make a figure, in the order the form lists them, explained for people who
+ * do not know the models. Server ones may not be set up; the server says which and why.
+ */
+const MODELS = [
+  {
+    id: 'tripo',
+    name: 'Best quality, in the cloud',
+    description: 'OpenAI draws your figure, then Tripo3D sculpts it into a detailed 3D model. Your photo is sent to both companies. Costs roughly 40 to 90 cents per figure and takes one to three minutes.',
+  },
+  {
+    id: 'shapes',
+    name: 'Chunky toy look, in the cloud',
+    description: 'OpenAI draws your figure, then rebuilds it from simple blocks, balls and cylinders, like a toy. Your photo is sent to OpenAI. Costs roughly 10 to 35 cents and takes one to four minutes.',
+  },
+  {
+    id: 'local',
+    name: 'Private, on the Flakifier Mac',
+    description: 'Free models draw and sculpt your figure on the Mac that runs Flakifier. Nothing goes to the cloud and nothing is paid, but it takes 10 to 20 minutes.',
+  },
+  {
+    id: BROWSER_PIPELINE,
+    name: 'Free and private, in this browser',
+    description: 'Free models run right here on your device and turn the photo into a 3D picture that stands out from a flat back, like a medal, rather than a full figure. The photo never leaves this device. The first run downloads about 125 MB; after that it takes a minute or two.',
+  },
+];
+/** What the in-browser pipeline can make: the shapes public/relief.js builds. */
+const BROWSER_FIGURES = [
+  { id: 'relief', label: 'Relief with a flat back' },
+  { id: 'rounded', label: 'Rounded on both sides' },
+  { id: 'bricks', label: 'LEGO-style bricks' },
+];
+/** Status line while the in-browser pipeline works on a stage. */
+const BROWSER_HINTS = {
+  input: 'Preparing the photo…',
+  cutout: 'Removing the background…',
+  depth: 'Estimating depth…',
+  stl: 'Building the 3D model…',
+};
+/** Stepper stage each in-browser stage completes. */
+const BROWSER_STAGES = { input: 'input', cutout: 'image', depth: 'model', stl: 'stl' };
+const MB = 1024 * 1024;
 /** Pipeline of a run that only holds a monster scan photo; opening it offers the photo to flakify. */
 const PHOTO_PIPELINE = 'photo';
 const RECENT_LIMIT = 6;
@@ -23,8 +69,23 @@ const NO_BACKEND = document.documentElement.dataset.backend === 'none';
 
 const $ = (id) => document.getElementById(id);
 /** The per-conversion part of the state, as it is before a photo is chosen. */
-const freshJobState = () => ({ blob: null, previewUrl: null, jobId: null, pipeline: 'tripo', figure: 'monster', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
-const state = { figures: {}, stream: null, recent: [], showAllRecent: false, ...freshJobState() };
+const freshJobState = () => ({ blob: null, previewUrl: null, jobId: null, run: 0, pipeline: 'tripo', figure: 'monster', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null, browser: null });
+const state = {
+  figures: {},
+  serverFigures: [{ id: 'monster', label: 'Flaky Test Monster' }],
+  defaultFigure: 'monster',
+  /** Why each method cannot run here, by id; a missing entry means it can. */
+  unavailable: {},
+  /** The figure last picked for each method, kept while switching between them. */
+  figureChoice: {},
+  worker: null,
+  stream: null,
+  recent: [],
+  showAllRecent: false,
+  ...freshJobState(),
+};
+/** Each opened or started conversion gets a new number, so late answers for an old one are ignored. */
+let runCounter = 0;
 
 /**
  * Reveals one step section with a fade and hides the rest. Moves focus into the new step
@@ -115,6 +176,8 @@ function chooseImage(blob) {
   setPreview(blob);
   stopCamera();
   showStep('confirm');
+  // A method may have been set up (or stopped) since the page loaded.
+  loadAvailability();
 }
 
 /** Error message from a failed API response, which may not be JSON (e.g. a proxy page). */
@@ -127,9 +190,10 @@ async function responseError(res, fallback) {
 async function startJob() {
   $('flakify').disabled = true;
   try {
-    state.pipeline = $('pipeline').value;
+    state.pipeline = selectedModel();
     state.figure = $('figure').value;
     state.name = $('job-name').value.trim();
+    if (state.pipeline === BROWSER_PIPELINE) return runInBrowser();
     const query = new URLSearchParams({ pipeline: state.pipeline, figure: state.figure, name: state.name });
     const res = await fetch(`/api/jobs?${query}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
     if (!res.ok) throw new Error(await responseError(res, 'Upload failed'));
@@ -151,8 +215,8 @@ async function startJob() {
 function openJob(job) {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  const pipeline = job.pipeline in PIPELINE_UI ? job.pipeline : 'tripo';
-  Object.assign(state, { jobId: job.id, pipeline, figure: job.figure, name: job.name ?? '', disposeViewer: null });
+  const pipeline = job.pipeline in PIPELINE_UI && job.pipeline !== BROWSER_PIPELINE ? job.pipeline : 'tripo';
+  Object.assign(state, { jobId: job.id, run: ++runCounter, pipeline, figure: job.figure, name: job.name ?? '', disposeViewer: null });
   history.replaceState(null, '', `#job=${job.id}`);
   stopCamera();
   resetProgress();
@@ -162,10 +226,10 @@ function openJob(job) {
 
 /** Display name of a figure key, falling back to the key for presets that were removed. */
 function figureLabel(figure) {
-  return state.figures[figure] ?? figure;
+  return state.figures[figure] ?? BROWSER_FIGURES.find(({ id }) => id === figure)?.label ?? figure;
 }
 
-/** Fills the figure picker from the server's presets. */
+/** Loads the server's figure presets. Without a server only the built-in monster is known. */
 async function loadFigures() {
   if (NO_BACKEND) return;
   try {
@@ -173,10 +237,90 @@ async function loadFigures() {
     if (!res.ok) throw new Error(`Figures failed (${res.status})`);
     const { figures, default: selected } = await res.json();
     state.figures = Object.fromEntries(figures.map(({ id, label }) => [id, label]));
-    $('figure').replaceChildren(...figures.map(({ id, label }) => new Option(label, id, id === selected, id === selected)));
+    state.serverFigures = figures;
+    state.defaultFigure = selected;
   } catch {
     // Keep the built-in monster option; the server still accepts it.
   }
+}
+
+/**
+ * Finds out which methods can run here: the server reports its own, and the in-browser one
+ * needs Web Workers and WebAssembly. Then draws the method list.
+ */
+async function loadAvailability() {
+  const unavailable = {};
+  const serverModels = MODELS.filter(({ id }) => id !== BROWSER_PIPELINE);
+  if (NO_BACKEND) {
+    for (const { id } of serverModels) unavailable[id] = 'it needs the Flakifier server, which this preview site does not have.';
+  } else {
+    try {
+      const res = await fetch('/api/pipelines');
+      if (!res.ok) throw new Error(`Pipelines failed (${res.status})`);
+      for (const { id, unavailable: reason } of (await res.json()).pipelines) if (reason) unavailable[id] = reason;
+    } catch {
+      for (const { id } of serverModels) unavailable[id] = 'the Flakifier server could not be reached.';
+    }
+  }
+  if (typeof Worker === 'undefined' || typeof WebAssembly === 'undefined') {
+    unavailable[BROWSER_PIPELINE] = 'this browser cannot run the models. Try a current Chrome, Edge, Firefox or Safari.';
+  }
+  state.unavailable = unavailable;
+  renderModels();
+}
+
+/** The method picked in the form, or undefined when none can run. */
+function selectedModel() {
+  return document.querySelector('input[name="model"]:checked')?.value;
+}
+
+/**
+ * Lists the methods as radio buttons with their explanation. Those that cannot run are
+ * disabled and say why. Keeps the current pick when it can still run, else picks the first
+ * that can.
+ */
+function renderModels() {
+  const current = selectedModel();
+  const usable = MODELS.filter(({ id }) => !state.unavailable[id]);
+  const pick = usable.some(({ id }) => id === current) ? current : usable[0]?.id;
+  $('models').replaceChildren(...MODELS.map(({ id, name, description }) => {
+    const reason = state.unavailable[id];
+    const label = document.createElement('label');
+    label.className = 'model';
+    const input = document.createElement('input');
+    Object.assign(input, { type: 'radio', name: 'model', value: id, checked: id === pick, disabled: Boolean(reason) });
+    const title = document.createElement('span');
+    title.className = 'model-name';
+    title.textContent = name;
+    const text = document.createElement('span');
+    text.className = 'model-description';
+    text.textContent = description;
+    label.append(input, title, text);
+    if (reason) {
+      const note = document.createElement('span');
+      note.className = 'model-note';
+      note.textContent = `Not available here: ${reason}`;
+      label.append(note);
+    }
+    return label;
+  }));
+  const none = usable.length === 0;
+  $('flakify-unavailable').hidden = !none;
+  $('flakify').disabled = none;
+  if (none) $('flakify').setAttribute('aria-describedby', 'flakify-unavailable');
+  else $('flakify').removeAttribute('aria-describedby');
+  renderFigures();
+}
+
+/** Fills the figure picker with what the picked method can make, keeping earlier picks. */
+function renderFigures() {
+  const model = selectedModel();
+  const browser = model === BROWSER_PIPELINE;
+  const figures = browser ? BROWSER_FIGURES : state.serverFigures;
+  const wanted = state.figureChoice[browser ? BROWSER_PIPELINE : 'server'] ?? (browser ? figures[0].id : state.defaultFigure);
+  const selected = figures.some(({ id }) => id === wanted) ? wanted : figures[0].id;
+  $('figure').replaceChildren(...figures.map(({ id, label }) => new Option(label, id, id === selected, id === selected)));
+  $('figure').disabled = !model;
 }
 
 /** Formats a job's creation time for the recent list. */
@@ -350,7 +494,11 @@ function resetProgress() {
   const ui = PIPELINE_UI[state.pipeline];
   $('progress-hint').textContent = ui.hint;
   $('progress-hint').hidden = false;
-  for (const li of document.querySelectorAll('#stepper li')) li.classList.remove('done', 'active');
+  const labels = ui.stageLabels ?? STAGE_LABELS;
+  document.querySelectorAll('#stepper li').forEach((li, i) => {
+    li.classList.remove('done', 'active');
+    li.textContent = labels[i];
+  });
 }
 
 /** Shows a one-line error under the stepper. */
@@ -361,8 +509,12 @@ function showError(message) {
   document.querySelector('#stepper li.active')?.classList.remove('active');
 }
 
-/** Lights up the stepper according to which files exist and announces the running stage. */
-function renderStages(stages) {
+/**
+ * Lights up the stepper according to which stages are done and announces the running one.
+ * @param {Record<string, unknown>} stages truthy for each finished stage
+ * @param {string} [imageUrl] figure image to preview, by default the job's from the server
+ */
+function renderStages(stages, imageUrl = stages.image && `/api/jobs/${state.jobId}/${stages.image}`) {
   let nextPending = true;
   for (const li of document.querySelectorAll('#stepper li')) {
     const done = Boolean(stages[li.dataset.stage]);
@@ -374,8 +526,8 @@ function renderStages(stages) {
     }
     if (!done) nextPending = false;
   }
-  if (stages.image && $('image-preview').hidden) {
-    $('image-preview').src = `/api/jobs/${state.jobId}/${stages.image}`;
+  if (imageUrl && $('image-preview').hidden) {
+    $('image-preview').src = imageUrl;
     $('image-preview').hidden = false;
   }
 }
@@ -413,48 +565,173 @@ async function poll() {
   }
 }
 
-/** Shows every stage side by side, fills in download links and loads the 3D viewer. */
-async function showResult(stages) {
-  const { jobId } = state;
-  const file = (name) => `/api/jobs/${jobId}/${name}?download=1`;
-  const view = (name) => `/api/jobs/${jobId}/${name}`;
-  $('dl-stl').href = file('model.stl');
+/** Shows a finished server job: every stage side by side, downloads and the 3D viewer. */
+function showResult(stages) {
+  const file = (name) => `/api/jobs/${state.jobId}/${name}?download=1`;
+  const view = (name) => `/api/jobs/${state.jobId}/${name}`;
   const ui = PIPELINE_UI[state.pipeline];
+  return renderResult({
+    original: view(stages.input),
+    image: view(stages.image),
+    imageLabel: figureLabel(state.figure),
+    viewer: view(ui.viewerFile),
+    // The server names downloaded files itself.
+    downloads: {
+      stl: { href: file('model.stl') },
+      image: { href: file(stages.image), text: 'Download figure image' },
+      model: ui.modelDownload ? { href: file(stages.model), text: ui.modelDownload } : null,
+      original: { href: file(stages.input) },
+    },
+    deletable: true,
+  });
+}
+
+/** Sets a download link, or clears its file name so the server's name applies. */
+function setDownload(link, { href, name = '', text }) {
+  link.href = href;
+  link.download = name;
+  if (text) link.textContent = text;
+}
+
+/**
+ * Shows a finished conversion side by side, fills in the downloads and loads the 3D viewer.
+ * @param {{ original: string, image: string, imageLabel: string, viewer: string, deletable: boolean,
+ *   downloads: Record<'stl' | 'image' | 'original', { href: string, name?: string, text?: string }> &
+ *   { model: { href: string, name?: string, text: string } | null } }} result
+ */
+async function renderResult({ original, image, imageLabel, viewer, downloads, deletable }) {
+  const { run } = state;
   showName($('result-name'), state.name);
-  $('stage-original').src = view(stages.input);
-  $('stage-image').src = view(stages.image);
-  $('stage-image-label').textContent = figureLabel(state.figure);
+  $('stage-original').src = original;
+  $('stage-image').src = image;
+  $('stage-image-label').textContent = imageLabel;
   $('stage-final').removeAttribute('src');
   $('dl-final').hidden = true;
-  $('dl-image').href = file(stages.image);
-  $('dl-model').hidden = !ui.modelDownload;
-  if (ui.modelDownload) {
-    $('dl-model').href = file(stages.model);
-    $('dl-model').textContent = ui.modelDownload;
-  }
-  $('dl-original').href = file(stages.input);
+  setDownload($('dl-stl'), downloads.stl);
+  setDownload($('dl-image'), downloads.image);
+  setDownload($('dl-original'), downloads.original);
+  $('dl-model').hidden = !downloads.model;
+  if (downloads.model) setDownload($('dl-model'), downloads.model);
+  $('delete-job').hidden = !deletable;
   showStep('result');
   try {
-    const { dispose, still } = await mountViewer($('viewer'), view(ui.viewerFile));
-    if (jobId !== state.jobId) return dispose();
+    const { dispose, still } = await mountViewer($('viewer'), viewer);
+    if (run !== state.run) return dispose();
     state.disposeViewer = dispose;
     $('stage-final').src = still;
     $('dl-final').href = still;
     $('dl-final').download = `${fileSlug(state.name)}-final.png`;
     $('dl-final').hidden = false;
   } catch (err) {
-    if (jobId !== state.jobId) return;
+    if (run !== state.run) return;
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
     $('stage-final').alt = 'No render: the 3D model could not be loaded';
   }
+}
+
+/** The model worker, created on first use and kept so the loaded models are reused. */
+function getWorker() {
+  if (!state.worker) {
+    state.worker = new Worker(new URL('./browser-worker.js', import.meta.url), { type: 'module' });
+    state.worker.addEventListener('message', (event) => handleWorkerMessage(event.data));
+    state.worker.addEventListener('error', (event) => {
+      stopWorker();
+      if (state.pipeline === BROWSER_PIPELINE) showError(`The in-browser models could not start: ${event.message || 'worker error'}`);
+    });
+  }
+  return state.worker;
+}
+
+/** Stops the worker, for example to abandon a run; the next run starts a new one. */
+function stopWorker() {
+  state.worker?.terminate();
+  state.worker = null;
+}
+
+/** Runs the in-browser pipeline on the chosen photo; its stages fill the same progress view. */
+function runInBrowser() {
+  clearTimeout(state.pollTimer);
+  state.disposeViewer?.();
+  Object.assign(state, { jobId: null, run: ++runCounter, disposeViewer: null, browser: { done: {}, files: {}, urls: [], downloads: new Map() } });
+  history.replaceState(null, '', location.pathname);
+  stopCamera();
+  resetProgress();
+  showStep('progress');
+  getWorker().postMessage({ blob: state.blob, options: { shape: state.figure } });
+}
+
+/** Object URL for a result of the in-browser run, freed when the run is left. */
+function browserUrl(blob) {
+  const url = URL.createObjectURL(blob);
+  state.browser.urls.push(url);
+  return url;
+}
+
+/** Download progress summed over every model file seen so far. */
+function downloadHint(downloads) {
+  let loaded = 0, total = 0;
+  for (const file of downloads.values()) { loaded += file.loaded; total += file.total; }
+  return `Downloading the models, first run only: ${(loaded / MB).toFixed(0)} of ${(total / MB).toFixed(0)} MB`;
+}
+
+/** Progress, stage results, the end and errors from the in-browser run. */
+function handleWorkerMessage(message) {
+  const run = state.browser;
+  if (state.pipeline !== BROWSER_PIPELINE || !run) return;
+  if (message.type === 'progress') {
+    if (message.stage === 'download') {
+      run.downloads.set(message.file, { loaded: message.loaded ?? 0, total: message.total ?? 0 });
+      $('progress-hint').textContent = downloadHint(run.downloads);
+      return;
+    }
+    if (message.device) run.device = message.device;
+    // The worker reports 'input' once the models are loaded.
+    if (message.stage === 'input') run.done.input = true;
+    renderStages(run.done);
+    if (BROWSER_HINTS[message.stage]) $('progress-hint').textContent = BROWSER_HINTS[message.stage];
+  } else if (message.type === 'stage') {
+    run.files[message.stage] = message.file;
+    run.done[BROWSER_STAGES[message.stage]] = true;
+    renderStages(run.done, message.stage === 'cutout' ? browserUrl(message.file) : undefined);
+  } else if (message.type === 'done') {
+    showBrowserResult();
+  } else if (message.type === 'error') {
+    showError(message.message);
+  }
+}
+
+/** Shows the in-browser result. It lives only in this page, so nothing can be deleted. */
+function showBrowserResult() {
+  const { files } = state.browser;
+  const prefix = `${fileSlug(state.name)}-${state.figure}`;
+  const stl = browserUrl(files.stl);
+  const cutout = browserUrl(files.cutout);
+  return renderResult({
+    original: state.previewUrl,
+    image: cutout,
+    imageLabel: 'Cut-out',
+    viewer: stl,
+    downloads: {
+      stl: { href: stl, name: `${prefix}.stl` },
+      image: { href: cutout, name: `${prefix}-cutout.png`, text: 'Download cut-out' },
+      model: { href: browserUrl(files.depth), name: `${prefix}-depth.png`, text: 'Download depth map' },
+      original: { href: state.previewUrl, name: `${prefix}-photo.png` },
+    },
+    deletable: false,
+  });
 }
 
 /** Returns to the first step and clears everything. */
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
+  if (state.browser) {
+    // A run still going would keep the worker busy; a new worker loads the cached models.
+    if (!state.browser.files.stl) stopWorker();
+    state.browser.urls.forEach((url) => URL.revokeObjectURL(url));
+  }
   setPreview(null);
-  Object.assign(state, freshJobState());
+  Object.assign(state, freshJobState(), { run: ++runCounter });
   history.replaceState(null, '', location.pathname);
   $('job-name').value = '';
   showStep('source');
@@ -491,17 +768,20 @@ $('delete-job').addEventListener('click', async () => {
 });
 $('recent-more').addEventListener('click', () => { state.showAllRecent = true; renderRecent(); });
 
-/** Disables what needs the server and says so; the photo can still be downloaded instead. */
-function disableBackendFeatures() {
+$('models').addEventListener('change', renderFigures);
+$('figure').addEventListener('change', () => {
+  state.figureChoice[selectedModel() === BROWSER_PIPELINE ? BROWSER_PIPELINE : 'server'] = $('figure').value;
+});
+
+/** Says what needs the server; the photo can also be downloaded to flakify it elsewhere. */
+function showNoBackendNotice() {
   $('no-backend-notice').hidden = false;
-  $('flakify-unavailable').hidden = false;
   $('dl-photo').hidden = false;
-  for (const id of ['job-name', 'figure', 'pipeline', 'flakify']) $(id).disabled = true;
-  $('flakify').setAttribute('aria-describedby', 'flakify-unavailable');
 }
 
-if (NO_BACKEND) disableBackendFeatures();
+if (NO_BACKEND) showNoBackendNotice();
 await loadFigures();
+await loadAvailability();
 if (!(await restoreFromUrl())) {
   showStep('source', { focus: false });
   startCamera();

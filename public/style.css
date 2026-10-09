@@ -121,13 +121,6 @@ body {
   font-size: 0.8125rem;
 }
 
-.title-note { font-weight: 400; color: var(--muted); }
-.switch-link { margin-top: 24px; }
-.switch-link a { color: var(--accent); }
-/* In-browser page: drop target and the file input hidden inside its button. */
-.card.is-dragover { border-color: var(--accent); }
-.btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-
 .arrow { color: var(--muted); }
 
 .tag {
@@ -539,8 +532,6 @@ body {
 .actions { justify-content: flex-end; align-items: center; }
 
 /* Step 2: form fields, labelled like flags */
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-
 .field {
   display: flex;
   flex-direction: column;
@@ -550,7 +541,6 @@ body {
   font-size: 0.8125rem;
   color: var(--muted);
 }
-.choices .field { margin-top: 0; }
 .field > span:first-child::before { content: "--"; content: "--" / ""; color: var(--accent); }
 .field .optional::before { content: "("; }
 .field .optional::after { content: ")"; }
@@ -566,6 +556,32 @@ body {
   border-radius: var(--radius);
 }
 .field input::placeholder { color: var(--muted); opacity: 1; }
+
+/* How to make the figure: one card per method, the ones that cannot run here greyed out. */
+.models { margin-inline: 0; padding: 0; border: 0; }
+.models legend { padding: 0; margin-bottom: 6px; }
+.models legend::before { content: "--"; content: "--" / ""; color: var(--accent); }
+.model-list { display: grid; gap: 8px; }
+.model {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.model:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.model:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.model:has(input:disabled) { cursor: default; background: transparent; }
+.model:has(input:disabled) .model-name { color: var(--muted); }
+.model input { grid-row: span 3; align-self: start; margin: 3px 0 0; accent-color: var(--accent); }
+.model-name { font-size: 0.9375rem; font-weight: 700; }
+.model-description, .model-note { font-size: 0.8125rem; color: var(--muted); }
+.model-note { color: var(--fg); }
+.model-note::before { content: "✗ "; content: "✗ " / ""; color: var(--danger); }
 .field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
 
 .result-name { font-size: 1.25rem; margin: 0 0 20px; overflow-wrap: anywhere; }
@@ -695,6 +711,5 @@ body {
   .masthead { gap: 14px; margin-bottom: 32px; }
   .mascot { width: 56px; height: 56px; }
   .stages { grid-template-columns: 1fr; }
-  .choices { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }
 }

@@ -2,8 +2,8 @@
 # Builds the static frontend into _site for GitHub Pages. Pages serves the site under a
 # sub-path (/flakifier/, /flakifier/pr-preview/pr-N/), which is why index.html links its
 # assets relatively. There is no backend there, so the page is marked data-backend="none":
-# the camera, the monster scan and the in-browser pipeline (public/browser.html) work, and
-# what needs `npm start` is disabled.
+# the camera, the monster scan and the in-browser 3D method work, and what needs
+# `npm start` is disabled.
 # JS, CSS and HTML are minified with pinned tools fetched by npx; the app itself keeps no
 # npm dependencies, and the Node server still serves public/ unminified.
 set -euo pipefail
@@ -23,7 +23,4 @@ sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html
   | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
     --minify-css true > _site/index.html
 grep -q 'data-backend="none"' _site/index.html
-# The in-browser pipeline needs no backend, so it runs on Pages as is.
-npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-  --minify-css true public/browser.html > _site/public/browser.html
 touch _site/.nojekyll

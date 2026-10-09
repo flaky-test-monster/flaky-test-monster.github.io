@@ -50,6 +50,9 @@ class HttpError extends Error {
   }
 }
 
+/** Service behind each API key, for the reasons shown on the form. */
+const API_KEY_SERVICES = { OPENAI_API_KEY: 'OpenAI', TRIPO_API_KEY: 'Tripo3D' };
+
 /**
  * Returns an availability check that reports env variables which are not set.
  * @param {string[]} keys
@@ -57,7 +60,9 @@ class HttpError extends Error {
  */
 const requireEnv = (keys) => async () => {
   const missing = keys.filter((key) => !process.env[key]);
-  return missing.length > 0 ? `This pipeline needs ${missing.join(', ')} in .env` : null;
+  if (missing.length === 0) return null;
+  const services = missing.map((key) => API_KEY_SERVICES[key] ?? key).join(' and ');
+  return `the ${services} ${missing.length > 1 ? 'keys are' : 'key is'} not set up on the server (${missing.join(', ')} in .env).`;
 };
 
 /**
@@ -242,12 +247,6 @@ async function serveIndex(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'index.html'), STATIC_TYPES['.html']);
 }
 
-/** GET /browser: the in-browser pipeline page, which loads its files relative to /public/ */
-async function redirectBrowser(req, res) {
-  res.writeHead(302, { Location: '/public/browser.html' });
-  res.end();
-}
-
 /** GET /public/* */
 async function serveStatic(req, res, url, [, relative]) {
   const filePath = path.resolve(PUBLIC_DIR, relative);
@@ -267,7 +266,7 @@ async function createJobRoute(req, res, url) {
   const figure = url.searchParams.get('figure') || (requested === 'lego' ? 'lego' : DEFAULT_FIGURE);
   if (!Object.hasOwn(FIGURES, figure)) throw new HttpError(400, `Unknown figure: ${figure}`);
   const reason = await PIPELINES[pipeline].unavailable();
-  if (reason) throw new HttpError(400, reason);
+  if (reason) throw new HttpError(400, `This way of making a figure is not available: ${reason}`);
   const input = await readBody(req);
   const id = await createJob(input, extension, pipeline, figure, cleanName(url.searchParams.get('name')));
   sendJson(res, 202, { id });
@@ -289,6 +288,15 @@ async function readPhoto(req) {
 async function createPhotoRoute(req, res) {
   const id = await createJob(await readPhoto(req), 'png', PHOTO_PIPELINE, DEFAULT_FIGURE, PHOTO_NAME);
   sendJson(res, 201, { id });
+}
+
+/**
+ * GET /api/pipelines: which server-side 3D methods can run right now, and why not. The page
+ * disables the ones that cannot; the in-browser method is not listed, it needs no server.
+ */
+async function listPipelinesRoute(req, res) {
+  const pipelines = await Promise.all(Object.entries(PIPELINES).map(async ([id, pipeline]) => ({ id, unavailable: await pipeline.unavailable() })));
+  sendJson(res, 200, { pipelines });
 }
 
 /** GET /api/figures: the figure presets the page offers, without their prompts. */
@@ -328,9 +336,9 @@ async function jobFileRoute(req, res, url, [, id, name]) {
 
 const ROUTES = [
   { pattern: /^\/$/, handlers: { GET: serveIndex } },
-  { pattern: /^\/browser\/?$/, handlers: { GET: redirectBrowser } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },
   { pattern: /^\/api\/figures$/, handlers: { GET: listFiguresRoute } },
+  { pattern: /^\/api\/pipelines$/, handlers: { GET: listPipelinesRoute } },
   { pattern: /^\/api\/jobs$/, handlers: { GET: listJobsRoute, POST: createJobRoute } },
   { pattern: /^\/api\/jobs\/([^/]+)$/, handlers: { GET: jobStatusRoute, DELETE: deleteJobRoute } },
   { pattern: /^\/api\/jobs\/([^/]+)\/([^/]+)$/, handlers: { GET: jobFileRoute } },

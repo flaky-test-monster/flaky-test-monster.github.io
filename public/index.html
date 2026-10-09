@@ -29,7 +29,7 @@
         </div>
       </a>
     </header>
-    <p id="no-backend-notice" class="notice" hidden>Browser-only preview: the camera and monster scan work, while flakifying and recent runs need the <a href="https://github.com/kertal/flakifier#install">Flakifier server</a>.</p>
+    <p id="no-backend-notice" class="notice" hidden>Browser-only preview: the camera, the monster scan and the in-browser figures work. The other ways to make a figure, and recent runs, need the <a href="https://github.com/kertal/flakifier#install">Flakifier server</a>.</p>
 
     <main>
     <section id="step-source" class="step" data-step="source" aria-label="Choose a photo" tabindex="-1">
@@ -83,7 +83,6 @@
         <ul id="recent-list" class="recent-list"></ul>
         <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
       </div>
-      <p class="hint switch-link">No API keys or Mac? Make a 3D relief <a class="link" href="public/browser.html">entirely in your browser</a> with free models.</p>
     </section>
 
     <section id="step-confirm" class="step" data-step="confirm" aria-label="Check the photo and settings" tabindex="-1" hidden>
@@ -92,23 +91,15 @@
         <span>name <span class="optional">optional</span></span>
         <input type="text" id="job-name" maxlength="60" autocomplete="off" placeholder="e.g. Grandpa's birthday figure">
       </label>
-      <div class="choices">
-        <label class="field">
-          <span>figure</span>
-          <select id="figure">
-            <option value="monster" selected>Flaky Test Monster</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>3d model</span>
-          <select id="pipeline">
-            <option value="tripo" selected>Tripo3D (OpenAI + Tripo3D)</option>
-            <option value="shapes">Simple shapes (OpenAI only)</option>
-            <option value="local">Local, on this Mac</option>
-          </select>
-        </label>
-      </div>
-      <p id="flakify-unavailable" class="hint" hidden>Flakify needs the Flakifier server, which this preview runs without. Download the photo to flakify it there.</p>
+      <fieldset class="field models">
+        <legend>how to make it</legend>
+        <div id="models" class="model-list"></div>
+      </fieldset>
+      <label class="field">
+        <span>figure</span>
+        <select id="figure"></select>
+      </label>
+      <p id="flakify-unavailable" class="hint" hidden>None of the ways to make a figure can run here. Download the photo and flakify it with the Flakifier server.</p>
       <div class="actions">
         <button type="button" id="retake" class="btn">Choose another</button>
         <a id="dl-photo" class="btn" download="flakifier-photo.png" hidden>Download photo</a>

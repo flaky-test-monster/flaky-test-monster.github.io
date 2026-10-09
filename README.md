@@ -6,10 +6,13 @@ itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
 database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
 entirely on your Mac.
 
-Before clicking **Flakify**, pick a **Figure** (what the photo turns into) and a
-**3D model** method (how that image becomes a 3D model). Any figure works with any method.
+Before clicking **Flakify**, pick **how to make it** (the 3D method, each explained in
+plain words on the form) and then a **figure** (what the photo turns into). Methods that
+cannot run here are greyed out with the reason, for example a missing API key or no server
+on the GitHub Pages preview. The figure list depends on the method: the server methods offer
+the figures below, the in-browser method offers its relief shapes.
 
-Figures, defined with their prompts in `lib/figures.js`:
+Figures for the server methods, defined with their prompts in `lib/figures.js`:
 
 - **Marble bust**
 - **LEGO minifigure**
@@ -31,11 +34,16 @@ uses only the photo, because FLUX.1 Kontext takes a single image.
   `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
   [Local pipeline](#local-pipeline-apple-silicon).
 
-There is also a separate **in-browser pipeline** at <http://localhost:3000/browser>: photo →
-background removal → depth map → relief STL, with free open models that the browser
-downloads and runs itself. No API keys, no install and no GPU server; the photo never
-leaves the device. It makes a 3D relief rather than a full statue, and does not use the
-figure presets. See [In-browser pipeline](#in-browser-pipeline).
+- **Free and private, in this browser:** photo → background removal → depth map → relief
+  STL, with free open models that the browser downloads and runs itself. No API keys, no
+  install and no GPU server; the photo never leaves the device. It makes a 3D relief
+  (smooth, rounded or LEGO-style bricks) rather than a full statue. See
+  [In-browser pipeline](#in-browser-pipeline).
+
+The form lists them as *Best quality, in the cloud* (Tripo3D), *Chunky toy look, in the
+cloud* (simple shapes), *Private, on the Flakifier Mac* (local) and *Free and private, in
+this browser*, and picks the first one that can run. `GET /api/pipelines` tells the page
+which server methods are set up.
 
 OpenAI has no image-to-3D API, so with simple shapes the GPT model doesn't return a
 mesh directly. It looks at the figure image and describes the figure as 20 to 100
@@ -109,8 +117,8 @@ This starts the local 3D server in the background when the local pipeline is ins
 stops both. A 3D server you already started yourself is reused and left running.
 `node server.js` still works when you only use the cloud pipelines.
 
-Open <http://localhost:3000>. Take a photo or drop a PNG/JPG (max 10 MB), choose a figure
-and a 3D method, and click **Flakify**. The stepper lights up as each stage finishes, the styled image
+Open <http://localhost:3000>. Take a photo, choose how to make it and a figure, and click
+**Flakify**. The stepper lights up as each stage finishes, the styled image
 appears as soon as it is ready, and the final screen shows the model in a rotating 3D
 viewer with download buttons for the STL, the styled image and the original photo, plus
 the GLB from Tripo3D or the local pipeline.
@@ -214,10 +222,11 @@ Flakifier.
 
 ## In-browser pipeline
 
-Open <http://localhost:3000/browser> (or the **entirely in your browser** link on the start
-screen). Everything runs in a Web Worker in the page; the server only hands out the files.
-`public/` has no server dependency, so the page also works from any static host: the
-[GitHub Pages build](#github-pages-and-pr-previews) publishes it at `public/browser.html`.
+Pick **Free and private, in this browser** on the form. Everything runs in a Web Worker in
+the page (`public/browser-worker.js`); the server only hands out the files, so this method
+also works on the [GitHub Pages build](#github-pages-and-pr-previews), which has no server.
+The progress steps read Models, Cut-out, Depth and STL, and the result shows the cut-out in
+place of the figure image, with the depth map as an extra download.
 
 | Step | Model | Licence | Download |
 |---|---|---|---|
@@ -232,26 +241,26 @@ runs work without downloading again. WebGPU is used when the browser offers it (
 Chrome and Edge); otherwise the models run on the CPU through WebAssembly, which is slower
 but works everywhere.
 
-How the smooth STL is built: the cut-out's outline becomes a grid of square cells (the **Detail**
-setting picks 100, 160 or 240 cells across the subject). Each cell gets a front face raised
+How the smooth STL is built: the cut-out's outline becomes a grid of square cells, 160
+across the subject. Each cell gets a front face raised
 by the depth map plus a dome that rounds the outline, a back face, and side walls along the
 outline, so the mesh is closed and watertight. Only the largest connected piece of the
 subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the front.
 
-- **Relief, flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
+- **Relief with a flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
   and it prints without supports.
 - **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
   cropped at the shoulders gives it a flat bottom to stand on.
 - **LEGO-style bricks:** the same relief built from bricks. Each grid point inside the
   outline becomes a stud-wide column, as thick as the relief there rounded to whole plates
-  (LEGO proportions: a plate is 0.4 of the stud pitch), with a stud on its front. **Detail**
-  sets 20, 32 or 48 studs across the subject. Flat back, so it prints lying down with the
+  (LEGO proportions: a plate is 0.4 of the stud pitch), with a stud on its front, 32 studs
+  across the subject. Flat back, so it prints lying down with the
   studs up. The columns form one closed mesh; each stud is its own closed shell sunk
   slightly into its column, which slicers merge when slicing. It is a printed look-alike,
   not a buildable LEGO set.
 
-Results stay in the page: they are not listed under recent conversions and are gone after
-a reload, so download what you want to keep. Depth from a single photo is an estimate:
+Results stay in the page: they are not listed under recent runs and are gone after a
+reload or **Start over**, so download what you want to keep. Depth from a single photo is an estimate:
 faces come out recognisable but flattened, and the back of a rounded figure is invented.
 
 ## GitHub Pages and PR previews
@@ -260,10 +269,9 @@ The frontend is published as a static site on GitHub Pages, so changes to the UI
 tried without installing anything. Pages has no backend, so the build marks the page with
 `data-backend="none"` and the app runs browser-only: the camera and the
 [monster scan](#monster-scan) work, a taken photo can be downloaded, and a notice says
-that the rest needs the Node server (`npm start`). Flakify, the figure and 3D model
-pickers, and saving scan photos are disabled; the recent runs are hidden. The
-[in-browser pipeline](#in-browser-pipeline) works in full at `public/browser.html`, linked
-from the start page.
+that the rest needs the Node server (`npm start`). Flakify works with the
+[in-browser method](#in-browser-pipeline); the server methods are greyed out on the form,
+saving scan photos is disabled and the recent runs are hidden.
 
 - `.github/workflows/pages.yml` deploys `main` to the `gh-pages` branch.
 - `.github/workflows/pr-preview.yml` deploys each pull request to
