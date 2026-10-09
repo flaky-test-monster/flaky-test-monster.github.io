@@ -95,9 +95,8 @@ export function trackFaces(previous, faces, aspect) {
 /**
  * Verdict for a score.
  * @param {number} score
- * @returns {{ key: 'human' | 'suspicious' | 'monster', label: string }}
+ * @returns {{ min: number, key: 'human' | 'suspicious' | 'monster', label: string }}
  */
 export function verdict(score) {
-  const { key, label } = VERDICTS.find(({ min }) => score >= min) ?? VERDICTS.at(-1);
-  return { key, label };
+  return VERDICTS.find(({ min }) => score >= min);
 }

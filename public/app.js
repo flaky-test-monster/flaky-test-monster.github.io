@@ -1,4 +1,4 @@
-import { isMonsterScanning, startMonsterScan, stopMonsterScan } from './monster-scan.js';
+import { stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -409,10 +409,7 @@ $('take-photo').addEventListener('click', async () => {
   chooseImage(await captureFrame());
   $('take-photo').disabled = false;
 });
-$('scan-toggle').addEventListener('click', () => {
-  if (isMonsterScanning()) stopMonsterScan();
-  else startMonsterScan($('video'));
-});
+$('scan-toggle').addEventListener('click', () => toggleMonsterScan($('video')));
 $('file-input').addEventListener('change', (event) => chooseImage(event.target.files[0]));
 const uploadCard = $('upload-card');
 uploadCard.addEventListener('dragover', (event) => { event.preventDefault(); uploadCard.classList.add('is-dragover'); });

@@ -7,6 +7,7 @@ const POSTER_FROM = 40;
 
 /** Bumped on every start and stop, so a scan loop can tell it has been replaced. */
 let runId = 0;
+let scanning = false;
 let score = null;
 /** @type {import('./monster-score.js').TrackedFace[]} */
 let faces = [];
@@ -115,8 +116,9 @@ function failScan(err) {
  * Starts scanning the webcam video, loading the face tracker on first use.
  * @param {HTMLVideoElement} video
  */
-export async function startMonsterScan(video) {
+async function startMonsterScan(video) {
   const id = ++runId;
+  scanning = true;
   score = null;
   faces = [];
   monsterCount = 0;
@@ -144,12 +146,17 @@ export async function startMonsterScan(video) {
 /** Stops scanning; the last result stays on screen but the webcam goes back to normal. */
 export function stopMonsterScan() {
   runId += 1;
+  scanning = false;
   setCameraLook(null);
   drawFaces($('video'), []);
   setRunning(false);
 }
 
-/** Whether a scan is running. */
-export function isMonsterScanning() {
-  return $('scan-toggle').getAttribute('aria-pressed') === 'true';
+/**
+ * Starts a scan of the webcam video, or stops the one that is running.
+ * @param {HTMLVideoElement} video
+ */
+export function toggleMonsterScan(video) {
+  if (scanning) stopMonsterScan();
+  else startMonsterScan(video);
 }
