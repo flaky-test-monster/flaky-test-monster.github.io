@@ -62,7 +62,9 @@ body {
 ::selection { background: var(--accent); color: var(--accent-fg); }
 
 .app {
-  max-width: 680px;
+  /* Wide enough that the 4:3 camera preview fills the screen height on larger screens:
+     ~340px of masthead, lead and buttons around it, ~172px of padding and photo strip beside it. */
+  max-width: clamp(680px, (100svh - 340px) * 4 / 3 + 172px, 1280px);
   margin: 0 auto;
   padding: 56px 24px 64px;
 }
@@ -603,7 +605,7 @@ body {
 .preview {
   display: block;
   width: 100%;
-  max-height: 480px;
+  max-height: max(480px, 100svh - 320px);
   object-fit: contain;
   border-radius: var(--radius);
   background: var(--surface);
