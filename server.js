@@ -19,6 +19,9 @@ const DEFAULT_PIPELINE = 'tripo';
 /** Old combined style names, still accepted from older pages and scripts. */
 const LEGACY_PIPELINES = { marble: 'tripo', lego: 'shapes' };
 const INPUT_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg' };
+/** Pipeline of a run that only holds a monster scan photo and never converts it. */
+const PHOTO_PIPELINE = 'photo';
+const PHOTO_NAME = 'Monster photo';
 const STATIC_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -265,6 +268,23 @@ async function createJobRoute(req, res, url) {
   runPipeline(id, pipeline, figure, input, mimeType).catch((err) => console.error(`[${id}] Unhandled pipeline error:`, err));
 }
 
+/**
+ * Reads a monster scan photo from the request, which must be a PNG.
+ * @param {import('node:http').IncomingMessage} req
+ * @returns {Promise<Buffer>}
+ */
+async function readPhoto(req) {
+  const mimeType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+  if (mimeType !== 'image/png') throw new HttpError(415, 'Send the photo as image/png');
+  return readBody(req);
+}
+
+/** POST /api/photos: stores a monster scan photo as a run of its own, without converting it. */
+async function createPhotoRoute(req, res) {
+  const id = await createJob(await readPhoto(req), 'png', PHOTO_PIPELINE, DEFAULT_FIGURE, PHOTO_NAME);
+  sendJson(res, 201, { id });
+}
+
 /** GET /api/figures: the figure presets the page offers, without their prompts. */
 async function listFiguresRoute(req, res) {
   sendJson(res, 200, { figures: Object.entries(FIGURES).map(([id, { label }]) => ({ id, label })), default: DEFAULT_FIGURE });
@@ -307,6 +327,7 @@ const ROUTES = [
   { pattern: /^\/api\/jobs$/, handlers: { GET: listJobsRoute, POST: createJobRoute } },
   { pattern: /^\/api\/jobs\/([^/]+)$/, handlers: { GET: jobStatusRoute, DELETE: deleteJobRoute } },
   { pattern: /^\/api\/jobs\/([^/]+)\/([^/]+)$/, handlers: { GET: jobFileRoute } },
+  { pattern: /^\/api\/photos$/, handlers: { POST: createPhotoRoute } },
 ];
 
 /**

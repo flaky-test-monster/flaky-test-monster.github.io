@@ -1,6 +1,6 @@
 # Flakifier
 
-Turn a webcam photo or an uploaded portrait into a 3D-printable STL figure: the Flaky
+Turn a webcam photo into a 3D-printable STL figure: the Flaky
 Test Monster in one of three looks, a marble bust, or a LEGO-style minifigure. The app
 itself is plain Node and vanilla JavaScript: no npm dependencies, no bundler, no
 database. The models run in the cloud (OpenAI, Tripo3D) or, with the local pipeline,
@@ -116,6 +116,34 @@ and local) or `model.json` (simple shapes, the shape list the model returned), t
 `lego.png` instead of `figure.png` and still open. Past runs are listed on the start
 screen, where you can reopen or delete them.
 
+## Monster scan
+
+The **Monster scan** button on the camera card tracks your face in the live webcam video
+and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
+uploaded and no API key is needed.
+
+The score is all in the mouth: closed is 0, wide open is 100. Up to four faces are
+tracked at once, each with its own score; the meter shows the highest and a tracker below
+it counts how many faces in view are monsters. Openness is the gap between the lips
+over the width of the mouth, so it does not matter how close you sit to the camera (see
+`public/monster-score.js`). Below 40 is human, 60 and up is a monster, in between is
+suspicious. Each frame is blended with the previous score so the meter does not jitter.
+
+As the score climbs the preview turns into a high-contrast poster. Once you are a monster
+it goes green, and every monster face gets white eyes with small black pupils and a red
+tongue in its open mouth. Only the preview changes; **Take photo** mid-scan still gives
+you the plain photo.
+
+When the score hits 100 the scan takes a **monster photo** of the preview, effects and
+all, with a white flash and a shutter click. While the score stays at 100 it takes another
+every 5 seconds, and the scan panel keeps the last 6 to choose from. Pick one to download
+it or save it to **Recent runs** as a "Monster photo" run, which holds only the photo and
+costs nothing; open that run to flakify the photo. Saving goes through `POST /api/photos`.
+
+Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
+(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage on
+the first scan (a few MB, then cached by the browser).
+
 ## Local pipeline (Apple Silicon)
 
 Runs the whole pipeline on your Mac with two open models, for every figure preset. Tested
@@ -173,8 +201,9 @@ Flakifier.
 ## Notes
 
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
-  `getUserMedia` on plain `http://` for any other host. If camera permission is denied,
-  the camera card is hidden and you can still upload an image.
+  `getUserMedia` on plain `http://` for any other host. If camera permission is denied
+  or there is no camera, the camera card says so and its buttons are disabled; allow the
+  camera and reload.
 - **Run time is about 1 to 4 minutes.** The OpenAI image edit takes 20 to 60 seconds.
   The Tripo3D method then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
   server polls Tripo3D every 3 seconds and gives up after 10 minutes. The simple-shapes
