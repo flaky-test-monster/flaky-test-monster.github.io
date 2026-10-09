@@ -7,8 +7,8 @@
   <meta name="description" content="Turn a photo of yourself into a 3D-printable Flaky Test Monster.">
   <meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0e100d" media="(prefers-color-scheme: dark)">
-  <link rel="icon" type="image/jpeg" href="/public/monster.jpg">
-  <link rel="stylesheet" href="/public/style.css">
+  <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/style.css">
   <script type="importmap">
     {
       "imports": {
@@ -21,14 +21,15 @@
 <body>
   <div class="app">
     <header>
-      <a class="masthead" id="home-link" href="/" aria-label="flakifier: back to the start">
-        <img class="mascot" src="/public/monster.jpg" width="72" height="72" alt="">
+      <a class="masthead" id="home-link" href="./" aria-label="flakifier: back to the start">
+        <img class="mascot" src="public/monster.jpg" width="72" height="72" alt="">
         <div class="masthead-text">
           <h1 class="title">flakifier</h1>
           <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
         </div>
       </a>
     </header>
+    <p id="no-backend-notice" class="notice" hidden>Browser-only preview: the camera and monster scan work, while flakifying and recent runs need the <a href="https://github.com/kertal/flakifier#install">Flakifier server</a>.</p>
 
     <main>
     <section id="step-source" class="step" data-step="source" aria-label="Choose a photo" tabindex="-1">
@@ -43,7 +44,7 @@
             <p class="camera-score-value"><span id="camera-score-value">--</span><span class="camera-score-max">/100</span></p>
             <p class="camera-score-meta"><span id="camera-score-verdict"></span> · <span id="camera-score-monsters"></span></p>
           </div>
-          <div class="camera-logo" aria-hidden="true"><img src="/public/monster.jpg" alt="" width="40" height="40"><span>flakifier</span></div>
+          <div class="camera-logo" aria-hidden="true"><img src="public/monster.jpg" alt="" width="40" height="40"><span>flakifier</span></div>
           <button type="button" id="fullscreen-toggle" class="camera-fullscreen" aria-pressed="false" aria-label="Full screen" hidden>
             <svg class="icon-enter" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <svg class="icon-exit" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -106,8 +107,10 @@
           </select>
         </label>
       </div>
+      <p id="flakify-unavailable" class="hint" hidden>Flakify needs the Flakifier server, which this preview runs without. Download the photo to flakify it there.</p>
       <div class="actions">
         <button type="button" id="retake" class="btn">Choose another</button>
+        <a id="dl-photo" class="btn" download="flakifier-photo.png" hidden>Download photo</a>
         <button type="button" id="flakify" class="btn btn-primary btn-next">Flakify</button>
       </div>
     </section>
@@ -168,6 +171,6 @@
       <span>retries: 3</span>
     </footer>
   </div>
-  <script type="module" src="/public/app.js"></script>
+  <script type="module" src="public/app.js"></script>
 </body>
 </html>

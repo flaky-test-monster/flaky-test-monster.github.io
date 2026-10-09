@@ -32,8 +32,9 @@ let selectedPhoto = null;
 /** Made on the click that starts a scan, since browsers only allow sound after a user gesture. */
 let audio = null;
 /**
- * Saves the photo the user picked to the recent runs; resolves to whether it worked.
- * @type {(photo: Blob) => Promise<boolean>}
+ * Saves the photo the user picked to the recent runs; resolves to whether it worked. Null
+ * when there is no server to save to.
+ * @type {((photo: Blob) => Promise<boolean>) | null}
  */
 let savePhoto = async () => false;
 
@@ -184,7 +185,8 @@ function renderPhotos() {
   $('scan-photo-img').alt = `Monster photo taken at ${time(selectedPhoto)}, with the monster look`;
   $('scan-photo-download').href = selectedPhoto.url;
   // Also off while a save is on its way, so a redraw in the meantime cannot allow a second save.
-  $('scan-photo-keep').disabled = selectedPhoto.saving || selectedPhoto.saved;
+  $('scan-photo-keep').disabled = !savePhoto || selectedPhoto.saving || selectedPhoto.saved;
+  $('scan-photo-keep').title = savePhoto ? '' : 'Saving needs the Flakifier server';
   $('scan-photo-keep').textContent = selectedPhoto.saved ? 'Saved to recent runs' : 'Save to recent runs';
   $('scan-photo-strip').replaceChildren(...photos.map((photo, i) => {
     const button = document.createElement('button');
@@ -209,7 +211,7 @@ function renderPhotos() {
 /** Saves the selected photo to the recent runs, once. */
 async function keepSelectedPhoto() {
   const photo = selectedPhoto;
-  if (!photo || photo.saving || photo.saved) return;
+  if (!photo || !savePhoto || photo.saving || photo.saved) return;
   photo.saving = true;
   renderPhotos();
   photo.saved = await savePhoto(photo.blob);
@@ -312,7 +314,8 @@ export function toggleMonsterScan(video) {
 
 /**
  * Sets how a photo the user picks is saved to the recent runs.
- * @param {(photo: Blob) => Promise<boolean>} saver gets a PNG, resolves to whether it was saved
+ * @param {((photo: Blob) => Promise<boolean>) | null} saver gets a PNG, resolves to whether it
+ *   was saved; null disables saving
  */
 export function onSaveMonsterPhoto(saver) {
   savePhoto = saver;
