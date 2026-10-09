@@ -14,8 +14,12 @@ env.allowLocalModels = false;
 /** @type {Promise<{ cutout: Function, depth: Function, device: string }> | null} */
 let modelsPromise = null;
 
+/** Number of the run being worked on, sent back with every message so the page can drop stale ones. */
+let currentRun = null;
+/** Posts a message to the page, tagged with the current run. */
+const send = (message) => postMessage({ ...message, run: currentRun });
 /** Posts a progress message to the page. */
-const report = (message) => postMessage({ type: 'progress', ...message });
+const report = (message) => send({ type: 'progress', ...message });
 
 /**
  * Creates one pipeline on WebGPU when available, falling back to WebAssembly (CPU).
@@ -92,24 +96,26 @@ async function run({ blob, options }) {
   const alpha = new Uint8Array(photo.width * photo.height);
   for (let p = 0; p < alpha.length; p++) alpha[p] = rgba[p * 4 + 3];
   const cutoutPng = await rgbaToPng(rgba, photo.width, photo.height);
-  postMessage({ type: 'stage', stage: 'cutout', file: cutoutPng });
+  send({ type: 'stage', stage: 'cutout', file: cutoutPng });
 
   report({ stage: 'depth' });
   const { predicted_depth } = await models.depth(photo.canvas);
   const depth = Float32Array.from(predicted_depth.data);
+  if (depth.length !== photo.width * photo.height) throw new Error('The depth map does not match the photo size');
   const depthPng = await depthToPng(depth, alpha, photo.width, photo.height);
-  postMessage({ type: 'stage', stage: 'depth', file: depthPng });
+  send({ type: 'stage', stage: 'depth', file: depthPng });
 
   report({ stage: 'stl' });
   const { stl, triangles } = reliefToStl({ width: photo.width, height: photo.height, alpha, depth }, options);
-  postMessage({ type: 'stage', stage: 'stl', file: new Blob([stl], { type: 'model/stl' }), triangles });
+  send({ type: 'stage', stage: 'stl', file: new Blob([stl], { type: 'model/stl' }), triangles });
 }
 
 self.addEventListener('message', async (event) => {
+  currentRun = event.data.run;
   try {
     await run(event.data);
-    postMessage({ type: 'done' });
+    send({ type: 'done' });
   } catch (err) {
-    postMessage({ type: 'error', message: err?.message ?? String(err) });
+    send({ type: 'error', message: err?.message ?? String(err) });
   }
 });

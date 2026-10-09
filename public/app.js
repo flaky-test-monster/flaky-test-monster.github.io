@@ -76,6 +76,8 @@ const state = {
   defaultFigure: 'monster',
   /** Why each method cannot run here, by id; a missing entry means it can. */
   unavailable: {},
+  /** True while Flakify is creating a job. */
+  starting: false,
   /** The figure last picked for each method, kept while switching between them. */
   figureChoice: {},
   worker: null,
@@ -86,6 +88,8 @@ const state = {
 };
 /** Each opened or started conversion gets a new number, so late answers for an old one are ignored. */
 let runCounter = 0;
+/** Numbers availability checks, so an older answer that arrives late does not win. */
+let availabilityCheck = 0;
 
 /**
  * Reveals one step section with a fade and hides the rest. Moves focus into the new step
@@ -188,6 +192,7 @@ async function responseError(res, fallback) {
 
 /** Uploads the image, creates a job and starts polling. */
 async function startJob() {
+  state.starting = true;
   $('flakify').disabled = true;
   try {
     state.pipeline = selectedModel();
@@ -203,7 +208,8 @@ async function startJob() {
     showStep('progress');
     showError(err.message);
   } finally {
-    $('flakify').disabled = false;
+    state.starting = false;
+    $('flakify').disabled = !selectedModel();
   }
 }
 
@@ -215,6 +221,7 @@ async function startJob() {
 function openJob(job) {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
+  leaveBrowserRun();
   const pipeline = job.pipeline in PIPELINE_UI && job.pipeline !== BROWSER_PIPELINE ? job.pipeline : 'tripo';
   Object.assign(state, { jobId: job.id, run: ++runCounter, pipeline, figure: job.figure, name: job.name ?? '', disposeViewer: null });
   history.replaceState(null, '', `#job=${job.id}`);
@@ -249,6 +256,7 @@ async function loadFigures() {
  * needs Web Workers and WebAssembly. Then draws the method list.
  */
 async function loadAvailability() {
+  const check = ++availabilityCheck;
   const unavailable = {};
   const serverModels = MODELS.filter(({ id }) => id !== BROWSER_PIPELINE);
   if (NO_BACKEND) {
@@ -265,6 +273,7 @@ async function loadAvailability() {
   if (typeof Worker === 'undefined' || typeof WebAssembly === 'undefined') {
     unavailable[BROWSER_PIPELINE] = 'this browser cannot run the models. Try a current Chrome, Edge, Firefox or Safari.';
   }
+  if (check !== availabilityCheck) return;
   state.unavailable = unavailable;
   renderModels();
 }
@@ -306,7 +315,8 @@ function renderModels() {
   }));
   const none = usable.length === 0;
   $('flakify-unavailable').hidden = !none;
-  $('flakify').disabled = none;
+  // Stays off while a job is being started, so a second click cannot start a second job.
+  $('flakify').disabled = none || state.starting;
   if (none) $('flakify').setAttribute('aria-describedby', 'flakify-unavailable');
   else $('flakify').removeAttribute('aria-describedby');
   renderFigures();
@@ -636,7 +646,9 @@ function getWorker() {
     state.worker.addEventListener('message', (event) => handleWorkerMessage(event.data));
     state.worker.addEventListener('error', (event) => {
       stopWorker();
-      if (state.pipeline === BROWSER_PIPELINE) showError(`The in-browser models could not start: ${event.message || 'worker error'}`);
+      if (!state.browser || state.browser.finished) return;
+      state.browser.finished = true;
+      showError(`The in-browser models could not start: ${event.message || 'worker error'}`);
     });
   }
   return state.worker;
@@ -652,12 +664,24 @@ function stopWorker() {
 function runInBrowser() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { jobId: null, run: ++runCounter, disposeViewer: null, browser: { done: {}, files: {}, urls: [], downloads: new Map() } });
+  leaveBrowserRun();
+  Object.assign(state, { jobId: null, run: ++runCounter, disposeViewer: null, browser: { done: {}, files: {}, urls: [], downloads: new Map(), finished: false } });
   history.replaceState(null, '', location.pathname);
   stopCamera();
   resetProgress();
   showStep('progress');
-  getWorker().postMessage({ blob: state.blob, options: { shape: state.figure } });
+  getWorker().postMessage({ run: state.run, blob: state.blob, options: { shape: state.figure } });
+}
+
+/**
+ * Lets go of the current in-browser run: frees its files, and stops the worker if it is
+ * still working, since it handles one photo at a time. A new worker loads the cached models.
+ */
+function leaveBrowserRun() {
+  if (!state.browser) return;
+  if (!state.browser.finished) stopWorker();
+  state.browser.urls.forEach((url) => URL.revokeObjectURL(url));
+  state.browser = null;
 }
 
 /** Object URL for a result of the in-browser run, freed when the run is left. */
@@ -677,7 +701,8 @@ function downloadHint(downloads) {
 /** Progress, stage results, the end and errors from the in-browser run. */
 function handleWorkerMessage(message) {
   const run = state.browser;
-  if (state.pipeline !== BROWSER_PIPELINE || !run) return;
+  // Messages carry the number of the run they belong to; anything older is ignored.
+  if (state.pipeline !== BROWSER_PIPELINE || !run || message.run !== state.run) return;
   if (message.type === 'progress') {
     if (message.stage === 'download') {
       run.downloads.set(message.file, { loaded: message.loaded ?? 0, total: message.total ?? 0 });
@@ -687,15 +712,18 @@ function handleWorkerMessage(message) {
     if (message.device) run.device = message.device;
     // The worker reports 'input' once the models are loaded.
     if (message.stage === 'input') run.done.input = true;
-    renderStages(run.done);
+    renderStages(run.done, null);
     if (BROWSER_HINTS[message.stage]) $('progress-hint').textContent = BROWSER_HINTS[message.stage];
   } else if (message.type === 'stage') {
     run.files[message.stage] = message.file;
     run.done[BROWSER_STAGES[message.stage]] = true;
-    renderStages(run.done, message.stage === 'cutout' ? browserUrl(message.file) : undefined);
+    // null, not undefined: the default would build a server URL for the figure image.
+    renderStages(run.done, message.stage === 'cutout' ? browserUrl(message.file) : null);
   } else if (message.type === 'done') {
+    run.finished = true;
     showBrowserResult();
   } else if (message.type === 'error') {
+    run.finished = true;
     showError(message.message);
   }
 }
@@ -715,7 +743,7 @@ function showBrowserResult() {
       stl: { href: stl, name: `${prefix}.stl` },
       image: { href: cutout, name: `${prefix}-cutout.png`, text: 'Download cut-out' },
       model: { href: browserUrl(files.depth), name: `${prefix}-depth.png`, text: 'Download depth map' },
-      original: { href: state.previewUrl, name: `${prefix}-photo.png` },
+      original: { href: state.previewUrl, name: `${prefix}-photo.${state.blob.type === 'image/jpeg' ? 'jpg' : 'png'}` },
     },
     deletable: false,
   });
@@ -725,11 +753,7 @@ function showBrowserResult() {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  if (state.browser) {
-    // A run still going would keep the worker busy; a new worker loads the cached models.
-    if (!state.browser.files.stl) stopWorker();
-    state.browser.urls.forEach((url) => URL.revokeObjectURL(url));
-  }
+  leaveBrowserRun();
   setPreview(null);
   Object.assign(state, freshJobState(), { run: ++runCounter });
   history.replaceState(null, '', location.pathname);
@@ -781,7 +805,9 @@ function showNoBackendNotice() {
 
 if (NO_BACKEND) showNoBackendNotice();
 await loadFigures();
-await loadAvailability();
+// Not awaited: the server's check can take seconds and the form is not shown yet; choosing
+// a photo checks again anyway.
+loadAvailability();
 if (!(await restoreFromUrl())) {
   showStep('source', { focus: false });
   startCamera();

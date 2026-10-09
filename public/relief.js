@@ -9,6 +9,7 @@ const STL_HEADER_BYTES = 80;
 const STL_COUNT_BYTES = 4;
 const STL_TRIANGLE_BYTES = 50;
 const STL_HEADER_TEXT = 'Flakifier binary STL (browser)';
+const NO_SUBJECT_MESSAGE = 'No subject found in the photo: try a photo with one person, facing the camera, against a plain background';
 const ALPHA_THRESHOLD = 128;
 const DEPTH_LOW_PERCENTILE = 0.02;
 const DEPTH_HIGH_PERCENTILE = 0.98;
@@ -16,7 +17,6 @@ const DEPTH_HIGH_PERCENTILE = 0.98;
 const DEPTH_WEIGHT = 0.7;
 /** Back of a rounded figure, as a share of the front dome. */
 const ROUNDED_BACK_RATIO = 0.6;
-const MAX_PINCH_PASSES = 8;
 /** LEGO proportions as a share of the stud pitch (8 mm): plate 3.2, stud 4.8 wide, 1.7 high. */
 const PLATE_RATIO = 0.4;
 const STUD_RADIUS_RATIO = 0.3;
@@ -54,13 +54,15 @@ export const RELIEF_DEFAULTS = {
 export function reliefToStl(input, options = {}) {
   const opts = { ...RELIEF_DEFAULTS, ...options };
   const box = subjectBounds(input);
-  if (!box) throw new Error('No subject found in the photo');
+  if (!box) throw new Error(NO_SUBJECT_MESSAGE);
   if (opts.shape === 'bricks') {
     const grid = sampleGrid(input, box, Math.max(4, Math.round(opts.resolution / CELLS_PER_STUD)));
     return writeBricks(grid, opts);
   }
   const grid = sampleGrid(input, box, opts.resolution);
   const cells = selectCells(grid);
+  // A subject thinner than one cell everywhere leaves nothing to build.
+  if (!cells.includes(1)) throw new Error(NO_SUBJECT_MESSAGE);
   const heights = vertexHeights(grid, cells, opts);
   return writeStl(grid, cells, heights, opts.heightMm);
 }
@@ -131,10 +133,12 @@ function selectCells({ cols, rows, inside }) {
 
 /**
  * Cells that touch only at a corner would share a wall edge between four faces, so each such
- * pinch is bridged with one extra cell. Modifies and returns `kept`.
+ * pinch is bridged with one extra cell. A bridge can expose a new pinch, so passes repeat
+ * until none is left; every pass that changes something adds a cell, so this ends.
+ * Modifies and returns `kept`.
  */
 function bridgePinches(kept, cw, ch) {
-  for (let pass = 0, changed = true; changed && pass < MAX_PINCH_PASSES; pass++) {
+  for (let changed = true; changed; ) {
     changed = false;
     for (let j = 1; j < ch - 2; j++) {
       for (let i = 1; i < cw - 2; i++) {
@@ -304,6 +308,7 @@ function writeStl({ cols, rows }, cells, { front, back }, heightMm) {
  */
 function writeBricks({ cols, rows, inside, depth }, opts) {
   const kept = bridgePinches(largestComponent(inside, cols, rows), cols, rows);
+  if (!kept.includes(1)) throw new Error(NO_SUBJECT_MESSAGE);
   const { front } = surfaceHeights(depth, kept, cols, rows, { ...opts, shape: 'relief' });
   const isBrick = (i, j) => i >= 0 && j >= 0 && i < cols && j < rows && kept[j * cols + i] === 1;
   const { left, right, top, bottom } = extent(cols, rows, isBrick);
