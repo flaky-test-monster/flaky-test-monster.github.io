@@ -100,9 +100,13 @@ function setPreview(blob) {
   if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
   state.blob = blob;
   state.previewUrl = blob ? URL.createObjectURL(blob) : null;
-  if (state.previewUrl) $('preview').src = state.previewUrl;
-  else $('preview').removeAttribute('src');
-  $('dl-photo').href = state.previewUrl ?? '';
+  if (state.previewUrl) {
+    $('preview').src = state.previewUrl;
+    $('dl-photo').href = state.previewUrl;
+  } else {
+    $('preview').removeAttribute('src');
+    $('dl-photo').removeAttribute('href');
+  }
 }
 
 /** Moves to the confirm step with the chosen image. */

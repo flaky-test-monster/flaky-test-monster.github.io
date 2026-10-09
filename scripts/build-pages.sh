@@ -9,6 +9,8 @@ cd "$(dirname "$0")/.."
 rm -rf _site
 mkdir -p _site
 cp -R public _site/public
+# The page lives at the root; a second copy in public/ would resolve its assets to public/public/.
+rm _site/public/index.html
 sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html > _site/index.html
 grep -q 'data-backend="none"' _site/index.html
 touch _site/.nojekyll

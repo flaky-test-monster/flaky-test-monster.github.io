@@ -32,10 +32,10 @@ let selectedPhoto = null;
 /** Made on the click that starts a scan, since browsers only allow sound after a user gesture. */
 let audio = null;
 /**
- * Saves the photo the user picked to the recent runs; resolves to whether it worked.
- * @type {(photo: Blob) => Promise<boolean>}
+ * Saves the photo the user picked to the recent runs; resolves to whether it worked. Null
+ * when there is no server to save to.
+ * @type {((photo: Blob) => Promise<boolean>) | null}
  */
-/** @type {((photo: Blob) => Promise<boolean>) | null} null when there is no server to save to */
 let savePhoto = async () => false;
 
 /**
