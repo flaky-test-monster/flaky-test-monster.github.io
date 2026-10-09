@@ -4,6 +4,8 @@ const AUTO_ROTATE_SPEED = 1.2;
 const FRAME_PADDING = 1.1;
 const CAMERA_HEIGHT_RATIO = 0.15;
 const STILL_SIZE_PX = 1024;
+/** Above 2x the extra pixels cost GPU memory without a visible difference at this size. */
+const MAX_PIXEL_RATIO = 2;
 
 const STL_COLOR = 0xf2c94c;
 const STL_ROUGHNESS = 0.35;
@@ -38,7 +40,7 @@ export async function mountViewer(container, url) {
     import('three/addons/controls/OrbitControls.js'),
   ]);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
   container.replaceChildren(renderer.domElement);
@@ -55,7 +57,7 @@ export async function mountViewer(container, url) {
   addLight(1.6, 0, 3, -5);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.autoRotate = true;
+  controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
   controls.autoRotateSpeed = AUTO_ROTATE_SPEED;
 
   const model = await loadModel(THREE, url);
@@ -77,6 +79,7 @@ export async function mountViewer(container, url) {
 
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = container;
+    if (!w || !h) return; // hidden: keep the last size rather than a 0 by 0 canvas
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -85,6 +88,20 @@ export async function mountViewer(container, url) {
   observer.observe(container);
   resize();
   renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
-  const dispose = () => { observer.disconnect(); renderer.setAnimationLoop(null); renderer.dispose(); container.replaceChildren(); };
+  const dispose = () => {
+    observer.disconnect();
+    renderer.setAnimationLoop(null);
+    controls.dispose();
+    // renderer.dispose() does not free what the model uploaded to the GPU.
+    model.traverse((object) => {
+      object.geometry?.dispose();
+      for (const material of [object.material].flat().filter(Boolean)) {
+        for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
+        material.dispose();
+      }
+    });
+    renderer.dispose();
+    container.replaceChildren();
+  };
   return { dispose, still };
 }

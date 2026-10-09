@@ -16,43 +16,51 @@
   </script>
 </head>
 <body>
-  <main class="app">
-    <h1 class="title">Flakifier <span class="title-note">in your browser</span></h1>
-
-    <section id="step-source" class="step" data-step="source">
-      <p class="lead">Take a photo or upload one. Free, open models run right here in your browser and turn it into a 3D-printable relief of you, smooth or built from LEGO-style bricks. No server, no API keys, and the photo never leaves this device. The first run downloads about 125 MB of models; later runs use the browser's cache.</p>
-      <div class="cards">
-        <div class="card card-camera" id="camera-card">
-          <div class="camera-frame">
-            <video id="video" autoplay playsinline muted></video>
-            <div id="countdown" class="countdown" hidden></div>
-          </div>
-          <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
-          <span class="card-label">Use camera</span>
+  <div class="app">
+    <header>
+      <a class="masthead" href="./browser.html" aria-label="flakifier in your browser: back to the start">
+        <img class="mascot" src="monster.jpg" width="72" height="72" alt="">
+        <div class="masthead-text">
+          <h1 class="title">flakifier</h1>
+          <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">3D relief, in your browser</span></p>
         </div>
-        <label class="card card-upload" id="upload-card">
-          <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg" aria-label="Upload a PNG or JPG image">
-          <span class="upload-icon" aria-hidden="true">+</span>
-          <span class="card-label">Upload image</span>
-          <span class="hint">Click or drag and drop a PNG or JPG</span>
-        </label>
+      </a>
+    </header>
+
+    <main>
+    <section id="step-source" class="step" data-step="source" aria-label="Choose a photo">
+      <p class="lead">Take a photo or upload one. Free, open models run right here in your browser and turn it into a 3D-printable relief of you, smooth or built from LEGO-style bricks. No server, no API keys, and the photo never leaves this device. The first run downloads about 125 MB of models; later runs use the browser's cache.</p>
+      <div class="card card-camera" id="camera-card">
+        <div class="camera-frame" id="camera-frame">
+          <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
+          <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
+        </div>
+        <p id="camera-error" class="camera-error" role="alert" hidden>The camera is blocked or missing. Upload a photo instead, or allow camera access and reload.</p>
+        <div class="camera-actions">
+          <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
+          <label class="btn btn-large" id="upload-button">
+            <input type="file" id="file-input" class="visually-hidden" accept="image/png,image/jpeg">
+            Upload photo
+          </label>
+        </div>
+        <span class="card-label">camera or PNG/JPG, drop one here</span>
       </div>
       <p class="hint switch-link">Want a full statue or minifigure instead? Use the <a class="link" href="/">server pipelines</a>.</p>
     </section>
 
-    <section id="step-confirm" class="step" data-step="confirm" hidden>
+    <section id="step-confirm" class="step" data-step="confirm" aria-label="Check the photo and settings" hidden>
       <img id="preview" class="preview" alt="Your chosen photo">
       <div class="choices">
-        <label class="choice">
-          <span>Shape</span>
+        <label class="field">
+          <span>shape</span>
           <select id="shape">
             <option value="relief" selected>Relief, flat back</option>
             <option value="rounded">Rounded on both sides</option>
             <option value="bricks">LEGO-style bricks</option>
           </select>
         </label>
-        <label class="choice">
-          <span>Detail</span>
+        <label class="field">
+          <span>detail</span>
           <select id="resolution">
             <option value="100">Coarse (fast, small STL)</option>
             <option value="160" selected>Normal</option>
@@ -61,8 +69,8 @@
         </label>
       </div>
       <div class="actions">
-        <button type="button" id="retake" class="btn">Retake / Choose another</button>
-        <button type="button" id="flakify" class="btn btn-primary">Flakify</button>
+        <button type="button" id="retake" class="btn">Choose another</button>
+        <button type="button" id="flakify" class="btn btn-primary btn-next">Flakify</button>
       </div>
     </section>
 
@@ -75,7 +83,7 @@
       </ol>
       <p id="error" class="error" hidden>
         <span id="error-text"></span>
-        <a href="#" id="try-again">Try again</a>
+        <button type="button" id="try-again" class="link-button">Try again</button>
       </p>
       <p class="hint" id="progress-hint" aria-live="polite">Starting…</p>
       <img id="image-preview" class="preview" alt="Cut-out of your photo" hidden>
@@ -108,10 +116,11 @@
         <a id="dl-final" class="btn" download="flakifier-final.png" hidden>Download render</a>
       </div>
       <div class="result-links">
-        <a href="#" id="start-over" class="link">Start over</a>
+        <button type="button" id="start-over" class="link-button">Start over</button>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
   <script type="module" src="browser.js"></script>
 </body>
 </html>

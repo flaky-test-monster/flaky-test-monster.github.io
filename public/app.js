@@ -1,3 +1,4 @@
+import { onSaveMonsterPhoto, stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -11,39 +12,62 @@ const PIPELINE_UI = {
   shapes: { hint: 'This usually takes one to four minutes.', modelDownload: null, viewerFile: 'model.stl' },
   local: { hint: 'Running on this Mac usually takes 10 to 20 minutes.', modelDownload: 'Download GLB', viewerFile: 'model.glb' },
 };
-const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local' };
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg'];
+const PIPELINE_LABELS = { tripo: 'Tripo3D', shapes: 'Simple shapes', local: 'Local', photo: 'Monster scan' };
+/** Pipeline of a run that only holds a monster scan photo; opening it offers the photo to flakify. */
+const PHOTO_PIPELINE = 'photo';
 const RECENT_LIMIT = 6;
 const INTERRUPTED_MESSAGE = 'This conversion was interrupted because the server stopped. Start a new one.';
 const JOB_HASH_PATTERN = /^#job=([0-9a-f-]{36})$/;
 
 const $ = (id) => document.getElementById(id);
-const state = { figures: {}, stream: null, blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null, recent: [], showAllRecent: false };
+/** The per-conversion part of the state, as it is before a photo is chosen. */
+const freshJobState = () => ({ blob: null, previewUrl: null, jobId: null, pipeline: 'tripo', figure: 'monster', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
+const state = { figures: {}, stream: null, recent: [], showAllRecent: false, ...freshJobState() };
 
-/** Reveals one step section with a fade and hides the rest. */
-function showStep(name) {
+/**
+ * Reveals one step section with a fade and hides the rest. Moves focus into the new step
+ * so keyboard and screen reader users are not left on a control that just disappeared.
+ */
+function showStep(name, { focus = true } = {}) {
   for (const step of document.querySelectorAll('.step')) {
     const active = step.dataset.step === name;
     step.hidden = !active;
     step.classList.toggle('is-visible', false);
-    if (active) requestAnimationFrame(() => requestAnimationFrame(() => step.classList.add('is-visible')));
+    if (!active) continue;
+    requestAnimationFrame(() => requestAnimationFrame(() => step.classList.add('is-visible')));
+    if (focus) step.focus({ preventScroll: true });
   }
 }
 
-/** Starts the webcam preview; hides the camera card when access is refused. */
+/** Starts the webcam preview; says how to fix it when access is refused or there is no camera. */
 async function startCamera() {
   if (state.stream) return;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
+    setCameraBlocked(false);
   } catch {
-    $('camera-card').hidden = true;
-    document.querySelector('.cards').classList.add('single');
+    setCameraBlocked(true);
   }
+}
+
+/** Shows the camera error and disables the buttons that need the camera, or undoes that. */
+function setCameraBlocked(blocked) {
+  $('camera-error').hidden = !blocked;
+  $('take-photo').disabled = blocked;
+  $('scan-toggle').disabled = blocked;
+}
+
+/** Shows the camera preview full screen, with the logo on top, or leaves full screen. */
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else $('camera-frame').requestFullscreen().catch(() => {});
 }
 
 /** Stops the webcam so the indicator light goes off. */
 function stopCamera() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  stopMonsterScan();
   state.stream?.getTracks().forEach((track) => track.stop());
   state.stream = null;
 }
@@ -69,12 +93,27 @@ function captureFrame() {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
+/** Shows the chosen photo, or replaces the previous one, freeing its object URL. */
+function setPreview(blob) {
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+  state.blob = blob;
+  state.previewUrl = blob ? URL.createObjectURL(blob) : null;
+  if (state.previewUrl) $('preview').src = state.previewUrl;
+  else $('preview').removeAttribute('src');
+}
+
 /** Moves to the confirm step with the chosen image. */
 function chooseImage(blob) {
-  if (!blob || !ACCEPTED_TYPES.includes(blob.type)) return;
-  state.blob = blob;
-  $('preview').src = URL.createObjectURL(blob);
+  if (!blob) return;
+  setPreview(blob);
+  stopCamera();
   showStep('confirm');
+}
+
+/** Error message from a failed API response, which may not be JSON (e.g. a proxy page). */
+async function responseError(res, fallback) {
+  const body = await res.json().catch(() => ({}));
+  return body.error ?? `${fallback} (${res.status})`;
 }
 
 /** Uploads the image, creates a job and starts polling. */
@@ -86,7 +125,7 @@ async function startJob() {
     state.name = $('job-name').value.trim();
     const query = new URLSearchParams({ pipeline: state.pipeline, figure: state.figure, name: state.name });
     const res = await fetch(`/api/jobs?${query}`, { method: 'POST', headers: { 'Content-Type': state.blob.type }, body: state.blob });
-    if (!res.ok) throw new Error((await res.json()).error ?? `Upload failed (${res.status})`);
+    if (!res.ok) throw new Error(await responseError(res, 'Upload failed'));
     openJob({ id: (await res.json()).id, pipeline: state.pipeline, figure: state.figure, name: state.name });
   } catch (err) {
     resetProgress();
@@ -128,7 +167,7 @@ async function loadFigures() {
     state.figures = Object.fromEntries(figures.map(({ id, label }) => [id, label]));
     $('figure').replaceChildren(...figures.map(({ id, label }) => new Option(label, id, id === selected, id === selected)));
   } catch {
-    // Keep the built-in marble option; the server still accepts it.
+    // Keep the built-in monster option; the server still accepts it.
   }
 }
 
@@ -139,6 +178,7 @@ function formatDate(iso) {
 
 /** One-word status of a stored job for the recent list. */
 function jobState(job) {
+  if (job.pipeline === PHOTO_PIPELINE) return 'Photo';
   if (job.error) return 'Failed';
   if (STAGES.every((stage) => job.stages[stage])) return 'Done';
   return job.running ? 'In progress' : 'Interrupted';
@@ -173,7 +213,7 @@ function renderRecent() {
     meta.append([figureLabel(job.figure), PIPELINE_LABELS[job.pipeline] ?? job.pipeline, job.name ? formatDate(job.createdAt) : null, ''].filter((part) => part !== null).join(' · '), status);
     text.append(title, meta);
     button.append(img, text);
-    button.addEventListener('click', () => openJob(job));
+    button.addEventListener('click', () => (job.pipeline === PHOTO_PIPELINE ? openPhoto(job) : openJob(job)));
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'recent-delete';
@@ -200,12 +240,14 @@ function renderRecent() {
 async function deleteJob(job) {
   const label = job.name || (job.createdAt ? `the conversion from ${formatDate(job.createdAt)}` : 'this conversion');
   if (!confirm(`Delete ${label}? Its images and 3D files are removed for good.`)) return false;
-  const res = await fetch(`/api/jobs/${job.id}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 404) {
-    alert((await res.json().catch(() => ({}))).error ?? `Delete failed (${res.status})`);
+  try {
+    const res = await fetch(`/api/jobs/${job.id}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 404) throw new Error(await responseError(res, 'Delete failed'));
+    return true;
+  } catch (err) {
+    alert(err.message);
     return false;
   }
-  return true;
 }
 
 /** Fetches the stored conversions for the recent list. A failure just hides the list. */
@@ -220,6 +262,40 @@ async function loadRecent() {
   renderRecent();
 }
 
+/**
+ * Opens a monster photo run at the confirm step, ready to flakify.
+ * @param {{ id: string, stages: { input: string | null } }} job
+ * @returns {Promise<boolean>} whether the photo opened
+ */
+async function openPhoto(job) {
+  try {
+    const res = await fetch(`/api/jobs/${job.id}/${job.stages.input}`);
+    if (!res.ok) throw new Error(await responseError(res, 'Could not load the photo'));
+    chooseImage(await res.blob());
+    return true;
+  } catch (err) {
+    alert(err.message);
+    return false;
+  }
+}
+
+/**
+ * Saves a monster photo the user picked as a run of its own in the recent runs.
+ * @param {Blob} photo PNG
+ * @returns {Promise<boolean>} whether it was saved
+ */
+async function saveMonsterPhoto(photo) {
+  try {
+    const res = await fetch('/api/photos', { method: 'POST', headers: { 'Content-Type': photo.type }, body: photo });
+    if (!res.ok) throw new Error(await responseError(res, 'Saving the monster photo failed'));
+    await loadRecent();
+    return true;
+  } catch (err) {
+    console.warn(err.message);
+    return false;
+  }
+}
+
 /** Reopens the conversion named in the URL, if any. Returns whether one was opened. */
 async function restoreFromUrl() {
   const id = location.hash.match(JOB_HASH_PATTERN)?.[1];
@@ -227,7 +303,13 @@ async function restoreFromUrl() {
   try {
     const res = await fetch(`/api/jobs/${id}`);
     if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);
-    openJob(await res.json());
+    const job = await res.json();
+    if (job.pipeline === PHOTO_PIPELINE) {
+      history.replaceState(null, '', location.pathname);
+      // When the photo cannot load, startup goes on to the camera as with no link at all.
+      return await openPhoto(job);
+    }
+    openJob(job);
     return true;
   } catch {
     history.replaceState(null, '', location.pathname);
@@ -255,8 +337,8 @@ function resetProgress() {
   state.pollFailures = 0;
   $('error').hidden = true;
   $('image-preview').hidden = true;
+  $('progress-status').textContent = '';
   const ui = PIPELINE_UI[state.pipeline];
-  document.querySelector('#stepper li[data-stage="image"]').textContent = 'Figure';
   $('progress-hint').textContent = ui.hint;
   $('progress-hint').hidden = false;
   for (const li of document.querySelectorAll('#stepper li')) li.classList.remove('done', 'active');
@@ -270,13 +352,17 @@ function showError(message) {
   document.querySelector('#stepper li.active')?.classList.remove('active');
 }
 
-/** Lights up the stepper according to which files exist. */
+/** Lights up the stepper according to which files exist and announces the running stage. */
 function renderStages(stages) {
   let nextPending = true;
   for (const li of document.querySelectorAll('#stepper li')) {
     const done = Boolean(stages[li.dataset.stage]);
     li.classList.toggle('done', done);
     li.classList.toggle('active', !done && nextPending);
+    if (!done && nextPending) {
+      const message = `Running: ${li.textContent}`;
+      if ($('progress-status').textContent !== message) $('progress-status').textContent = message;
+    }
     if (!done) nextPending = false;
   }
   if (stages.image && $('image-preview').hidden) {
@@ -296,8 +382,11 @@ function nextPollDelay(failures) {
  * retries is treated as terminal, since the server-side job keeps running regardless.
  */
 async function poll() {
+  const { jobId } = state;
   try {
-    const res = await fetch(`/api/jobs/${state.jobId}`);
+    const res = await fetch(`/api/jobs/${jobId}`);
+    // The user moved on (start over, another job) while the request was in flight.
+    if (jobId !== state.jobId) return;
     if (res.status === 404) return showError('Job not found');
     if (!res.ok) throw new Error(`Status check failed (${res.status})`);
     const { stages, error, running } = await res.json();
@@ -308,6 +397,7 @@ async function poll() {
     if (running === false) return showError(INTERRUPTED_MESSAGE);
     state.pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
   } catch (err) {
+    if (jobId !== state.jobId) return;
     state.pollFailures += 1;
     if (state.pollFailures > POLL_MAX_RETRIES) return showError(`Lost contact with the server: ${err.message}`);
     state.pollTimer = setTimeout(poll, nextPollDelay(state.pollFailures));
@@ -316,19 +406,18 @@ async function poll() {
 
 /** Shows every stage side by side, fills in download links and loads the 3D viewer. */
 async function showResult(stages) {
-  const file = (name) => `/api/jobs/${state.jobId}/${name}?download=1`;
-  const view = (name) => `/api/jobs/${state.jobId}/${name}`;
+  const { jobId } = state;
+  const file = (name) => `/api/jobs/${jobId}/${name}?download=1`;
+  const view = (name) => `/api/jobs/${jobId}/${name}`;
   $('dl-stl').href = file('model.stl');
   const ui = PIPELINE_UI[state.pipeline];
   showName($('result-name'), state.name);
   $('stage-original').src = view(stages.input);
   $('stage-image').src = view(stages.image);
   $('stage-image-label').textContent = figureLabel(state.figure);
-  $('stage-final-label').textContent = 'Final 3D figure';
   $('stage-final').removeAttribute('src');
   $('dl-final').hidden = true;
   $('dl-image').href = file(stages.image);
-  $('dl-image').textContent = 'Download figure image';
   $('dl-model').hidden = !ui.modelDownload;
   if (ui.modelDownload) {
     $('dl-model').href = file(stages.model);
@@ -338,12 +427,14 @@ async function showResult(stages) {
   showStep('result');
   try {
     const { dispose, still } = await mountViewer($('viewer'), view(ui.viewerFile));
+    if (jobId !== state.jobId) return dispose();
     state.disposeViewer = dispose;
     $('stage-final').src = still;
     $('dl-final').href = still;
     $('dl-final').download = `${fileSlug(state.name)}-final.png`;
     $('dl-final').hidden = false;
   } catch (err) {
+    if (jobId !== state.jobId) return;
     $('viewer').textContent = `Could not load 3D preview: ${err.message}`;
     $('stage-final').alt = 'No render: the 3D model could not be loaded';
   }
@@ -353,9 +444,9 @@ async function showResult(stages) {
 function startOver() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
-  Object.assign(state, { blob: null, jobId: null, pipeline: 'tripo', figure: 'marble', name: '', pollTimer: null, pollFailures: 0, disposeViewer: null });
+  setPreview(null);
+  Object.assign(state, freshJobState());
   history.replaceState(null, '', location.pathname);
-  $('file-input').value = '';
   $('job-name').value = '';
   showStep('source');
   startCamera();
@@ -368,19 +459,24 @@ $('take-photo').addEventListener('click', async () => {
   chooseImage(await captureFrame());
   $('take-photo').disabled = false;
 });
-$('file-input').addEventListener('change', (event) => chooseImage(event.target.files[0]));
-const uploadCard = $('upload-card');
-uploadCard.addEventListener('dragover', (event) => { event.preventDefault(); uploadCard.classList.add('is-dragover'); });
-uploadCard.addEventListener('dragleave', () => uploadCard.classList.remove('is-dragover'));
-uploadCard.addEventListener('drop', (event) => {
-  event.preventDefault();
-  uploadCard.classList.remove('is-dragover');
-  chooseImage(event.dataTransfer.files[0]);
+// Not every browser can show an element full screen (iPhone Safari cannot); there the button stays hidden.
+$('fullscreen-toggle').hidden = !document.fullscreenEnabled;
+$('fullscreen-toggle').addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', () => {
+  $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-frame')));
 });
-$('retake').addEventListener('click', () => showStep('source'));
+$('scan-toggle').addEventListener('click', () => toggleMonsterScan($('video')));
+onSaveMonsterPhoto(saveMonsterPhoto);
+$('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
 $('flakify').addEventListener('click', startJob);
-$('try-again').addEventListener('click', (event) => { event.preventDefault(); startOver(); });
-$('start-over').addEventListener('click', (event) => { event.preventDefault(); startOver(); });
+$('home-link').addEventListener('click', (event) => {
+  // Let the browser open a new tab or window as usual; a plain click resets in place.
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  startOver();
+});
+$('try-again').addEventListener('click', startOver);
+$('start-over').addEventListener('click', startOver);
 $('delete-job').addEventListener('click', async () => {
   if (await deleteJob({ id: state.jobId, name: state.name })) startOver();
 });
@@ -388,7 +484,7 @@ $('recent-more').addEventListener('click', () => { state.showAllRecent = true; r
 
 await loadFigures();
 if (!(await restoreFromUrl())) {
-  showStep('source');
+  showStep('source', { focus: false });
   startCamera();
 }
 loadRecent();

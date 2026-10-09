@@ -35,8 +35,10 @@ async function startCamera() {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
   } catch {
-    $('camera-card').hidden = true;
-    document.querySelector('.cards').classList.add('single');
+    // Uploading still works: hide only the camera parts.
+    $('camera-frame').hidden = true;
+    $('take-photo').hidden = true;
+    $('camera-error').hidden = false;
   }
 }
 
@@ -207,7 +209,7 @@ $('take-photo').addEventListener('click', async () => {
   $('take-photo').disabled = false;
 });
 $('file-input').addEventListener('change', (event) => chooseImage(event.target.files[0]));
-const uploadCard = $('upload-card');
+const uploadCard = $('camera-card');
 uploadCard.addEventListener('dragover', (event) => { event.preventDefault(); uploadCard.classList.add('is-dragover'); });
 uploadCard.addEventListener('dragleave', () => uploadCard.classList.remove('is-dragover'));
 uploadCard.addEventListener('drop', (event) => {
