@@ -34,10 +34,11 @@ uses only the photo, because FLUX.1 Kontext takes a single image.
   `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
   [Local pipeline](#local-pipeline-apple-silicon).
 
-- **Free and private, in this browser:** photo → background removal → depth map → relief
-  STL, with free open models that the browser downloads and runs itself. No API keys, no
-  install and no GPU server; the photo never leaves the device. It makes a 3D relief
-  (smooth, rounded or LEGO-style bricks) rather than a full statue. See
+- **Free and private, in this browser:** photo → face landmarks, background removal and
+  depth map → relief STL, with free open models that the browser downloads and runs itself.
+  No API keys, no install and no GPU server; the photo never leaves the device. It makes a
+  3D relief (a monster bobblehead, smooth, rounded or LEGO-style bricks) rather than a full
+  statue. See
   [In-browser pipeline](#in-browser-pipeline).
 
 The form lists them as *Best quality, in the cloud* (Tripo3D), *Chunky toy look, in the
@@ -132,31 +133,40 @@ screen, where you can reopen or delete them.
 
 ## Monster scan
 
-The **Monster scan** button on the camera card tracks your face in the live webcam video
-and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
+The monster scan is always on while the camera is: it tracks your face in the live webcam
+video and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
 uploaded and no API key is needed.
 
 The score is all in the mouth: closed is 0, wide open is 100. Up to four faces are
-tracked at once, each with its own score; the meter shows the highest and a tracker below
-it counts how many faces in view are monsters. Openness is the gap between the lips
+tracked at once, each with its own score; the preview shows the highest. Openness is the gap between the lips
 over the width of the mouth, so it does not matter how close you sit to the camera (see
 `public/monster-score.js`). Below 40 is human, 60 and up is a monster, in between is
-suspicious. Each frame is blended with the previous score so the meter does not jitter.
+suspicious. Each frame is blended with the previous score so the score does not jitter.
+The score sits over the camera preview, as a compact badge in the page and larger in full
+screen (with how many faces in view are monsters). A checkbox next to the verdict stays
+unchecked while you are human and is checked once you are a monster, and a polite
+instruction says what to do: look into the camera, then open your eyes and mouth wide like
+the monster. Screen readers hear the verdict and the monster count from the status line under the
+camera.
 
 As the score climbs the preview turns into a high-contrast poster. Once you are a monster
 it goes green, and every monster face gets white eyes with small black pupils and a red
-tongue in its open mouth. Only the preview changes; **Take photo** mid-scan still gives
-you the plain photo.
+tongue in its open mouth. **Take photo** keeps what the preview shows: the photo it hands
+to the 3D methods has the poster look at the strength the score has reached, and the green,
+eyes and tongue if you are a monster. Keep your mouth closed for a plain photo.
 
 When the score hits 100 the scan takes a **monster photo** of the preview, effects and
 all, with a white flash and a shutter click. While the score stays at 100 it takes another
-every 5 seconds, and the scan panel keeps the last 6 to choose from. Pick one to download
-it or save it to **Recent runs** as a "Monster photo" run, which holds only the photo and
-costs nothing; open that run to flakify the photo. Saving goes through `POST /api/photos`.
+every 5 seconds. The last 6 show as small thumbnails to the right of the video (below it
+on a phone, over it in full screen). Click one to see it in place of the video, with
+**Back to camera** (or Escape), **Download**, and **Save to recent runs**, which keeps it
+as a "Monster photo" run that holds only the photo and costs nothing; open that run to
+flakify the photo. New photos keep coming in as thumbnails without taking over the view. Saving goes through `POST /api/photos`.
 
 Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
-(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage on
-the first scan (a few MB, then cached by the browser).
+(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage when
+the camera first starts (a few MB, then cached by the browser). The shutter click plays
+from the first click or tap on the page on, since browsers keep pages silent until then.
 
 ## Local pipeline (Apple Silicon)
 
@@ -232,9 +242,15 @@ place of the figure image, with the depth map as an extra download.
 |---|---|---|---|
 | Background removal | [MODNet](https://huggingface.co/Xenova/modnet) (ONNX) | Apache-2.0 | about 25 MB |
 | Depth estimation | [Depth Anything V2 Small](https://huggingface.co/onnx-community/depth-anything-v2-small) (ONNX) | Apache-2.0 | about 100 MB |
+| Face landmarks | [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker), the monster scan's | Apache-2.0 | about 4 MB |
+| Face depth, caricature, monster parts | `public/caricature.js`, no model | MIT (this repo) | none |
 | Relief mesh and STL | `public/relief.js`, no model | MIT (this repo) | none |
 
-Both models run with [Transformers.js](https://github.com/huggingface/transformers.js)
+The face landmarks are found on the page, since MediaPipe needs WebGL, and sent to the worker
+with the photo. They are optional: without a face, or if the tracker cannot load, the figure
+is made without the face touches below.
+
+Both Transformers.js models run with [Transformers.js](https://github.com/huggingface/transformers.js)
 3.8.1, loaded from the jsDelivr CDN. They are fetched from the Hugging Face Hub on the
 first run (the page shows download progress) and kept in the browser's cache, so later
 runs work without downloading again. WebGPU is used when the browser offers it (current
@@ -245,9 +261,18 @@ How the smooth STL is built: the cut-out's outline becomes a grid of square cell
 across the subject. Each cell gets a front face raised
 by the depth map plus a dome that rounds the outline, a back face, and side walls along the
 outline, so the mesh is closed and watertight. Only the largest connected piece of the
-subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the front.
+subject is kept, small gaps inside it (often in hair) are filled, and the outline is
+smoothed so it does not show the grid's stair steps. Depth models make faces nearly flat,
+so when a face is found its landmarks' own depth is blended in, which brings out the nose
+and chin. The model is 100 mm tall, stands upright (Z up) and faces the front.
 
-- **Relief with a flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
+- **Monster bobblehead** (default): a relief with a flat back, warped into a caricature
+  first. The head is 1.5 times bigger, and the eyes, nose and mouth are enlarged on top.
+  Then the monster parts are added as separate solids sunk into the front: googly eyes
+  with pupils looking two different ways, a tongue hanging over the chin (longer the wider
+  the mouth is open), two fangs and two horns on the hair. The warp and the parts come
+  from `public/caricature.js`. Without a face in the photo it is a plain relief.
+- **Relief with a flat back:** about 3 to 17 mm thick. Lay it on its back in the slicer
   and it prints without supports.
 - **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
   cropped at the shoulders gives it a flat bottom to stand on.

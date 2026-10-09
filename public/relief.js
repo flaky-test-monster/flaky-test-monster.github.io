@@ -2,8 +2,10 @@
 // becomes a grid of square cells; each cell gets a front face lifted by the depth map, a back
 // face, and side walls along the outline, so the mesh is watertight. The 'bricks' shape builds
 // the same relief from LEGO-style bricks instead: one column per stud, stacked in plate-height
-// steps, with a stud on top. Runs in the browser and in Node (no DOM): the in-browser pipeline
-// calls it from its worker.
+// steps, with a stud on top. The outline is smoothed so it does not show the grid's stair
+// steps, and monster parts (googly eyes, tongue, fangs, horns, placed by caricature.js) can be
+// added as separate solids that sink into the relief. Runs in the browser and in Node (no
+// DOM): the in-browser pipeline calls it from its worker.
 
 const STL_HEADER_BYTES = 80;
 const STL_COUNT_BYTES = 4;
@@ -26,6 +28,13 @@ const STUD_OVERLAP_RATIO = 0.05;
 const STUD_SEGMENTS = 16;
 /** Grid cells per stud: the bricks shape uses resolution / this many studs. */
 const CELLS_PER_STUD = 5;
+/** Empty pockets inside the outline smaller than this share of all cells are filled. */
+const HOLE_FILL_RATIO = 0.02;
+/** Outline smoothing: passes, and how far a corner may move, in cells (under half, so two sides of a one-cell strip never cross). */
+const OUTLINE_SMOOTHING_PASSES = 6;
+const OUTLINE_MAX_SHIFT = 0.45;
+/** Segments around the monster parts' round solids. */
+const PART_SEGMENTS = 20;
 
 export const RELIEF_DEFAULTS = {
   // 'relief': flat back, prints lying down; 'rounded': domed on both sides;
@@ -43,6 +52,9 @@ export const RELIEF_DEFAULTS = {
  * @property {number} height image height in pixels
  * @property {Uint8Array | Uint8ClampedArray} alpha one value per pixel, 0 background to 255 subject
  * @property {Float32Array} depth one value per pixel, larger is closer to the camera
+ * @property {Float32Array} [lift] one value per pixel: how far the face stands out, in pixels,
+ *   added after the depth map is scaled, from caricature.js faceLift()
+ * @property {object[]} [parts] monster parts in pixels, from caricature.js monsterParts()
  */
 
 /**
@@ -64,7 +76,7 @@ export function reliefToStl(input, options = {}) {
   // A subject thinner than one cell everywhere leaves nothing to build.
   if (!cells.includes(1)) throw new Error(NO_SUBJECT_MESSAGE);
   const heights = vertexHeights(grid, cells, opts);
-  return writeStl(grid, cells, heights, opts.heightMm);
+  return writeStl(grid, cells, heights, opts.heightMm, input.parts ?? []);
 }
 
 /** Pixel bounding box of the subject, or null when the mask is empty. */
@@ -103,15 +115,17 @@ function sampleGrid(input, box, resolution) {
   const rows = Math.ceil((box.y1 - box.y0) / step) + 3;
   const inside = new Uint8Array(cols * rows);
   const depth = new Float32Array(cols * rows);
+  const lift = new Float32Array(cols * rows);
   for (let j = 1; j < rows - 1; j++) {
     for (let i = 1; i < cols - 1; i++) {
       const x = Math.min(box.x0 + (i - 1) * step, input.width - 1);
       const y = Math.min(box.y0 + (j - 1) * step, input.height - 1);
       inside[j * cols + i] = sample(input.alpha, input.width, input.height, x, y) >= ALPHA_THRESHOLD ? 1 : 0;
       depth[j * cols + i] = sample(input.depth, input.width, input.height, x, y);
+      if (input.lift) lift[j * cols + i] = sample(input.lift, input.width, input.height, x, y);
     }
   }
-  return { cols, rows, inside, depth };
+  return { cols, rows, inside, depth, lift, subjectPx: Math.max(box.y1 - box.y0, 1), box, step };
 }
 
 /**
@@ -128,7 +142,36 @@ function selectCells({ cols, rows, inside }) {
       cells[j * cw + i] = inside[v] & inside[v + 1] & inside[v + cols] & inside[v + cols + 1];
     }
   }
-  return bridgePinches(largestComponent(cells, cw, ch), cw, ch);
+  return bridgePinches(fillHoles(largestComponent(cells, cw, ch), cw, ch), cw, ch);
+}
+
+/**
+ * Fills small empty pockets inside the outline, such as gaps the cut-out leaves in hair:
+ * empty cells that cannot reach the grid's edge and form a group smaller than HOLE_FILL_RATIO.
+ * Modifies and returns `cells`.
+ */
+function fillHoles(cells, cw, ch) {
+  const empty = Uint8Array.from(cells, (c) => 1 - c);
+  const label = new Int32Array(cells.length).fill(-1);
+  const limit = HOLE_FILL_RATIO * cells.length;
+  for (let start = 0; start < cells.length; start++) {
+    if (!empty[start] || label[start] !== -1) continue;
+    const group = [start];
+    let open = false;
+    label[start] = start;
+    for (let k = 0; k < group.length; k++) {
+      const c = group[k];
+      const i = c % cw, j = (c - i) / cw;
+      if (i === 0 || j === 0 || i === cw - 1 || j === ch - 1) open = true;
+      for (const [ni, nj] of [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]) {
+        if (ni < 0 || nj < 0 || ni >= cw || nj >= ch) continue;
+        const n = nj * cw + ni;
+        if (empty[n] && label[n] === -1) { label[n] = start; group.push(n); }
+      }
+    }
+    if (!open && group.length < limit) for (const c of group) cells[c] = 1;
+  }
+  return cells;
 }
 
 /**
@@ -180,7 +223,7 @@ function largestComponent(cells, cw, ch) {
 }
 
 /** Front and back offsets in mm for every vertex used by a kept cell. */
-function vertexHeights({ cols, rows, depth }, cells, opts) {
+function vertexHeights({ cols, rows, inside, depth, lift, subjectPx }, cells, opts) {
   const cw = cols - 1;
   const used = new Uint8Array(cols * rows);
   cells.forEach((kept, c) => {
@@ -188,15 +231,48 @@ function vertexHeights({ cols, rows, depth }, cells, opts) {
     const v = Math.floor(c / cw) * cols + (c % cw);
     used[v] = used[v + 1] = used[v + cols] = used[v + cols + 1] = 1;
   });
+  // Filled holes and bridges use points outside the subject, where the depth is the background's.
+  const fill = (values) => fillFromSubject(values, used, inside, cols, rows);
+  return surfaceHeights({ depth: fill(depth), lift: fill(lift), mmPerPx: opts.heightMm / subjectPx }, used, cols, rows, opts);
+}
 
-  return surfaceHeights(depth, used, cols, rows, opts);
+/**
+ * Gives every used point outside the subject the mean of its neighbours that have a value,
+ * spreading inward from the subject, so filled holes match what is around them.
+ * @returns {Float32Array} a copy of `values`
+ */
+function fillFromSubject(values, used, inside, cols, rows) {
+  const out = Float32Array.from(values);
+  const known = Uint8Array.from(inside);
+  let open = [];
+  used.forEach((u, v) => { if (u && !known[v]) open.push(v); });
+  while (open.length) {
+    const reached = [];
+    for (const v of open) {
+      const i = v % cols, j = (v - i) / cols;
+      let sum = 0, count = 0;
+      for (const [ni, nj] of [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]) {
+        if (ni < 0 || nj < 0 || ni >= cols || nj >= rows || !known[nj * cols + ni]) continue;
+        sum += out[nj * cols + ni];
+        count++;
+      }
+      if (count) reached.push([v, sum / count]);
+    }
+    // Nothing reachable is left: the rest keep their own values.
+    if (!reached.length) break;
+    for (const [v, value] of reached) { out[v] = value; known[v] = 1; }
+    open = open.filter((v) => !known[v]);
+  }
+  return out;
 }
 
 /**
  * Front and back offsets in mm for the grid points flagged in `used`. The front combines the
- * normalised depth map with a dome that rounds the outline; the back is flat or a lower dome.
+ * normalised depth map with a dome that rounds the outline, plus the face lift; the back is
+ * flat or a lower dome.
  */
-function surfaceHeights(depth, used, cols, rows, opts) {
+/** `mmPerPx` turns the lift from picture pixels into millimetres: the figure's height over the subject's. */
+function surfaceHeights({ depth, lift, mmPerPx }, used, cols, rows, opts) {
   const smooth = boxBlur(depth, used, cols, rows);
   const values = [];
   used.forEach((u, v) => { if (u) values.push(smooth[v]); });
@@ -214,12 +290,12 @@ function surfaceHeights(depth, used, cols, rows, opts) {
     const near = Math.min(Math.max((smooth[v] - low) / range, 0), 1);
     const r = 1 - Math.min(distance[v] / roundCells, 1);
     const dome = Math.sqrt(1 - r * r);
-    const lift = opts.reliefMm * (DEPTH_WEIGHT * near + (1 - DEPTH_WEIGHT) * dome);
+    const raise = opts.reliefMm * (DEPTH_WEIGHT * near + (1 - DEPTH_WEIGHT) * dome) + lift[v] * mmPerPx;
     if (opts.shape === 'rounded') {
-      front[v] = opts.baseMm / 2 + lift;
+      front[v] = opts.baseMm / 2 + raise;
       back[v] = opts.baseMm / 2 + opts.reliefMm * ROUNDED_BACK_RATIO * dome;
     } else {
-      front[v] = opts.baseMm + lift;
+      front[v] = opts.baseMm + raise;
       back[v] = 0;
     }
   }
@@ -270,19 +346,24 @@ function outlineDistance(used, cols, rows) {
 
 /**
  * Writes front and back faces of every kept cell and walls along the outline as binary STL,
- * scaled to `heightMm` tall and centered on x.
+ * scaled to `heightMm` tall and centered on x, then adds the monster parts.
  */
-function writeStl({ cols, rows }, cells, { front, back }, heightMm) {
+function writeStl(grid, cells, { front, back }, heightMm, parts) {
+  const { cols, rows } = grid;
   const cw = cols - 1, ch = rows - 1;
   const isCell = (i, j) => i >= 0 && j >= 0 && i < cw && j < ch && cells[j * cw + i] === 1;
   const { left, right, top, bottom } = extent(cw, ch, isCell);
   const cellMm = heightMm / (bottom + 1 - top);
   const x = (i) => (i - (left + right + 1) / 2) * cellMm;
   const z = (j) => (bottom + 1 - j) * cellMm;
-  const frontPoint = (i, j) => [x(i), -front[j * cols + i], z(j)];
-  const backPoint = (i, j) => [x(i), back[j * cols + i], z(j)];
+  const { gi, gj } = smoothOutline(cols, rows, cw, ch, isCell);
+  // Points carry their vertex number, so the mesh can wind each triangle on the regular grid
+  // and only then move it to the smoothed outline: a squeezed cell cannot flip its winding.
+  const frontPoint = (i, j) => [x(i), -front[j * cols + i], z(j), j * cols + i];
+  const backPoint = (i, j) => [x(i), back[j * cols + i], z(j), j * cols + i];
+  const smoothed = ([, y, , v]) => [x(gi[v]), y, z(gj[v])];
 
-  const mesh = createMesh();
+  const mesh = createMesh(smoothed);
   for (let j = 0; j < ch; j++) {
     for (let i = 0; i < cw; i++) {
       if (!isCell(i, j)) continue;
@@ -295,7 +376,156 @@ function writeStl({ cols, rows }, cells, { front, back }, heightMm) {
       }
     }
   }
+
+  // Parts are placed in picture pixels; this turns them into grid and then millimetre units.
+  const { box, step } = grid;
+  const toGrid = (px, py) => [(px - box.x0) / step + 1, (py - box.y0) / step + 1];
+  const mm = (px) => (px / step) * cellMm;
+  const isUsed = (i, j) => isCell(i - 1, j - 1) || isCell(i, j - 1) || isCell(i - 1, j) || isCell(i, j);
+  /** Front surface height at a grid point: the nearest used vertex's, or the base. */
+  const surfaceAt = (fi, fj) => {
+    const ci = Math.round(fi), cj = Math.round(fj);
+    for (let d = 0; d <= 3; d++) {
+      for (let j = cj - d; j <= cj + d; j++) {
+        for (let i = ci - d; i <= ci + d; i++) {
+          if (i >= 0 && j >= 0 && i < cols && j < rows && isUsed(i, j)) return front[j * cols + i];
+        }
+      }
+    }
+    return 0;
+  };
+  for (const part of parts) {
+    const [fi, fj] = toGrid(part.x, part.y);
+    addPart(mesh, part, { x: x(fi), z: z(fj), surface: surfaceAt(fi, fj), mm });
+  }
   return mesh.toStl();
+}
+
+/**
+ * Positions of every grid vertex in grid units, with the outline smoothed: each vertex on the
+ * outline moves toward the middle of its two outline neighbours (Taubin smoothing, which does
+ * not shrink the shape), by less than half a cell, so no cell folds over. Only positions
+ * change, not which faces exist, so the mesh stays watertight.
+ */
+function smoothOutline(cols, rows, cw, ch, isCell) {
+  const gi = new Float32Array(cols * rows), gj = new Float32Array(cols * rows);
+  for (let v = 0; v < gi.length; v++) { gi[v] = v % cols; gj[v] = Math.floor(v / cols); }
+  /** Outline neighbours of each outline vertex, from the walls the mesh gets. */
+  const links = new Map();
+  const link = (a, b) => {
+    if (!links.has(a)) links.set(a, []);
+    links.get(a).push(b);
+  };
+  for (let j = 0; j < ch; j++) {
+    for (let i = 0; i < cw; i++) {
+      if (!isCell(i, j)) continue;
+      const corners = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]];
+      for (const [di, dj, [pi, pj], [qi, qj]] of cellSides(corners)) {
+        if (isCell(i + di, j + dj)) continue;
+        const p = pj * cols + pi, q = qj * cols + qi;
+        link(p, q);
+        link(q, p);
+      }
+    }
+  }
+  const outline = [...links.keys()];
+  const home = outline.map((v) => [gi[v], gj[v]]);
+  for (let pass = 0; pass < OUTLINE_SMOOTHING_PASSES * 2; pass++) {
+    const factor = pass % 2 === 0 ? 0.5 : -0.53;
+    const moves = outline.map((v) => {
+      const near = links.get(v);
+      const mi = near.reduce((sum, n) => sum + gi[n], 0) / near.length;
+      const mj = near.reduce((sum, n) => sum + gj[n], 0) / near.length;
+      return [gi[v] + factor * (mi - gi[v]), gj[v] + factor * (mj - gj[v])];
+    });
+    outline.forEach((v, k) => {
+      const [hi, hj] = home[k];
+      const di = moves[k][0] - hi, dj = moves[k][1] - hj;
+      const shrink = Math.min(1, OUTLINE_MAX_SHIFT / (Math.hypot(di, dj) || 1));
+      gi[v] = hi + di * shrink;
+      gj[v] = hj + dj * shrink;
+    });
+  }
+  return { gi, gj };
+}
+
+/**
+ * Adds one monster part as closed solids that sink into the front of the relief. Nothing
+ * reaches behind the back (y > 0), so the figure still prints lying on its back.
+ * @param {{ x: number, z: number, surface: number, mm: (px: number) => number }} at the part's
+ *   position in mm, the relief's front height there, and a pixel-to-mm conversion
+ */
+function addPart(mesh, part, { x, z, surface, mm }) {
+  const front = (sink, depth) => Math.min(-surface + sink, -depth);
+  if (part.type === 'eye') {
+    const r = mm(part.r);
+    const y = front(0.3 * r, r);
+    addEllipsoid(mesh, [x, y, z], [r, r, r]);
+    const [lx, lz] = part.look;
+    const length = Math.hypot(lx, 1.2, lz);
+    const pupil = [lx / length, -1.2 / length, -lz / length].map((d) => d * r * 0.85);
+    addEllipsoid(mesh, [x + pupil[0], y + pupil[1], z + pupil[2]], [0.4 * r, 0.4 * r, 0.4 * r]);
+  } else if (part.type === 'tongue') {
+    const w = mm(part.w), l = mm(part.l), thick = 0.4 * w;
+    addEllipsoid(mesh, [x, front(0.1 * thick, thick), z], [w, thick, l]);
+  } else if (part.type === 'fang') {
+    const r = mm(part.r);
+    addCone(mesh, [x, front(0, r), z + r], [0, 0, -1], r, mm(part.l));
+  } else if (part.type === 'horn') {
+    const r = mm(part.r);
+    const length = Math.hypot(part.lean, 1);
+    addCone(mesh, [x, -r, z], [part.lean / length, 0, 1 / length], r, mm(part.l));
+  }
+}
+
+/** Closed ellipsoid around `center` with radii along x, y and z. */
+function addEllipsoid(mesh, center, radii) {
+  const rings = PART_SEGMENTS / 2;
+  const point = (a, b) => {
+    const theta = (Math.PI * a) / rings, phi = (2 * Math.PI * b) / PART_SEGMENTS;
+    return [
+      center[0] + radii[0] * Math.sin(theta) * Math.cos(phi),
+      center[1] + radii[1] * Math.sin(theta) * Math.sin(phi),
+      center[2] + radii[2] * Math.cos(theta),
+    ];
+  };
+  for (let a = 0; a < rings; a++) {
+    for (let b = 0; b < PART_SEGMENTS; b++) {
+      const p = point(a, b), q = point(a, b + 1), r = point(a + 1, b + 1), s = point(a + 1, b);
+      // The poles collapse a ring to one point; skip the zero-area triangle there.
+      if (a > 0) emitAround(mesh, center, p, q, r);
+      if (a < rings - 1) emitAround(mesh, center, p, r, s);
+    }
+  }
+}
+
+/** Closed cone from a round base at `base`, pointing along the unit vector `axis`. */
+function addCone(mesh, base, axis, radius, length) {
+  const apex = base.map((c, k) => c + axis[k] * length);
+  // Two unit vectors at right angles to the axis span the base circle.
+  const helper = Math.abs(axis[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const u = normalize(cross(axis, helper)), w = cross(axis, u);
+  const ring = Array.from({ length: PART_SEGMENTS }, (_, k) => {
+    const angle = (2 * Math.PI * k) / PART_SEGMENTS;
+    return base.map((c, d) => c + radius * (Math.cos(angle) * u[d] + Math.sin(angle) * w[d]));
+  });
+  const inside = base.map((c, k) => c + axis[k] * length * 0.25);
+  for (let k = 0; k < PART_SEGMENTS; k++) {
+    const next = ring[(k + 1) % PART_SEGMENTS];
+    emitAround(mesh, inside, ring[k], next, apex);
+    emitAround(mesh, inside, ring[k], next, base);
+  }
+}
+
+/** Emits a triangle of a convex solid, facing away from a point inside it. */
+function emitAround(mesh, inside, a, b, c) {
+  const centroid = [0, 1, 2].map((k) => (a[k] + b[k] + c[k]) / 3);
+  mesh.emit(a, b, c, sub(centroid, inside));
+}
+
+function normalize(v) {
+  const length = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / length, v[1] / length, v[2] / length];
 }
 
 /**
@@ -306,10 +536,11 @@ function writeStl({ cols, rows }, cells, { front, back }, heightMm) {
  * Walls are split at every column height meeting at their corners, so no edge ends in the
  * middle of another and the mesh stays manifold.
  */
-function writeBricks({ cols, rows, inside, depth }, opts) {
+function writeBricks({ cols, rows, inside, depth, lift, subjectPx }, opts) {
   const kept = bridgePinches(largestComponent(inside, cols, rows), cols, rows);
   if (!kept.includes(1)) throw new Error(NO_SUBJECT_MESSAGE);
-  const { front } = surfaceHeights(depth, kept, cols, rows, { ...opts, shape: 'relief' });
+  const fill = (values) => fillFromSubject(values, kept, inside, cols, rows);
+  const { front } = surfaceHeights({ depth: fill(depth), lift: fill(lift), mmPerPx: opts.heightMm / subjectPx }, kept, cols, rows, { ...opts, shape: 'relief' });
   const isBrick = (i, j) => i >= 0 && j >= 0 && i < cols && j < rows && kept[j * cols + i] === 1;
   const { left, right, top, bottom } = extent(cols, rows, isBrick);
   const studMm = opts.heightMm / (bottom + 1 - top);
@@ -389,13 +620,16 @@ function cellSides(corners) {
   ];
 }
 
-/** Collects triangles, each wound so its normal points along a given outward direction. */
-function createMesh() {
+/**
+ * Collects triangles, each wound so its normal points along a given outward direction.
+ * Points with a fourth value (a vertex number) are passed through `move` once wound.
+ */
+function createMesh(move = (p) => p) {
   const coords = [];
   const emit = (a, b, c, outward) => {
     const n = cross(sub(b, a), sub(c, a));
     if (n[0] * outward[0] + n[1] * outward[1] + n[2] * outward[2] < 0) [b, c] = [c, b];
-    coords.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    for (const p of [a, b, c]) coords.push(...(p.length > 3 ? move(p) : p));
   };
   const quad = (p, q, r, s, outward) => { emit(p, q, r, outward); emit(p, r, s, outward); };
   /** Triangulates the band between two point chains that run side by side in the same direction. */

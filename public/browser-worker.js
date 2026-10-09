@@ -1,13 +1,17 @@
 // Runs the in-browser pipeline off the main thread: background removal (MODNet), depth
-// estimation (Depth Anything V2 Small) and the relief mesher. Models are downloaded from
+// estimation (Depth Anything V2 Small), the face touches from caricature.js and the relief
+// mesher. The page finds the face landmarks (MediaPipe) and sends them along with the photo. Models are downloaded from
 // the Hugging Face Hub on first use and cached by the browser for later runs.
 import { env, pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
+import { applyWarp, caricatureWarp, faceLift, largestFace, monsterParts } from './caricature.js';
 import { reliefToStl } from './relief.js';
 
 const CUTOUT_MODEL = 'Xenova/modnet';
 const DEPTH_MODEL = 'onnx-community/depth-anything-v2-small';
 /** Longest side the models see; larger photos are scaled down first. */
 const MAX_INPUT_PX = 1024;
+/** The figure that gets the caricature and the monster parts; it is built as a relief. */
+const MONSTER_FIGURE = 'monster';
 
 env.allowLocalModels = false;
 
@@ -84,34 +88,53 @@ function depthToPng(depth, alpha, width, height) {
   return rgbaToPng(rgba, width, height);
 }
 
-/** photo -> cut-out (MODNet) -> depth (Depth Anything V2) -> relief STL. */
-async function run({ blob, options }) {
+/**
+ * photo -> cut-out (MODNet) -> depth (Depth Anything V2) -> face touches -> relief STL.
+ * With face landmarks, the face's real shape is added on top of the depth map; the monster figure
+ * is also warped into a bobblehead caricature and gets googly eyes, a tongue, fangs and horns.
+ */
+async function run({ blob, options, faces }) {
   const models = await loadModels();
   report({ stage: 'input', device: models.device });
   const photo = await decodePhoto(blob);
+  const face = largestFace(faces, photo.width, photo.height);
+  const monster = options.shape === MONSTER_FIGURE;
+  const warp = monster && face ? caricatureWarp(photo.width, photo.height, face) : null;
+  // The size of the picture the mesher gets: larger than the photo when warped.
+  const width = warp?.width ?? photo.width, height = warp?.height ?? photo.height;
 
   report({ stage: 'cutout' });
   const [cut] = await models.cutout(photo.canvas);
-  const rgba = cut.rgba().data;
-  const alpha = new Uint8Array(photo.width * photo.height);
-  for (let p = 0; p < alpha.length; p++) alpha[p] = rgba[p * 4 + 3];
-  const cutoutPng = await rgbaToPng(rgba, photo.width, photo.height);
+  const photoRgba = cut.rgba().data;
+  const rgba = warp ? applyWarp(photoRgba, photo.width, photo.height, 4, warp) : photoRgba;
+  const alphaOf = (pixels) => Uint8Array.from({ length: pixels.length / 4 }, (_, p) => pixels[p * 4 + 3]);
+  const alpha = alphaOf(rgba);
+  const cutoutPng = await rgbaToPng(rgba, width, height);
   send({ type: 'stage', stage: 'cutout', file: cutoutPng });
 
   report({ stage: 'depth' });
   const { predicted_depth } = await models.depth(photo.canvas);
-  const depth = Float32Array.from(predicted_depth.data);
+  let depth = Float32Array.from(predicted_depth.data);
   if (depth.length !== photo.width * photo.height) throw new Error('The depth map does not match the photo size');
-  const depthPng = await depthToPng(depth, alpha, photo.width, photo.height);
+  if (warp) depth = applyWarp(depth, photo.width, photo.height, 1, warp);
+  const depthPng = await depthToPng(depth, alpha, width, height);
   send({ type: 'stage', stage: 'depth', file: depthPng });
 
   report({ stage: 'stl' });
-  const { stl, triangles } = reliefToStl({ width: photo.width, height: photo.height, alpha, depth }, options);
+  // Landmarks where they are in the picture the mesher gets, warped or not.
+  const placed = warp?.face ?? face;
+  const lift = placed ? faceLift({ width, height, alpha }, placed) : undefined;
+  const parts = warp ? monsterParts(placed, { width, height, alpha }) : [];
+  const shape = monster ? 'relief' : options.shape;
+  const { stl, triangles } = reliefToStl({ width, height, alpha, depth, lift, parts }, { ...options, shape });
   send({ type: 'stage', stage: 'stl', file: new Blob([stl], { type: 'model/stl' }), triangles });
 }
 
 self.addEventListener('message', async (event) => {
   currentRun = event.data.run;
+  // Sent while the page looks for the face, so the models download meanwhile; the run that
+  // follows uses them, and reports a failed load itself.
+  if (event.data.preload) return loadModels().catch(() => {});
   try {
     await run(event.data);
     send({ type: 'done' });

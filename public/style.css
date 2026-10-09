@@ -209,8 +209,13 @@ body {
 
 .camera-error { margin: 0; color: var(--danger); text-align: center; }
 
+/* The video with the monster photos beside it, on the right. */
+.camera-stage { display: flex; gap: 12px; width: 100%; }
+
 .camera-frame {
   position: relative;
+  flex: 1;
+  min-width: 0;
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: 4px;
@@ -264,8 +269,10 @@ body {
   pointer-events: none;
 }
 
-/* Full screen preview: the camera frame fills the screen, with the logo on top. */
-.camera-frame:fullscreen {
+/* Full screen preview: the camera stage fills the screen, the video all of it, with the logo,
+   score and photo thumbnails on top. */
+.camera-stage:fullscreen { display: block; width: 100%; height: 100%; background: #000; }
+.camera-stage:fullscreen .camera-frame {
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
@@ -290,33 +297,57 @@ body {
 }
 .camera-logo img { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
 .camera-logo span::before { content: "$ "; content: "$ " / ""; color: var(--accent); }
-.camera-frame:fullscreen .camera-logo { display: flex; }
+.camera-stage:fullscreen .camera-logo { display: flex; }
 
 /* The scan score over the full screen preview; the scan panel stays the accessible readout. */
+/* The scan score over the preview: a compact badge in the page, larger in full screen. The
+   scan panel stays the accessible readout. */
 .camera-score {
   position: absolute;
-  bottom: 24px;
-  left: 24px;
+  bottom: 8px;
+  left: 8px;
   z-index: 4;
-  display: none;
-  padding: 12px 20px;
+  max-width: calc(100% - 16px);
+  padding: 6px 10px;
   color: #fff;
   background: rgb(0 0 0 / 60%);
   border-radius: var(--radius);
   pointer-events: none;
 }
-.camera-frame:fullscreen .camera-score:not([hidden]) { display: block; }
+.camera-score[hidden] { display: none; }
 .camera-score p { margin: 0; }
-.camera-score-value { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.camera-score-max { font-size: 0.4em; font-weight: 400; opacity: 0.7; }
-.camera-score-meta { margin-top: 6px; font-size: 1rem; }
+.camera-score-value { display: inline; font-size: 1.5rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.camera-score-max { font-size: 0.5em; font-weight: 400; opacity: 0.7; }
+.camera-score-meta { display: inline; margin-left: 8px; font-size: 0.85rem; }
+.camera-score-count { display: none; }
+/* Unchecked while human, checked once a monster, like a to-do list item. */
+.camera-score-check {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 6px;
+  vertical-align: -0.2em;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+.camera-score[data-verdict="monster"] .camera-score-check { background: #ff5b72; border-color: #ff5b72; }
+.camera-score[data-verdict="monster"] .camera-score-check::after { content: "✓"; font-size: 0.8em; font-weight: 700; line-height: 1; }
+.camera-score-hint { margin-top: 2px; font-size: 0.8rem; opacity: 0.9; }
+.camera-score-hint:empty { display: none; }
 .camera-score[data-verdict="monster"] .camera-score-value { color: #ff5b72; }
+.camera-stage:fullscreen .camera-score { bottom: 24px; left: 24px; padding: 12px 20px; }
+.camera-stage:fullscreen .camera-score-value { display: block; font-size: clamp(2.5rem, 6vw, 4.5rem); }
+.camera-stage:fullscreen .camera-score-max { font-size: 0.4em; }
+.camera-stage:fullscreen .camera-score-meta { display: block; margin: 6px 0 0; font-size: 1rem; }
+.camera-stage:fullscreen .camera-score-count { display: inline; }
+.camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
 .camera-fullscreen {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 4;
+  z-index: 6;
   display: grid;
   place-items: center;
   width: 40px;
@@ -331,7 +362,7 @@ body {
 .camera-fullscreen[hidden] { display: none; }
 .camera-fullscreen:hover { background: rgb(0 0 0 / 75%); }
 .camera-fullscreen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.camera-frame:fullscreen .camera-fullscreen { top: 16px; right: 16px; }
+.camera-stage:fullscreen .camera-fullscreen { top: 16px; right: 16px; }
 .camera-fullscreen[aria-pressed="false"] .icon-exit,
 .camera-fullscreen[aria-pressed="true"] .icon-enter { display: none; }
 
@@ -348,76 +379,58 @@ body {
   background: rgba(0, 0, 0, 0.35);
 }
 
-/* Monster scan: live score from the in-browser vision model */
-.btn[aria-pressed="true"] { border-color: var(--danger); color: var(--danger); }
+/* Monster scan: its score is on the camera preview, this panel holds the photos */
 
-.scan {
-  margin-top: 24px;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+/* Monster photos: thumbnails beside the video, over it in full screen. Size containment
+   keeps the strip from making the stage taller than the video; it scrolls instead. */
+.scan-photo-strip {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 80px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  contain: size;
 }
-
-.scan-readout { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-
-.scan-score { margin: 0; font-size: 2.25rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.scan-max { font-size: 0.875rem; font-weight: 400; color: var(--muted); }
-
-.scan-verdict { color: var(--muted); font-size: 0.8125rem; }
-.scan[data-verdict="human"] .scan-verdict { color: var(--pass); }
-.scan[data-verdict="suspicious"] .scan-verdict { color: var(--fg); }
-.scan[data-verdict="monster"] .scan-verdict { color: var(--danger); }
-.scan[data-verdict="human"] .scan-verdict::before { content: "✓ "; content: "✓ " / ""; }
-.scan[data-verdict="monster"] .scan-verdict::before { content: "✗ "; content: "✗ " / ""; }
-
-.scan-meter {
-  --score: 0;
-  position: relative;
-  height: 10px;
-  margin-top: 14px;
-  overflow: hidden;
-  border: 1px solid var(--field-border);
-  border-radius: 999px;
-}
-.scan-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: calc(var(--score) * 1%);
-  background: var(--pass);
-  transition: width 0.4s ease, background-color 0.4s ease;
-}
-.scan[data-verdict="suspicious"] .scan-fill { background: var(--muted); }
-.scan[data-verdict="monster"] .scan-fill { background: var(--danger); }
-
-.scan-scale { display: flex; justify-content: space-between; margin: 4px 0 14px; font-size: 0.75rem; color: var(--muted); }
-
-.scan-tracker { margin: 0 0 14px; font-size: 0.875rem; }
-.scan-count { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
-.scan-tracker[data-monsters="true"] .scan-count { color: var(--danger); }
-.scan-of { color: var(--muted); }
-
-.scan-photo { margin: 0 0 14px; }
-.scan-photo img { display: block; width: 100%; height: auto; border-radius: 4px; }
-.scan-photo-strip { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; }
+.scan-photo-strip[hidden] { display: none; }
 .scan-photo-choice {
   display: block;
-  width: 72px;
+  width: 100%;
   padding: 0;
   background: none;
   border: 2px solid transparent;
   border-radius: 6px;
   cursor: pointer;
 }
-.scan-photo .scan-photo-choice img { border-radius: 4px; }
+.scan-photo-choice img { display: block; width: 100%; height: auto; border-radius: 4px; }
 .scan-photo-choice:hover { border-color: var(--border); }
 .scan-photo-choice[aria-pressed="true"] { border-color: var(--accent); }
 .scan-photo-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.scan-photo figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
-.scan-photo .hint { margin: 0; }
+.camera-stage:fullscreen .scan-photo-strip {
+  position: absolute;
+  top: 72px;
+  right: 16px;
+  z-index: 6;
+  flex-direction: column;
+  width: 72px;
+  max-height: calc(100% - 144px);
+  contain: none;
+}
+
+/* A monster photo shown in place of the video, with the way back and what to do with it. */
+.camera-photo { position: absolute; inset: 0; z-index: 5; background: #000; }
+.camera-photo[hidden] { display: none; }
+.camera-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.camera-photo-actions { position: absolute; right: 8px; bottom: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.camera-stage:fullscreen .camera-photo-actions { right: 24px; bottom: 24px; left: 24px; }
+
+.scan-hint { margin: 0; text-align: center; }
 
 .scan-status:empty { display: none; }
-.scan-status { margin-top: 6px; }
+.scan-status { margin: 0; text-align: center; }
 
 /* Recent conversions */
 .recent { margin-top: 48px; }
@@ -703,7 +716,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .title::after, .tag-flaky, .tag-flaky::before, .stepper li.active::before { animation: none; }
   .step { transition: none; }
-  .scan-fill, .camera-frame video, .camera-frame::after { transition: none; }
+  .camera-frame video, .camera-frame::after { transition: none; }
 }
 
 @media (max-width: 560px) {
@@ -712,4 +725,9 @@ body {
   .mascot { width: 56px; height: 56px; }
   .stages { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }
+  .camera-stage { flex-direction: column; }
+  .scan-photo-strip { flex-direction: row; width: 100%; overflow: auto hidden; contain: none; }
+  .scan-photo-choice { flex: none; width: 72px; }
+  .camera-photo-actions { gap: 6px; }
+  .camera-photo-actions .btn { padding: 6px 10px; font-size: 0.8125rem; }
 }

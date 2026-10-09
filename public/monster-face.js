@@ -26,28 +26,56 @@ const MONSTER_GREEN = [0x2f, 0xd1, 0x2f];
 
 const $ = (id) => document.getElementById(id);
 
-/** Loaded once per page, since the model is a few megabytes. */
-let landmarkerPromise = null;
+/** Landmarkers by running mode, loaded once per page, since the model is a few megabytes. */
+const landmarkerPromises = {};
 
-/**
- * Loads the face landmarker, or returns the one already loaded.
- * @returns {Promise<{ detectForVideo(video: HTMLVideoElement, time: number): { faceLandmarks: { x: number, y: number }[][] } }>}
- */
-export function loadFaceTracker() {
-  landmarkerPromise ??= (async () => {
+/** Loads a face landmarker for 'VIDEO' (follows a face across frames) or 'IMAGE' (single photos). */
+function loadLandmarker(runningMode) {
+  landmarkerPromises[runningMode] ??= (async () => {
     const { FilesetResolver, FaceLandmarker } = await import(`${TASKS_VISION_URL}/vision_bundle.mjs`);
     const fileset = await FilesetResolver.forVisionTasks(`${TASKS_VISION_URL}/wasm`);
     return FaceLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: FACE_MODEL_URL, delegate: 'GPU' },
-      runningMode: 'VIDEO',
+      runningMode,
       numFaces: MAX_FACES,
     });
   })().catch((err) => {
     // A failed download should not stick: the next attempt loads again.
-    landmarkerPromise = null;
+    delete landmarkerPromises[runningMode];
     throw err;
   });
-  return landmarkerPromise;
+  return landmarkerPromises[runningMode];
+}
+
+/**
+ * Loads the face landmarker for the webcam, or returns the one already loaded.
+ * @returns {Promise<{ detectForVideo(video: HTMLVideoElement, time: number): { faceLandmarks: { x: number, y: number }[][] } }>}
+ */
+export function loadFaceTracker() {
+  return loadLandmarker('VIDEO');
+}
+
+/**
+ * Face landmarks of every face in a photo, for the in-browser figure. It has its own landmarker
+ * in image mode: the webcam's follows faces from frame to frame, which would carry over to the
+ * photo. A failure (no network, no WebGL) gives no faces: the figure is then made without
+ * the face touches.
+ * @param {Blob} blob
+ * @returns {Promise<{ x: number, y: number, z: number }[][]>} landmarks per face, normalized 0..1
+ */
+export async function findFaces(blob) {
+  try {
+    const landmarker = await loadLandmarker('IMAGE');
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return landmarker.detect(bitmap).faceLandmarks.map((face) => face.map(({ x, y, z }) => ({ x, y, z })));
+    } finally {
+      bitmap.close();
+    }
+  } catch (err) {
+    console.warn('Face landmarks unavailable, making the figure without them:', err);
+    return [];
+  }
 }
 
 /**
@@ -136,28 +164,50 @@ export function snapshotMonster(video) {
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
   ctx.drawImage(video, x, y, width, height, 0, 0, canvas.width, canvas.height);
-  posterize(ctx, canvas.width, canvas.height);
+  posterize(ctx, canvas.width, canvas.height, { strength: 1, green: true });
   ctx.drawImage($('eyes'), x, y, width, height, 0, 0, canvas.width, canvas.height);
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
 /**
- * Turns the picture into the green poster: grayscale, then contrast and brightness like
- * the CSS filters, then the green multiplied over it.
+ * A photo of the whole webcam frame in the look the preview has right now, for Take photo:
+ * not cropped or mirrored, like a plain capture, with the poster look at its current
+ * strength and the monster faces painted on.
+ * @param {HTMLVideoElement} video
+ * @param {{ strength: number, green: boolean }} look poster strength 0..1, and the green tint
+ * @returns {Promise<Blob | null>} a PNG
+ */
+export function snapshotPreview(video, look) {
+  const canvas = Object.assign(document.createElement('canvas'), { width: video.videoWidth, height: video.videoHeight });
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0);
+  if (look.strength > 0 || look.green) posterize(ctx, canvas.width, canvas.height, look);
+  // The eye canvas has the video's own size, so it lines up unscaled.
+  ctx.drawImage($('eyes'), 0, 0);
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+/**
+ * Turns the picture into the poster like the CSS filters on the preview: grayscale, then
+ * contrast and brightness, all by `strength`, then the green multiplied over it.
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} width
  * @param {number} height
+ * @param {{ strength: number, green: boolean }} look
  */
-function posterize(ctx, width, height) {
+function posterize(ctx, width, height, { strength, green }) {
   const image = ctx.getImageData(0, 0, width, height);
   const pixels = image.data;
   const clamp = (value) => Math.min(255, Math.max(0, value));
+  const contrast = 1 + (POSTER_CONTRAST - 1) * strength;
+  const brightness = 1 + (POSTER_BRIGHTNESS - 1) * strength;
+  const tint = green ? MONSTER_GREEN.map((c) => c / 255) : [1, 1, 1];
   for (let i = 0; i < pixels.length; i += 4) {
     const gray = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
-    const level = clamp(clamp((gray - 127.5) * POSTER_CONTRAST + 127.5) * POSTER_BRIGHTNESS) / 255;
-    pixels[i] = level * MONSTER_GREEN[0];
-    pixels[i + 1] = level * MONSTER_GREEN[1];
-    pixels[i + 2] = level * MONSTER_GREEN[2];
+    for (let c = 0; c < 3; c++) {
+      const value = pixels[i + c] + (gray - pixels[i + c]) * strength;
+      pixels[i + c] = clamp(clamp((value - 127.5) * contrast + 127.5) * brightness) * tint[c];
+    }
   }
   ctx.putImageData(image, 0, 0);
 }
