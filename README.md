@@ -138,11 +138,16 @@ video and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). 
 uploaded and no API key is needed.
 
 The score is all in the mouth: closed is 0, wide open is 100. Up to four faces are
-tracked at once, each with its own score; the meter shows the highest and a tracker below
-it counts how many faces in view are monsters. Openness is the gap between the lips
+tracked at once, each with its own score; the preview shows the highest. Openness is the gap between the lips
 over the width of the mouth, so it does not matter how close you sit to the camera (see
 `public/monster-score.js`). Below 40 is human, 60 and up is a monster, in between is
-suspicious. Each frame is blended with the previous score so the meter does not jitter.
+suspicious. Each frame is blended with the previous score so the score does not jitter.
+The score sits over the camera preview, as a compact badge in the page and larger in full
+screen (with how many faces in view are monsters). A checkbox next to the verdict stays
+unchecked while you are human and is checked once you are a monster, and a polite
+instruction says what to do: look into the camera, then open your eyes and mouth wide like
+the monster. Screen readers hear the verdict and the monster count from the status line under the
+camera.
 
 As the score climbs the preview turns into a high-contrast poster. Once you are a monster
 it goes green, and every monster face gets white eyes with small black pupils and a red
@@ -152,9 +157,11 @@ eyes and tongue if you are a monster. Keep your mouth closed for a plain photo.
 
 When the score hits 100 the scan takes a **monster photo** of the preview, effects and
 all, with a white flash and a shutter click. While the score stays at 100 it takes another
-every 5 seconds, and the scan panel keeps the last 6 to choose from. Pick one to download
-it or save it to **Recent runs** as a "Monster photo" run, which holds only the photo and
-costs nothing; open that run to flakify the photo. Saving goes through `POST /api/photos`.
+every 5 seconds. The last 6 show as small thumbnails to the right of the video (below it
+on a phone, over it in full screen). Click one to see it in place of the video, with
+**Back to camera** (or Escape), **Download**, and **Save to recent runs**, which keeps it
+as a "Monster photo" run that holds only the photo and costs nothing; open that run to
+flakify the photo. New photos keep coming in as thumbnails without taking over the view. Saving goes through `POST /api/photos`.
 
 Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
 (`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage when

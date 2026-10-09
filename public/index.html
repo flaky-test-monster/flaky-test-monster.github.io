@@ -35,48 +35,41 @@
     <section id="step-source" class="step" data-step="source" aria-label="Choose a photo" tabindex="-1">
       <p class="lead">Passed locally, failed on CI. Take a photo and get yourself back as a 3D-printable STL.</p>
       <div class="card card-camera" id="camera-card">
-        <div class="camera-frame" id="camera-frame">
-          <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
-          <canvas id="eyes" class="camera-eyes" aria-hidden="true"></canvas>
-          <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
-          <div id="camera-flash" class="camera-flash" aria-hidden="true"></div>
-          <div id="camera-score" class="camera-score" aria-hidden="true" hidden>
-            <p class="camera-score-value"><span id="camera-score-value">--</span><span class="camera-score-max">/100</span></p>
-            <p class="camera-score-meta"><span id="camera-score-verdict"></span> · <span id="camera-score-monsters"></span></p>
+        <div class="camera-stage" id="camera-stage">
+          <div class="camera-frame" id="camera-frame">
+            <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
+            <canvas id="eyes" class="camera-eyes" aria-hidden="true"></canvas>
+            <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
+            <div id="camera-flash" class="camera-flash" aria-hidden="true"></div>
+            <div id="camera-score" class="camera-score" aria-hidden="true" hidden>
+              <p class="camera-score-value"><span id="camera-score-value">--</span><span class="camera-score-max">/100</span></p>
+              <p class="camera-score-meta"><span class="camera-score-check" id="camera-score-check"></span><span id="camera-score-verdict"></span><span class="camera-score-count"> · <span id="camera-score-monsters"></span></span></p>
+              <p class="camera-score-hint" id="camera-score-hint"></p>
+            </div>
+            <div class="camera-logo" aria-hidden="true"><img src="public/monster.jpg" alt="" width="40" height="40"><span>flakifier</span></div>
+            <button type="button" id="fullscreen-toggle" class="camera-fullscreen" aria-pressed="false" aria-label="Full screen" hidden>
+              <svg class="icon-enter" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="icon-exit" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div id="camera-photo" class="camera-photo" hidden>
+              <img id="camera-photo-img" alt="">
+              <div class="camera-photo-actions">
+                <button type="button" id="camera-photo-back" class="btn"><span aria-hidden="true">← </span>Back to camera</button>
+                <button type="button" id="scan-photo-keep" class="btn btn-primary">Save to recent runs</button>
+                <a id="scan-photo-download" class="btn" download="flaky-test-monster.png">Download</a>
+              </div>
+            </div>
           </div>
-          <div class="camera-logo" aria-hidden="true"><img src="public/monster.jpg" alt="" width="40" height="40"><span>flakifier</span></div>
-          <button type="button" id="fullscreen-toggle" class="camera-fullscreen" aria-pressed="false" aria-label="Full screen" hidden>
-            <svg class="icon-enter" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <svg class="icon-exit" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
+          <ul id="scan-photo-strip" class="scan-photo-strip" aria-label="Monster photos: a photo is taken at 100, at most every 5 seconds, and the last 6 are kept" hidden></ul>
         </div>
         <p id="camera-error" class="camera-error" role="alert" hidden>The camera is blocked or missing. Allow camera access for this page in your browser and reload.</p>
         <div class="camera-actions">
           <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
         </div>
+        <p class="hint scan-hint">The monster scan runs in your browser with a local face tracker; the video never leaves this device.</p>
+        <p id="scan-status" class="hint scan-status" role="status"></p>
         <span class="card-label">camera</span>
       </div>
-      <section id="scan-panel" class="scan" aria-labelledby="scan-title" hidden>
-        <h2 class="section-title" id="scan-title">Monster scan</h2>
-        <div class="scan-readout">
-          <p class="scan-score"><span id="scan-score">--</span><span class="scan-max">/100</span></p>
-          <span id="scan-verdict" class="tag scan-verdict">scanning</span>
-        </div>
-        <div id="scan-meter" class="scan-meter" role="meter" aria-labelledby="scan-title" aria-valuemin="0" aria-valuemax="100"><span class="scan-fill"></span></div>
-        <div class="scan-scale" aria-hidden="true"><span>human</span><span>monster</span></div>
-        <p id="scan-tracker" class="scan-tracker" data-monsters="false"><span class="scan-count" id="scan-monsters">0</span> <span id="scan-monsters-label">monsters</span> <span class="scan-of">of <span id="scan-faces">0</span> <span id="scan-faces-label">faces</span> in view</span></p>
-        <p class="hint">Open wide. Runs in your browser with a local face tracker; the video never leaves this device.</p>
-        <figure id="scan-photo" class="scan-photo" hidden>
-          <img id="scan-photo-img" alt="">
-          <ul id="scan-photo-strip" class="scan-photo-strip" aria-label="Monster photos to choose from"></ul>
-          <figcaption>
-            <button type="button" id="scan-photo-keep" class="btn btn-primary">Save to recent runs</button>
-            <a id="scan-photo-download" class="btn" download="flaky-test-monster.png">Download</a>
-            <span class="hint">A photo is taken at 100, at most every 5 seconds; the last 6 are kept. Pick one to save.</span>
-          </figcaption>
-        </figure>
-        <p id="scan-status" class="hint scan-status" role="status"></p>
-      </section>
       <div id="recent" class="recent" hidden>
         <h2 class="section-title">Recent runs</h2>
         <ul id="recent-list" class="recent-list"></ul>

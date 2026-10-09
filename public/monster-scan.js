@@ -14,6 +14,12 @@ const PHOTO_EVERY_MS = 5000;
 const PHOTO_LIMIT = 6;
 /** Wait before a failed scan tries again; there is no button to restart it. */
 const RETRY_MS = 5000;
+/** What the score overlay asks for: no face in view, not a monster yet, a monster. */
+const HINTS = {
+  noFace: 'Please look into the camera.',
+  human: 'Please open your eyes and mouth wide, like the monster.',
+  monster: 'Thank you, you are a monster! Hold that face.',
+};
 
 /** Bumped on every start and stop, so a scan loop can tell it has been replaced. */
 let runId = 0;
@@ -25,12 +31,13 @@ let monsterCount = 0;
 let lastAnnouncement = null;
 let lastPhotoAt = -Infinity;
 /**
- * Monster photos to choose from, oldest first. They stay across scans until the page reloads.
+ * Monster photos, oldest first, shown as thumbnails beside the video. They stay across scans until the page reloads.
  * @type {{ blob: Blob, url: string, takenAt: Date, saving: boolean, saved: boolean }[]}
  */
 const photos = [];
+/** The photo shown in place of the video, or null for the live camera. */
 /** @type {typeof photos[number] | null} */
-let selectedPhoto = null;
+let viewedPhoto = null;
 /** Made when the page loads; browsers only let it play after the first click or tap. */
 let audio = null;
 /**
@@ -63,7 +70,7 @@ function setCameraLook(score) {
 }
 
 /**
- * Shows the score over the full screen preview, or hides it when no scan has a score.
+ * Shows the score over the preview, with what to do next, or hides it when no scan has a score.
  * @param {number | null} shown rounded score
  */
 function renderCameraScore(shown) {
@@ -74,33 +81,18 @@ function renderCameraScore(shown) {
   $('camera-score-value').textContent = shown;
   $('camera-score-verdict').textContent = result.label;
   $('camera-score-monsters').textContent = `${monsterCount} ${monsterCount === 1 ? 'monster' : 'monsters'} in view`;
-}
-
-/** Shows how many of the faces in view are monsters. */
-function renderTracker() {
-  $('scan-monsters').textContent = monsterCount;
-  $('scan-monsters-label').textContent = monsterCount === 1 ? 'monster' : 'monsters';
-  $('scan-faces').textContent = faces.length;
-  $('scan-faces-label').textContent = faces.length === 1 ? 'face' : 'faces';
-  $('scan-tracker').dataset.monsters = String(monsterCount > 0);
+  $('camera-score-hint').textContent = !faces.length ? HINTS.noFace : result.key === 'monster' ? HINTS.monster : HINTS.human;
 }
 
 /**
- * Shows the running score, rounded, on the meter and how many of the faces in view are
- * monsters.
+ * Shows the running score, rounded, on the camera preview, and announces the verdict and how
+ * many of the faces in view are monsters.
  */
 function render() {
   const shown = Math.round(score);
   const result = verdict(shown);
-  $('scan-score').textContent = shown;
-  $('scan-meter').setAttribute('aria-valuenow', shown);
-  $('scan-meter').setAttribute('aria-valuetext', `${shown} out of 100, ${result.label}`);
-  $('scan-meter').style.setProperty('--score', shown);
-  $('scan-panel').dataset.verdict = result.key;
-  $('scan-verdict').textContent = result.label;
   setCameraLook(shown);
   renderCameraScore(shown);
-  renderTracker();
   // Announce only a change of verdict or count, not every new score.
   const announcement = `Verdict: ${result.label}, ${monsterCount} of ${faces.length} in view are monsters`;
   if (announcement !== lastAnnouncement) setStatus(announcement);
@@ -153,8 +145,8 @@ function scanFrame(video, tracker) {
 }
 
 /**
- * Takes a monster photo and adds it to the ones to choose from. The newest is selected,
- * unless the user has picked an older one to look at.
+ * Takes a monster photo and adds it to the thumbnails beside the video. It does not take
+ * over the view: the camera, or the photo being looked at, stays.
  * @param {HTMLVideoElement} video
  */
 async function takePhoto(video) {
@@ -166,15 +158,13 @@ async function takePhoto(video) {
     playShutter();
     const blob = await pending;
     if (!blob) return;
-    const followNewest = selectedPhoto === null || selectedPhoto === photos.at(-1);
     const photo = { blob, url: URL.createObjectURL(blob), takenAt: new Date(), saving: false, saved: false };
     photos.push(photo);
     if (photos.length > PHOTO_LIMIT) {
       const oldest = photos.shift();
       URL.revokeObjectURL(oldest.url);
-      if (selectedPhoto === oldest) selectedPhoto = null;
+      if (viewedPhoto === oldest) viewedPhoto = null;
     }
-    if (followNewest || selectedPhoto === null) selectedPhoto = photo;
     renderPhotos();
     setStatus(`Monster photo ${photos.length} taken`);
   } catch (err) {
@@ -183,41 +173,68 @@ async function takePhoto(video) {
   }
 }
 
-/** Shows the selected photo large and every photo as a thumbnail to pick from. */
+/** The thumbnail button of a photo, by its place in the list. */
+const thumbnail = (index) => $('scan-photo-strip').querySelectorAll('button')[index];
+
+/**
+ * Shows every photo as a thumbnail beside the video, and the one being looked at, if any,
+ * in place of the video with its actions.
+ */
 function renderPhotos() {
-  $('scan-photo').hidden = photos.length === 0;
-  if (!selectedPhoto) return;
+  $('scan-photo-strip').hidden = photos.length === 0;
   const time = (photo) => photo.takenAt.toLocaleTimeString();
-  $('scan-photo-img').src = selectedPhoto.url;
-  $('scan-photo-img').alt = `Monster photo taken at ${time(selectedPhoto)}, with the monster look`;
-  $('scan-photo-download').href = selectedPhoto.url;
-  // Also off while a save is on its way, so a redraw in the meantime cannot allow a second save.
-  $('scan-photo-keep').disabled = !savePhoto || selectedPhoto.saving || selectedPhoto.saved;
-  $('scan-photo-keep').title = savePhoto ? '' : 'Saving needs the Flakifier server';
-  $('scan-photo-keep').textContent = selectedPhoto.saved ? 'Saved to recent runs' : 'Save to recent runs';
   $('scan-photo-strip').replaceChildren(...photos.map((photo, i) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'scan-photo-choice';
-    button.setAttribute('aria-pressed', String(photo === selectedPhoto));
-    button.setAttribute('aria-label', `Photo ${i + 1} of ${photos.length}, taken at ${time(photo)}${photo.saved ? ', saved' : ''}`);
+    button.setAttribute('aria-pressed', String(photo === viewedPhoto));
+    button.setAttribute('aria-label', `Show photo ${i + 1} of ${photos.length}, taken at ${time(photo)}${photo.saved ? ', saved' : ''}`);
     const img = document.createElement('img');
     img.src = photo.url;
     img.alt = '';
     button.append(img);
-    button.addEventListener('click', () => {
-      selectedPhoto = photo;
-      renderPhotos();
-    });
+    button.addEventListener('click', () => viewPhoto(photo));
     const li = document.createElement('li');
     li.append(button);
     return li;
   }));
+
+  $('camera-photo').hidden = !viewedPhoto;
+  if (!viewedPhoto) return;
+  $('camera-photo-img').src = viewedPhoto.url;
+  $('camera-photo-img').alt = `Monster photo taken at ${time(viewedPhoto)}, with the monster look`;
+  $('scan-photo-download').href = viewedPhoto.url;
+  // Also off while a save is on its way, so a redraw in the meantime cannot allow a second save.
+  $('scan-photo-keep').disabled = !savePhoto || viewedPhoto.saving || viewedPhoto.saved;
+  $('scan-photo-keep').title = savePhoto ? '' : 'Saving needs the Flakifier server';
+  $('scan-photo-keep').textContent = viewedPhoto.saved ? 'Saved to recent runs' : 'Save to recent runs';
 }
 
-/** Saves the selected photo to the recent runs, once. */
-async function keepSelectedPhoto() {
-  const photo = selectedPhoto;
+/** Shows a photo in place of the video, or the same photo again to go back to the camera. */
+function viewPhoto(photo) {
+  if (photo === viewedPhoto) return backToCamera();
+  viewedPhoto = photo;
+  renderPhotos();
+  $('camera-photo-back').focus();
+}
+
+/** Goes from a photo back to the live camera, with focus on that photo's thumbnail. */
+function backToCamera() {
+  const index = photos.indexOf(viewedPhoto);
+  showLiveCamera();
+  thumbnail(index)?.focus();
+}
+
+/** Shows the live camera again in place of a monster photo. */
+export function showLiveCamera() {
+  if (!viewedPhoto) return;
+  viewedPhoto = null;
+  renderPhotos();
+}
+
+/** Saves the photo being looked at to the recent runs, once. */
+async function keepViewedPhoto() {
+  const photo = viewedPhoto;
   if (!photo || !savePhoto || photo.saving || photo.saved) return;
   photo.saving = true;
   renderPhotos();
@@ -288,13 +305,6 @@ export async function startMonsterScan(video) {
   faces = [];
   monsterCount = 0;
   lastAnnouncement = null;
-  $('scan-panel').hidden = false;
-  $('scan-panel').removeAttribute('data-verdict');
-  $('scan-score').textContent = '--';
-  $('scan-verdict').textContent = 'scanning';
-  $('scan-meter').style.setProperty('--score', 0);
-  $('scan-meter').removeAttribute('aria-valuenow');
-  renderTracker();
   setCameraLook(null);
   renderCameraScore(null);
   try {
@@ -335,7 +345,11 @@ export function onSaveMonsterPhoto(saver) {
   savePhoto = saver;
 }
 
-$('scan-photo-keep').addEventListener('click', keepSelectedPhoto);
+$('scan-photo-keep').addEventListener('click', keepViewedPhoto);
+$('camera-photo-back').addEventListener('click', backToCamera);
+$('camera-photo').addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !document.fullscreenElement) backToCamera();
+});
 // The scan starts on its own, without a click, so the shutter sound waits for the first click,
 // tap or key press.
 document.addEventListener('pointerdown', prepareShutter, { passive: true });

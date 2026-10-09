@@ -1,5 +1,5 @@
 import { findFaces } from './monster-face.js';
-import { onSaveMonsterPhoto, startMonsterScan, stopMonsterScan, takePreviewPhoto } from './monster-scan.js';
+import { onSaveMonsterPhoto, showLiveCamera, startMonsterScan, stopMonsterScan, takePreviewPhoto } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -131,16 +131,17 @@ function setCameraBlocked(blocked) {
   $('take-photo').disabled = blocked;
 }
 
-/** Shows the camera preview full screen, with the logo on top, or leaves full screen. */
+/** Shows the camera preview and the monster photos full screen, with the logo on top, or leaves full screen. */
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
-  else $('camera-frame').requestFullscreen().catch(() => {});
+  else $('camera-stage').requestFullscreen().catch(() => {});
 }
 
 /** Stops the webcam so the indicator light goes off. */
 function stopCamera() {
   if (document.fullscreenElement) document.exitFullscreen();
   stopMonsterScan();
+  showLiveCamera();
   state.stream?.getTracks().forEach((track) => track.stop());
   state.stream = null;
 }
@@ -775,6 +776,8 @@ function startOver() {
 
 $('take-photo').addEventListener('click', async () => {
   $('take-photo').disabled = true;
+  // The photo is of the camera, so a monster photo being looked at makes way for it.
+  showLiveCamera();
   await runCountdown();
   chooseImage(await captureFrame());
   $('take-photo').disabled = false;
@@ -783,7 +786,7 @@ $('take-photo').addEventListener('click', async () => {
 $('fullscreen-toggle').hidden = !document.fullscreenEnabled;
 $('fullscreen-toggle').addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', () => {
-  $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-frame')));
+  $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-stage')));
 });
 onSaveMonsterPhoto(NO_BACKEND ? null : saveMonsterPhoto);
 $('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
