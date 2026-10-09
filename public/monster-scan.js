@@ -1,4 +1,5 @@
 import { drawFaces, loadFaceTracker, loadHandTracker, snapshotMonster, snapshotPreview } from './monster-face.js';
+import { zip } from './zip.js';
 import { isWaving, smoothScore, trackFaces, trackHands, verdict, WAVE_BONUS, WAVE_FROM } from './monster-score.js';
 
 const $ = (id) => document.getElementById(id);
@@ -276,6 +277,7 @@ const thumbnail = (index) => $('scan-photo-strip').querySelectorAll('button')[in
  * in place of the video with its actions.
  */
 function renderPhotos() {
+  renderDownloadAll();
   $('scan-photo-strip').hidden = photos.length === 0;
   const time = (photo) => photo.takenAt.toLocaleTimeString();
   $('scan-photo-strip').replaceChildren(...photos.map((photo, i) => {
@@ -299,10 +301,50 @@ function renderPhotos() {
   $('camera-photo-img').src = viewedPhoto.url;
   $('camera-photo-img').alt = `Monster photo taken at ${time(viewedPhoto)}, with the monster look`;
   $('scan-photo-download').href = viewedPhoto.url;
+  $('scan-photo-download').download = photoFileName(viewedPhoto);
   // Also off while a save is on its way, so a redraw in the meantime cannot allow a second save.
   $('scan-photo-keep').disabled = !savePhoto || viewedPhoto.saving || viewedPhoto.saved;
   $('scan-photo-keep').title = savePhoto ? '' : 'Saving needs the Flakifier server';
   $('scan-photo-keep').textContent = viewedPhoto.saved ? 'Saved to recent runs' : 'Save to recent runs';
+}
+
+/** The monster photos not saved to the recent runs, which are lost on reload. */
+const unsavedPhotos = () => photos.filter((photo) => !photo.saved);
+
+/** Offers the unsaved photos as one download, or hides the button when there are none. */
+function renderDownloadAll() {
+  const count = unsavedPhotos().length;
+  $('scan-photos-download').hidden = count === 0;
+  $('scan-photos-download').textContent = count === 1 ? 'Download the unsaved photo' : `Download ${count} unsaved photos`;
+}
+
+/** A file name for a photo by when it was taken, so several of them do not clash. */
+function photoFileName(photo) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const at = photo.takenAt;
+  return `flaky-test-monster-${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}-${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}.png`;
+}
+
+/** Downloads every unsaved photo: one as a PNG, several in a ZIP file. */
+async function downloadUnsaved() {
+  const unsaved = unsavedPhotos();
+  if (!unsaved.length) return;
+  const single = unsaved.length === 1;
+  // Off while the ZIP is packed, so a second click does not download it twice.
+  $('scan-photos-download').disabled = true;
+  let blob;
+  try {
+    blob = single ? unsaved[0].blob : await zip(unsaved.map((photo) => ({ name: photoFileName(photo), blob: photo.blob, date: photo.takenAt })));
+  } finally {
+    $('scan-photos-download').disabled = false;
+  }
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = single ? photoFileName(unsaved[0]) : 'flaky-test-monsters.zip';
+  link.click();
+  // Long enough for the download to start; the photos themselves keep their own URLs.
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+  setStatus(single ? 'Downloading the unsaved photo' : `Downloading ${unsaved.length} unsaved photos as a ZIP file`);
 }
 
 /** Shows a photo in place of the video, or the same photo again to go back to the camera. */
@@ -452,6 +494,7 @@ export function onSaveMonsterPhoto(saver) {
 }
 
 $('scan-photo-keep').addEventListener('click', keepViewedPhoto);
+$('scan-photos-download').addEventListener('click', downloadUnsaved);
 $('camera-photo-back').addEventListener('click', backToCamera);
 $('camera-photo').addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !document.fullscreenElement) backToCamera();

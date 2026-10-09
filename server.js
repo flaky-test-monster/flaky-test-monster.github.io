@@ -1,5 +1,7 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
 import path from 'node:path';
 import { DEFAULT_FIGURE, FIGURES } from './lib/figures.js';
 import { makeFigureImage, makeFigureScene } from './lib/openai.js';
@@ -31,6 +33,7 @@ const STATIC_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4',
 };
 const DEFAULT_TYPE = 'application/octet-stream';
 
@@ -144,24 +147,52 @@ function sendJson(res, status, body) {
 }
 
 /**
- * Reads a file from disk and sends it, mapping a missing file to 404.
+ * Streams a file from disk, mapping a missing file to 404.
  * @param {import('node:http').ServerResponse} res
  * @param {string} filePath
  * @param {string} contentType
  * @param {string} [downloadName] when set, the file is sent as an attachment
+ * @param {import('node:http').IncomingMessage} [req] when set, a byte range in it is honored
  */
-async function sendFile(res, filePath, contentType, downloadName) {
-  let data;
+async function sendFile(res, filePath, contentType, downloadName, req) {
+  let size;
   try {
-    data = await readFile(filePath);
+    const stats = await stat(filePath);
+    if (!stats.isFile()) throw new HttpError(404, 'Not found');
+    size = stats.size;
   } catch (err) {
-    if (err.code === 'ENOENT' || err.code === 'EISDIR') throw new HttpError(404, 'Not found');
+    if (err.code === 'ENOENT') throw new HttpError(404, 'Not found');
     throw err;
   }
-  const headers = { 'Content-Type': contentType, 'Content-Length': data.length };
+  const headers = { 'Content-Type': contentType };
   if (downloadName) headers['Content-Disposition'] = `attachment; filename="${downloadName}"`;
-  res.writeHead(200, headers);
-  res.end(data);
+  let status = 200;
+  let start = 0;
+  let end = size - 1;
+  // With the request, a single byte range is honored: browsers need that to seek and loop a
+  // video, and Safari will not play one without it. Only that range is read from disk.
+  if (req) {
+    headers['Accept-Ranges'] = 'bytes';
+    const range = req.headers.range?.match(/^bytes=(\d*)-(\d*)$/);
+    if (range && (range[1] || range[2])) {
+      start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+      end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+      if (start > end) {
+        res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+        res.end();
+        return;
+      }
+      headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+      status = 206;
+    }
+  }
+  headers['Content-Length'] = end - start + 1;
+  res.writeHead(status, headers);
+  if (size === 0) return res.end();
+  // A browser that seeks away cancels the request; that is no error worth a log line.
+  await pipeline(createReadStream(filePath, { start, end }), res).catch((err) => {
+    if (err.code !== 'ERR_STREAM_PREMATURE_CLOSE') throw err;
+  });
 }
 
 /**
@@ -252,7 +283,7 @@ async function serveStatic(req, res, url, [, relative]) {
   const filePath = path.resolve(PUBLIC_DIR, relative);
   if (!filePath.startsWith(PUBLIC_DIR + path.sep)) throw new HttpError(400, 'Invalid path');
   const contentType = STATIC_TYPES[path.extname(filePath).toLowerCase()] ?? DEFAULT_TYPE;
-  await sendFile(res, filePath, contentType);
+  await sendFile(res, filePath, contentType, undefined, req);
 }
 
 /** POST /api/jobs?pipeline=tripo|shapes|local&figure=<key of FIGURES>&name=... */

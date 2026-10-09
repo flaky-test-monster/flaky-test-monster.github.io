@@ -16,6 +16,8 @@ rm -rf _site
 mkdir -p _site/public
 # Images and anything else that is not minified, copied as is.
 find public -maxdepth 1 -type f ! -name '*.js' ! -name '*.css' ! -name '*.html' -exec cp {} _site/public/ \;
+# Videos and other media, also as is.
+cp -R public/media _site/public/
 # Each module on its own, no bundling: relative imports and the CDN imports stay as they are.
 npx --yes "$ESBUILD" public/*.js public/*.css --minify --format=esm --target=es2022 \
   --outdir=_site/public --log-level=warning

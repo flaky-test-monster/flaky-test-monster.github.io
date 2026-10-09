@@ -1,5 +1,6 @@
 import { findFaces } from './monster-face.js';
 import { onSaveMonsterPhoto, showLiveCamera, startMonsterScan, stopMonsterScan, takePreviewPhoto } from './monster-scan.js';
+import { pauseMusicVideo } from './music-video.js';
 import { mountViewer } from './viewer.js';
 
 const COUNTDOWN_SECONDS = 3;
@@ -101,6 +102,8 @@ let availabilityCheck = 0;
  * so keyboard and screen reader users are not left on a control that just disappeared.
  */
 function showStep(name, { focus = true } = {}) {
+  // The music video is on the start page; it should not play on where it cannot be seen.
+  if (name !== 'source') pauseMusicVideo();
   for (const step of document.querySelectorAll('.step')) {
     const active = step.dataset.step === name;
     step.hidden = !active;

@@ -496,6 +496,20 @@ body {
 .music-lead { margin: 0 0 16px; color: var(--muted); }
 .music-lead strong { color: var(--fg); }
 .music-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
+.music-video { margin-top: 48px; }
+.music-video-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.music-video-player:fullscreen { border-radius: 0; cursor: auto; }
+.video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.video-repeat[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.video-repeat::before { content: "↻ "; content: "↻ " / ""; }
+.video-time { margin-left: auto; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .music-list iframe {
   display: block;
   width: 100%;
