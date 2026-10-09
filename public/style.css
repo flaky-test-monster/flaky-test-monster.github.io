@@ -230,11 +230,15 @@ body {
   background: #000;
 }
 
-.camera-frame video {
+.camera-frame video,
+.camera-eyes {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1);
+}
+
+.camera-frame video {
   /* --poster runs 0..1 with the monster score: from webcam to stark black-and-white poster. */
   filter: grayscale(var(--poster, 0)) contrast(calc(1 + var(--poster, 0) * 6)) brightness(calc(1 + var(--poster, 0) * 0.15));
   transition: filter 0.4s ease;
@@ -252,9 +256,19 @@ body {
 }
 .card-camera.is-monster .camera-frame::after { opacity: 1; }
 
+/* Same size, fit and mirroring as the video, so eye landmarks line up. Above the green
+   tint so the eyes stay white. */
+.camera-eyes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .countdown {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,6 +322,11 @@ body {
 .scan[data-verdict="monster"] .scan-fill { background: var(--danger); }
 
 .scan-scale { display: flex; justify-content: space-between; margin: 4px 0 14px; font-size: 0.75rem; color: var(--muted); }
+
+.scan-tracker { margin: 0 0 14px; font-size: 0.875rem; }
+.scan-count { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+.scan-tracker[data-monsters="true"] .scan-count { color: var(--danger); }
+.scan-of { color: var(--muted); }
 
 .scan-status:empty { display: none; }
 .scan-status { margin-top: 6px; }

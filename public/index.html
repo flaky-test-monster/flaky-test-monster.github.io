@@ -35,6 +35,7 @@
         <div class="card card-camera" id="camera-card">
           <div class="camera-frame">
             <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
+            <canvas id="eyes" class="camera-eyes" aria-hidden="true"></canvas>
             <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
           </div>
           <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
@@ -56,7 +57,8 @@
         </div>
         <div id="scan-meter" class="scan-meter" role="meter" aria-labelledby="scan-title" aria-valuemin="0" aria-valuemax="100"><span class="scan-fill"></span></div>
         <div class="scan-scale" aria-hidden="true"><span>human</span><span>monster</span></div>
-        <p class="hint">Smile to pass as human, scowl to fail. Runs in your browser with <span id="scan-model">a local vision model</span>; the video never leaves this device.</p>
+        <p id="scan-tracker" class="scan-tracker" data-monsters="false"><span class="scan-count" id="scan-monsters">0</span> <span id="scan-monsters-label">monsters</span> <span class="scan-of">of <span id="scan-faces">0</span> <span id="scan-faces-label">faces</span> in view</span></p>
+        <p class="hint">Open wide. Runs in your browser with a local face tracker; the video never leaves this device.</p>
         <p id="scan-status" class="hint scan-status" role="status"></p>
       </section>
       <div id="recent" class="recent" hidden>
