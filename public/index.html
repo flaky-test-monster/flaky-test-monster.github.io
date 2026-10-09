@@ -29,6 +29,7 @@
         </div>
       </a>
     </header>
+    <p id="no-backend-notice" class="notice" hidden>Browser-only preview: the camera and monster scan work, while flakifying and recent runs need the <a href="https://github.com/kertal/flakifier#install">Flakifier server</a>.</p>
 
     <main>
     <section id="step-source" class="step" data-step="source" aria-label="Choose a photo" tabindex="-1">
@@ -106,8 +107,10 @@
           </select>
         </label>
       </div>
+      <p id="flakify-unavailable" class="hint" hidden>Flakify needs the Flakifier server, which this preview runs without. Download the photo to flakify it there.</p>
       <div class="actions">
         <button type="button" id="retake" class="btn">Choose another</button>
+        <a id="dl-photo" class="btn" download="flakifier-photo.png" hidden>Download photo</a>
         <button type="button" id="flakify" class="btn btn-primary btn-next">Flakify</button>
       </div>
     </section>

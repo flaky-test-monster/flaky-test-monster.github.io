@@ -18,6 +18,8 @@ const PHOTO_PIPELINE = 'photo';
 const RECENT_LIMIT = 6;
 const INTERRUPTED_MESSAGE = 'This conversion was interrupted because the server stopped. Start a new one.';
 const JOB_HASH_PATTERN = /^#job=([0-9a-f-]{36})$/;
+/** Set by scripts/build-pages.sh: a static copy with no /api, so only the in-browser parts work. */
+const NO_BACKEND = document.documentElement.dataset.backend === 'none';
 
 const $ = (id) => document.getElementById(id);
 /** The per-conversion part of the state, as it is before a photo is chosen. */
@@ -100,6 +102,7 @@ function setPreview(blob) {
   state.previewUrl = blob ? URL.createObjectURL(blob) : null;
   if (state.previewUrl) $('preview').src = state.previewUrl;
   else $('preview').removeAttribute('src');
+  $('dl-photo').href = state.previewUrl ?? '';
 }
 
 /** Moves to the confirm step with the chosen image. */
@@ -160,6 +163,7 @@ function figureLabel(figure) {
 
 /** Fills the figure picker from the server's presets. */
 async function loadFigures() {
+  if (NO_BACKEND) return;
   try {
     const res = await fetch('/api/figures');
     if (!res.ok) throw new Error(`Figures failed (${res.status})`);
@@ -252,6 +256,7 @@ async function deleteJob(job) {
 
 /** Fetches the stored conversions for the recent list. A failure just hides the list. */
 async function loadRecent() {
+  if (NO_BACKEND) return;
   try {
     const res = await fetch('/api/jobs');
     if (!res.ok) throw new Error(`List failed (${res.status})`);
@@ -299,7 +304,7 @@ async function saveMonsterPhoto(photo) {
 /** Reopens the conversion named in the URL, if any. Returns whether one was opened. */
 async function restoreFromUrl() {
   const id = location.hash.match(JOB_HASH_PATTERN)?.[1];
-  if (!id) return false;
+  if (!id || NO_BACKEND) return false;
   try {
     const res = await fetch(`/api/jobs/${id}`);
     if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);
@@ -466,7 +471,7 @@ document.addEventListener('fullscreenchange', () => {
   $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-frame')));
 });
 $('scan-toggle').addEventListener('click', () => toggleMonsterScan($('video')));
-onSaveMonsterPhoto(saveMonsterPhoto);
+onSaveMonsterPhoto(NO_BACKEND ? null : saveMonsterPhoto);
 $('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
 $('flakify').addEventListener('click', startJob);
 $('home-link').addEventListener('click', (event) => {
@@ -482,6 +487,16 @@ $('delete-job').addEventListener('click', async () => {
 });
 $('recent-more').addEventListener('click', () => { state.showAllRecent = true; renderRecent(); });
 
+/** Disables what needs the server and says so; the photo can still be downloaded instead. */
+function disableBackendFeatures() {
+  $('no-backend-notice').hidden = false;
+  $('flakify-unavailable').hidden = false;
+  $('dl-photo').hidden = false;
+  for (const id of ['job-name', 'figure', 'pipeline', 'flakify']) $(id).disabled = true;
+  $('flakify').setAttribute('aria-describedby', 'flakify-unavailable');
+}
+
+if (NO_BACKEND) disableBackendFeatures();
 await loadFigures();
 if (!(await restoreFromUrl())) {
   showStep('source', { focus: false });

@@ -201,9 +201,11 @@ Flakifier.
 ## GitHub Pages and PR previews
 
 The frontend is published as a static site on GitHub Pages, so changes to the UI can be
-tried without installing anything. Pages has no backend: the camera and the
-[monster scan](#monster-scan) work, while Flakify and the recent list need the Node
-server (`npm start`).
+tried without installing anything. Pages has no backend, so the build marks the page with
+`data-backend="none"` and the app runs browser-only: the camera and the
+[monster scan](#monster-scan) work, a taken photo can be downloaded, and a notice says
+that the rest needs the Node server (`npm start`). Flakify, the figure and 3D model
+pickers, and saving scan photos are disabled; the recent runs are hidden.
 
 - `.github/workflows/pages.yml` deploys `main` to the `gh-pages` branch.
 - `.github/workflows/pr-preview.yml` deploys each pull request to
