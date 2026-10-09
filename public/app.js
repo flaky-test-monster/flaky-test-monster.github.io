@@ -1,3 +1,4 @@
+import { findFaces } from './monster-face.js';
 import { onSaveMonsterPhoto, stopMonsterScan, toggleMonsterScan } from './monster-scan.js';
 import { mountViewer } from './viewer.js';
 
@@ -40,17 +41,19 @@ const MODELS = [
   {
     id: BROWSER_PIPELINE,
     name: 'Free and private, in this browser',
-    description: 'Free models run right here on your device and turn the photo into a 3D picture that stands out from a flat back, like a medal, rather than a full figure. The photo never leaves this device. The first run downloads about 125 MB; after that it takes a minute or two.',
+    description: 'Free models run right here on your device and turn the photo into a 3D picture that stands out from a flat back, like a medal, rather than a full figure: a monster bobblehead with googly eyes, or a plain relief. The photo never leaves this device. The first run downloads about 130 MB; after that it takes a minute or two.',
   },
 ];
 /** What the in-browser pipeline can make: the shapes public/relief.js builds. */
 const BROWSER_FIGURES = [
+  { id: 'monster', label: 'Monster bobblehead: big head, googly eyes, tongue' },
   { id: 'relief', label: 'Relief with a flat back' },
   { id: 'rounded', label: 'Rounded on both sides' },
   { id: 'bricks', label: 'LEGO-style bricks' },
 ];
 /** Status line while the in-browser pipeline works on a stage. */
 const BROWSER_HINTS = {
+  faces: 'Finding the face…',
   input: 'Preparing the photo…',
   cutout: 'Removing the background…',
   depth: 'Estimating depth…',
@@ -670,7 +673,13 @@ function runInBrowser() {
   stopCamera();
   resetProgress();
   showStep('progress');
-  getWorker().postMessage({ run: state.run, blob: state.blob, options: { shape: state.figure } });
+  $('progress-hint').textContent = BROWSER_HINTS.faces;
+  const { run, blob, figure } = state;
+  // The face tracker needs the page (WebGL), so it runs here and the worker gets the landmarks.
+  findFaces(blob).then((faces) => {
+    if (run !== state.run || !state.browser) return;
+    getWorker().postMessage({ run, blob, faces, options: { shape: figure } });
+  });
 }
 
 /**

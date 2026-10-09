@@ -34,10 +34,11 @@ uses only the photo, because FLUX.1 Kontext takes a single image.
   `trellis-server` (image to 3D, GLB) → STL. No API keys, no cloud, no cost per run. See
   [Local pipeline](#local-pipeline-apple-silicon).
 
-- **Free and private, in this browser:** photo → background removal → depth map → relief
-  STL, with free open models that the browser downloads and runs itself. No API keys, no
-  install and no GPU server; the photo never leaves the device. It makes a 3D relief
-  (smooth, rounded or LEGO-style bricks) rather than a full statue. See
+- **Free and private, in this browser:** photo → face landmarks, background removal and
+  depth map → relief STL, with free open models that the browser downloads and runs itself.
+  No API keys, no install and no GPU server; the photo never leaves the device. It makes a
+  3D relief (a monster bobblehead, smooth, rounded or LEGO-style bricks) rather than a full
+  statue. See
   [In-browser pipeline](#in-browser-pipeline).
 
 The form lists them as *Best quality, in the cloud* (Tripo3D), *Chunky toy look, in the
@@ -232,9 +233,15 @@ place of the figure image, with the depth map as an extra download.
 |---|---|---|---|
 | Background removal | [MODNet](https://huggingface.co/Xenova/modnet) (ONNX) | Apache-2.0 | about 25 MB |
 | Depth estimation | [Depth Anything V2 Small](https://huggingface.co/onnx-community/depth-anything-v2-small) (ONNX) | Apache-2.0 | about 100 MB |
+| Face landmarks | [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker), the monster scan's | Apache-2.0 | about 4 MB |
+| Face depth, caricature, monster parts | `public/caricature.js`, no model | MIT (this repo) | none |
 | Relief mesh and STL | `public/relief.js`, no model | MIT (this repo) | none |
 
-Both models run with [Transformers.js](https://github.com/huggingface/transformers.js)
+The face landmarks are found on the page, since MediaPipe needs WebGL, and sent to the worker
+with the photo. They are optional: without a face, or if the tracker cannot load, the figure
+is made without the face touches below.
+
+Both Transformers.js models run with [Transformers.js](https://github.com/huggingface/transformers.js)
 3.8.1, loaded from the jsDelivr CDN. They are fetched from the Hugging Face Hub on the
 first run (the page shows download progress) and kept in the browser's cache, so later
 runs work without downloading again. WebGPU is used when the browser offers it (current
@@ -245,9 +252,18 @@ How the smooth STL is built: the cut-out's outline becomes a grid of square cell
 across the subject. Each cell gets a front face raised
 by the depth map plus a dome that rounds the outline, a back face, and side walls along the
 outline, so the mesh is closed and watertight. Only the largest connected piece of the
-subject is kept. The model is 100 mm tall, stands upright (Z up) and faces the front.
+subject is kept, small gaps inside it (often in hair) are filled, and the outline is
+smoothed so it does not show the grid's stair steps. Depth models make faces nearly flat,
+so when a face is found its landmarks' own depth is blended in, which brings out the nose
+and chin. The model is 100 mm tall, stands upright (Z up) and faces the front.
 
-- **Relief with a flat back** (default): about 3 to 17 mm thick. Lay it on its back in the slicer
+- **Monster bobblehead** (default): a relief with a flat back, warped into a caricature
+  first. The head is 1.5 times bigger, and the eyes, nose and mouth are enlarged on top.
+  Then the monster parts are added as separate solids sunk into the front: googly eyes
+  with pupils looking two different ways, a tongue hanging over the chin (longer the wider
+  the mouth is open), two fangs and two horns on the hair. The warp and the parts come
+  from `public/caricature.js`. Without a face in the photo it is a plain relief.
+- **Relief with a flat back:** about 3 to 17 mm thick. Lay it on its back in the slicer
   and it prints without supports.
 - **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
   cropped at the shoulders gives it a flat bottom to stand on.

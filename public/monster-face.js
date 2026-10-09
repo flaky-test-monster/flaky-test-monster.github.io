@@ -26,28 +26,56 @@ const MONSTER_GREEN = [0x2f, 0xd1, 0x2f];
 
 const $ = (id) => document.getElementById(id);
 
-/** Loaded once per page, since the model is a few megabytes. */
-let landmarkerPromise = null;
+/** Landmarkers by running mode, loaded once per page, since the model is a few megabytes. */
+const landmarkerPromises = {};
 
-/**
- * Loads the face landmarker, or returns the one already loaded.
- * @returns {Promise<{ detectForVideo(video: HTMLVideoElement, time: number): { faceLandmarks: { x: number, y: number }[][] } }>}
- */
-export function loadFaceTracker() {
-  landmarkerPromise ??= (async () => {
+/** Loads a face landmarker for 'VIDEO' (follows a face across frames) or 'IMAGE' (single photos). */
+function loadLandmarker(runningMode) {
+  landmarkerPromises[runningMode] ??= (async () => {
     const { FilesetResolver, FaceLandmarker } = await import(`${TASKS_VISION_URL}/vision_bundle.mjs`);
     const fileset = await FilesetResolver.forVisionTasks(`${TASKS_VISION_URL}/wasm`);
     return FaceLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: FACE_MODEL_URL, delegate: 'GPU' },
-      runningMode: 'VIDEO',
+      runningMode,
       numFaces: MAX_FACES,
     });
   })().catch((err) => {
     // A failed download should not stick: the next attempt loads again.
-    landmarkerPromise = null;
+    delete landmarkerPromises[runningMode];
     throw err;
   });
-  return landmarkerPromise;
+  return landmarkerPromises[runningMode];
+}
+
+/**
+ * Loads the face landmarker for the webcam, or returns the one already loaded.
+ * @returns {Promise<{ detectForVideo(video: HTMLVideoElement, time: number): { faceLandmarks: { x: number, y: number }[][] } }>}
+ */
+export function loadFaceTracker() {
+  return loadLandmarker('VIDEO');
+}
+
+/**
+ * Face landmarks of every face in a photo, for the in-browser figure. It has its own landmarker
+ * in image mode: the webcam's follows faces from frame to frame, which would carry over to the
+ * photo. A failure (no network, no WebGL) gives no faces: the figure is then made without
+ * the face touches.
+ * @param {Blob} blob
+ * @returns {Promise<{ x: number, y: number, z: number }[][]>} landmarks per face, normalized 0..1
+ */
+export async function findFaces(blob) {
+  try {
+    const landmarker = await loadLandmarker('IMAGE');
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return landmarker.detect(bitmap).faceLandmarks.map((face) => face.map(({ x, y, z }) => ({ x, y, z })));
+    } finally {
+      bitmap.close();
+    }
+  } catch (err) {
+    console.warn('Face landmarks unavailable, making the figure without them:', err);
+    return [];
+  }
 }
 
 /**
