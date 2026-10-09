@@ -216,6 +216,8 @@ body {
 
 .camera-frame {
   position: relative;
+  /* So text over the video can be sized by the video's width (cqw). */
+  container-type: inline-size;
   flex: 1;
   min-width: 0;
   width: 100%;
@@ -321,7 +323,6 @@ body {
 .camera-score-value { display: inline; font-size: 1.5rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .camera-score-max { font-size: 0.5em; font-weight: 400; opacity: 0.7; }
 .camera-score-meta { display: inline; margin-left: 8px; font-size: 0.85rem; }
-.camera-score-count { display: none; }
 /* Unchecked while human, checked once a monster, like a to-do list item. */
 .camera-score-check {
   display: inline-grid;
@@ -335,6 +336,8 @@ body {
 }
 .camera-score[data-verdict="monster"] .camera-score-check { background: #ff5b72; border-color: #ff5b72; }
 .camera-score[data-verdict="monster"] .camera-score-check::after { content: "✓"; font-size: 0.8em; font-weight: 700; line-height: 1; }
+.camera-score-bonus { margin-left: 8px; padding: 0 6px; font-weight: 700; color: #071107; background: #4fc24f; border-radius: 3px; }
+.camera-score-bonus[hidden] { display: none; }
 .camera-score-hint { margin-top: 2px; font-size: 0.8rem; opacity: 0.9; }
 .camera-score-hint:empty { display: none; }
 .camera-score[data-verdict="monster"] .camera-score-value { color: #ff5b72; }
@@ -342,7 +345,58 @@ body {
 .camera-stage:fullscreen .camera-score-value { display: block; font-size: clamp(2.5rem, 6vw, 4.5rem); }
 .camera-stage:fullscreen .camera-score-max { font-size: 0.4em; }
 .camera-stage:fullscreen .camera-score-meta { display: block; margin: 6px 0 0; font-size: 1rem; }
-.camera-stage:fullscreen .camera-score-count { display: inline; }
+
+/* A score beyond 100, with the wave bonus: large and see-through in the middle of the video. */
+.camera-big-score {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: clamp(5rem, 28cqw, 16rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 45%);
+  text-shadow: 0 0 24px rgb(0 0 0 / 35%);
+  pointer-events: none;
+}
+.camera-big-score[hidden] { display: none; }
+
+/* How many humans and monsters are in view, top left; below the logo in full screen. */
+.camera-counts {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 4;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: rgb(0 0 0 / 60%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.camera-counts[hidden] { display: none; }
+#camera-monsters { color: #ff5b72; }
+.camera-stage:fullscreen .camera-counts { top: 80px; left: 16px; padding: 6px 14px; font-size: 1rem; }
+
+/* Waves at the first human to step into an empty view; run from monster-scan.js. */
+.camera-wave {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  z-index: 4;
+  margin: 0;
+  font-size: clamp(3rem, 12vw, 7rem);
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.camera-wave-hand { display: inline-block; transform-origin: 70% 90%; }
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
 .camera-fullscreen {

@@ -6,8 +6,11 @@
 
 const TASKS_VISION_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const FACE_MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const HAND_MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 /** Most faces tracked at once; more costs speed on every frame. */
 const MAX_FACES = 4;
+/** Most hands tracked at once, two per face. */
+const MAX_HANDS = MAX_FACES * 2;
 /** Outer and inner corner landmarks of each eye. */
 const EYE_CORNERS = [[33, 133], [362, 263]];
 /** Circle radius as a share of the corner-to-corner eye width. */
@@ -53,6 +56,31 @@ function loadLandmarker(runningMode) {
  */
 export function loadFaceTracker() {
   return loadLandmarker('VIDEO');
+}
+
+/** The hand landmarker for the webcam, loaded once per page. */
+let handTrackerPromise = null;
+
+/**
+ * Loads the hand landmarker for the webcam, or returns the one already loaded. It spots monsters
+ * waving for the bonus points.
+ * @returns {Promise<{ detectForVideo(video: HTMLVideoElement, time: number): { landmarks: { x: number, y: number }[][] } }>}
+ */
+export function loadHandTracker() {
+  handTrackerPromise ??= (async () => {
+    const { FilesetResolver, HandLandmarker } = await import(`${TASKS_VISION_URL}/vision_bundle.mjs`);
+    const fileset = await FilesetResolver.forVisionTasks(`${TASKS_VISION_URL}/wasm`);
+    return HandLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: HAND_MODEL_URL, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numHands: MAX_HANDS,
+    });
+  })().catch((err) => {
+    // A failed download should not stick: the next attempt loads again.
+    handTrackerPromise = null;
+    throw err;
+  });
+  return handTrackerPromise;
 }
 
 /**

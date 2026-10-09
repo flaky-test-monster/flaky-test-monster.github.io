@@ -1,5 +1,5 @@
-import { drawFaces, loadFaceTracker, snapshotMonster, snapshotPreview } from './monster-face.js';
-import { smoothScore, trackFaces, verdict } from './monster-score.js';
+import { drawFaces, loadFaceTracker, loadHandTracker, snapshotMonster, snapshotPreview } from './monster-face.js';
+import { isWaving, smoothScore, trackFaces, trackHands, verdict, WAVE_BONUS, WAVE_FROM } from './monster-score.js';
 
 const $ = (id) => document.getElementById(id);
 /** Score where the webcam starts turning into a high-contrast poster. */
@@ -14,11 +14,19 @@ const PHOTO_EVERY_MS = 5000;
 const PHOTO_LIMIT = 6;
 /** Wait before a failed scan tries again; there is no button to restart it. */
 const RETRY_MS = 5000;
+/** How long the view must stay empty before the next human to step in gets a wave, so a
+    face the tracker loses for a few frames is not waved at twice. */
+const EMPTY_BEFORE_WAVE_MS = 2000;
+/** How long the wave stays over the preview. */
+const WAVE_MS = 2500;
 /** What the score overlay asks for: no face in view, not a monster yet, a monster. */
 const HINTS = {
   noFace: 'Please look into the camera.',
   human: 'Please open your eyes and mouth wide, like the monster.',
   monster: 'Thank you, you are a monster! Hold that face.',
+  /** A monster with a mouth score above WAVE_FROM, not waving yet. */
+  waveForBonus: `Hold that face and wave for ${WAVE_BONUS} bonus points!`,
+  waving: `Wave bonus: +${WAVE_BONUS} points! Keep waving.`,
 };
 
 /** Bumped on every start and stop, so a scan loop can tell it has been replaced. */
@@ -28,6 +36,14 @@ let score = null;
 /** @type {import('./monster-score.js').TrackedFace[]} */
 let faces = [];
 let monsterCount = 0;
+/** Whether a monster earns the wave bonus in the current frame. */
+let waving = false;
+/** Loaded alongside the face tracker; null until then, or when it failed, and waves earn nothing. */
+let handTracker = null;
+/** @type {import('./monster-score.js').TrackedHand[]} */
+let hands = [];
+/** When the view last had no face in it, or null while someone is in view. */
+let emptySince = null;
 let lastAnnouncement = null;
 let lastPhotoAt = -Infinity;
 /**
@@ -75,13 +91,38 @@ function setCameraLook(score) {
  */
 function renderCameraScore(shown) {
   $('camera-score').hidden = shown === null;
+  $('camera-big-score').hidden = !(shown > 100);
   if (shown === null) return;
+  if (shown > 100) $('camera-big-score').textContent = shown;
   const result = verdict(shown);
   $('camera-score').dataset.verdict = result.key;
   $('camera-score-value').textContent = shown;
   $('camera-score-verdict').textContent = result.label;
-  $('camera-score-monsters').textContent = `${monsterCount} ${monsterCount === 1 ? 'monster' : 'monsters'} in view`;
-  $('camera-score-hint').textContent = !faces.length ? HINTS.noFace : result.key === 'monster' ? HINTS.monster : HINTS.human;
+  $('camera-score-bonus').hidden = !waving;
+  $('camera-score-hint').textContent = hint(result.key);
+}
+
+/** What the score overlay asks for next, by the verdict of the top score. */
+function hint(verdictKey) {
+  if (!faces.length) return HINTS.noFace;
+  if (waving) return HINTS.waving;
+  if (handTracker && faces.some((face) => face.mouth > WAVE_FROM)) return HINTS.waveForBonus;
+  return verdictKey === 'monster' ? HINTS.monster : HINTS.human;
+}
+
+/** "1 human", "2 monsters" and the like. */
+const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+
+/**
+ * Shows how many humans and monsters are in view, or hides the count when no scan runs.
+ * Every face that is not a monster yet counts as a human.
+ * @param {boolean} shown
+ */
+function renderCounts(shown) {
+  $('camera-counts').hidden = !shown;
+  if (!shown) return;
+  $('camera-humans').textContent = count(faces.length - monsterCount, 'human');
+  $('camera-monsters').textContent = count(monsterCount, 'monster');
 }
 
 /**
@@ -93,8 +134,9 @@ function render() {
   const result = verdict(shown);
   setCameraLook(shown);
   renderCameraScore(shown);
+  renderCounts(true);
   // Announce only a change of verdict or count, not every new score.
-  const announcement = `Verdict: ${result.label}, ${monsterCount} of ${faces.length} in view are monsters`;
+  const announcement = `Verdict: ${result.label}${waving ? `, wave bonus +${WAVE_BONUS}` : ''}, ${count(faces.length - monsterCount, 'human')} and ${count(monsterCount, 'monster')} in view`;
   if (announcement !== lastAnnouncement) setStatus(announcement);
   lastAnnouncement = announcement;
 }
@@ -128,20 +170,73 @@ function scanLoop(id, video, tracker) {
 
 /** Finds the faces in the current frame, updates their scores and paints the monsters. */
 function scanFrame(video, tracker) {
-  const detected = tracker.detectForVideo(video, performance.now()).faceLandmarks;
+  const now = performance.now();
+  const aspect = video.videoWidth / video.videoHeight;
+  const detected = tracker.detectForVideo(video, now).faceLandmarks;
   const previousShown = score === null ? null : Math.round(score);
   const previousCount = faces.length;
-  faces = trackFaces(faces, detected, video.videoWidth / video.videoHeight);
+  const previousWaving = waving;
+  // Hands only matter for the wave bonus, so they are only tracked while a face could earn it.
+  hands = faces.some((face) => face.mouth > WAVE_FROM) ? trackHandsIn(video, aspect, now) : [];
+  faces = trackFaces(faces, detected, aspect, hands.filter(isWaving).map((hand) => hand.palm));
+  waving = faces.some((face) => face.waving);
+  waveAtNewcomer();
   // Judged on the rounded score, like the meter, so the tracker and the meter always agree.
   const monsters = faces.filter((face) => verdict(Math.round(face.score)).key === 'monster');
   score = faces.length ? Math.max(...faces.map((face) => face.score)) : smoothScore(score, 0);
   // Redraw the readout only when something visible changed, not on every frame.
-  if (Math.round(score) !== previousShown || monsters.length !== monsterCount || faces.length !== previousCount) {
+  if (Math.round(score) !== previousShown || monsters.length !== monsterCount || faces.length !== previousCount || waving !== previousWaving) {
     monsterCount = monsters.length;
     render();
   }
   drawFaces(video, monsters.map((face) => face.landmarks));
-  if (Math.round(score) === 100 && performance.now() - lastPhotoAt >= PHOTO_EVERY_MS) takePhoto(video);
+  if (Math.round(score) >= 100 && now - lastPhotoAt >= PHOTO_EVERY_MS) takePhoto(video);
+}
+
+/**
+ * Follows the hands in the current frame. A failing hand tracker is switched off rather than
+ * stopping the scan: the score then simply has no wave bonus.
+ */
+function trackHandsIn(video, aspect, now) {
+  if (!handTracker) return [];
+  try {
+    return trackHands(hands, handTracker.detectForVideo(video, now).landmarks, aspect, now);
+  } catch (err) {
+    console.warn('Hand tracking failed, no wave bonus:', err);
+    handTracker = null;
+    return [];
+  }
+}
+
+/**
+ * Waves when a human steps into a view that has been empty for a while. Short gaps, where
+ * the tracker loses a face for a few frames, do not count as empty.
+ */
+function waveAtNewcomer() {
+  const now = performance.now();
+  if (!faces.length) {
+    emptySince ??= now;
+    return;
+  }
+  const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_WAVE_MS;
+  emptySince = null;
+  if (wasEmpty && faces.some((face) => verdict(Math.round(face.score)).key !== 'monster')) wave();
+}
+
+/** Waves a hand over the preview, without a word. */
+function wave() {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fade = (from, to) => ({ opacity: from, transform: `translateX(-50%)${still ? '' : ` scale(${from ? 1 : 0.8})`}` });
+  $('camera-wave').animate(
+    [fade(0), { ...fade(1), offset: 0.12 }, { ...fade(1), offset: 0.85 }, fade(0)],
+    { duration: WAVE_MS, easing: 'ease-out' },
+  );
+  if (!still) {
+    $('camera-wave').querySelector('.camera-wave-hand').animate(
+      [{ transform: 'rotate(0)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(0)' }],
+      { duration: 1000, delay: 200 },
+    );
+  }
 }
 
 /**
@@ -304,9 +399,19 @@ export async function startMonsterScan(video) {
   score = null;
   faces = [];
   monsterCount = 0;
+  waving = false;
+  hands = [];
+  // Not awaited: the scan runs without the wave bonus until the hand tracker is there.
+  loadHandTracker().then(
+    (tracker) => { if (id === runId) handTracker = tracker; },
+    (err) => console.warn('Hand tracker unavailable, no wave bonus:', err),
+  );
+  // An empty view to start with, so whoever is in front of the camera gets a wave.
+  emptySince = -Infinity;
   lastAnnouncement = null;
   setCameraLook(null);
   renderCameraScore(null);
+  renderCounts(false);
   try {
     setStatus('Loading face tracker');
     const tracker = await loadFaceTracker();
@@ -324,6 +429,7 @@ export function stopMonsterScan() {
   scanning = false;
   setCameraLook(null);
   renderCameraScore(null);
+  renderCounts(false);
   drawFaces($('video'), []);
 }
 
