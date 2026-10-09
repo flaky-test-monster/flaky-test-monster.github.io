@@ -3,14 +3,23 @@
 # sub-path (/flakifier/, /flakifier/pr-preview/pr-N/), which is why index.html links its
 # assets relatively. There is no backend there, so the page is marked data-backend="none":
 # the camera and the monster scan work, and what needs `npm start` is disabled.
+# JS, CSS and HTML are minified with pinned tools fetched by npx; the app itself keeps no
+# npm dependencies, and the Node server still serves public/ unminified.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+ESBUILD=esbuild@0.28.2
+HTML_MINIFIER=html-minifier-terser@7.2.0
+
 rm -rf _site
-mkdir -p _site
-cp -R public _site/public
-# The page lives at the root; a second copy in public/ would resolve its assets to public/public/.
-rm _site/public/index.html
-sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html > _site/index.html
+mkdir -p _site/public
+# Images and anything else that is not minified, copied as is.
+find public -maxdepth 1 -type f ! -name '*.js' ! -name '*.css' ! -name '*.html' -exec cp {} _site/public/ \;
+# Each module on its own, no bundling: relative imports and the CDN imports stay as they are.
+npx --yes "$ESBUILD" public/*.js public/*.css --minify --format=esm --target=es2022 \
+  --outdir=_site/public --log-level=warning
+sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html \
+  | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+    --minify-css true > _site/index.html
 grep -q 'data-backend="none"' _site/index.html
 touch _site/.nojekyll

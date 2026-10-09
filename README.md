@@ -212,7 +212,9 @@ pickers, and saving scan photos are disabled; the recent runs are hidden.
   `pr-preview/pr-<number>/` on the same branch, comments the preview URL on the PR, and
   removes the preview when the PR is closed. PRs from forks get no preview, because
   their token cannot push.
-- `scripts/build-pages.sh` builds the site into `_site/`.
+- `scripts/build-pages.sh` builds the site into `_site/`, minifying the JS and CSS with
+  esbuild and the HTML with html-minifier-terser. Both are pinned and fetched by `npx`,
+  so the app still has no npm dependencies; the Node server serves `public/` unminified.
 
 One-time setup: in the repository's **Settings → Pages**, set **Source** to
 **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
