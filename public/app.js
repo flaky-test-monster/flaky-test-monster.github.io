@@ -111,6 +111,23 @@ function showStep(name, { focus = true } = {}) {
   }
 }
 
+/** Whether the current history entry is the start: the camera and recent runs. */
+function atStart() {
+  return (history.state?.step ?? 'start') === 'start';
+}
+
+/**
+ * Gives a step after the start its own history entry, so the browser's Back button leads to
+ * the start. Every such entry sits right on top of the start's: from the start it is pushed,
+ * from another step it replaces that one, so Back from a conversion skips the photo check.
+ * @param {'confirm' | 'job'} step the photo check, or a conversion in progress or finished
+ * @param {string} [url] with the job id for a conversion that can be reopened
+ */
+function enterStep(step, url = location.pathname) {
+  if (atStart()) history.pushState({ step }, '', url);
+  else history.replaceState({ step }, '', url);
+}
+
 /** Starts the webcam preview; says how to fix it when access is refused or there is no camera. */
 async function startCamera() {
   if (state.stream) return;
@@ -181,6 +198,7 @@ function chooseImage(blob) {
   if (!blob) return;
   setPreview(blob);
   stopCamera();
+  enterStep('confirm');
   showStep('confirm');
   // A method may have been set up (or stopped) since the page loaded.
   loadAvailability();
@@ -206,6 +224,7 @@ async function startJob() {
     if (!res.ok) throw new Error(await responseError(res, 'Upload failed'));
     openJob({ id: (await res.json()).id, pipeline: state.pipeline, figure: state.figure, name: state.name });
   } catch (err) {
+    enterStep('job');
     resetProgress();
     showStep('progress');
     showError(err.message);
@@ -226,7 +245,7 @@ function openJob(job) {
   leaveBrowserRun();
   const pipeline = job.pipeline in PIPELINE_UI && job.pipeline !== BROWSER_PIPELINE ? job.pipeline : 'tripo';
   Object.assign(state, { jobId: job.id, run: ++runCounter, pipeline, figure: job.figure, name: job.name ?? '', disposeViewer: null });
-  history.replaceState(null, '', `#job=${job.id}`);
+  enterStep('job', `#job=${job.id}`);
   stopCamera();
   resetProgress();
   showStep('progress');
@@ -470,14 +489,16 @@ async function restoreFromUrl() {
     if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);
     const job = await res.json();
     if (job.pipeline === PHOTO_PIPELINE) {
-      history.replaceState(null, '', location.pathname);
+      history.replaceState({ step: 'start' }, '', location.pathname);
       // When the photo cannot load, startup goes on to the camera as with no link at all.
       return await openPhoto(job);
     }
+    // Opened from a link: the start goes below it, so Back leads there and not off the site.
+    if (atStart()) history.replaceState({ step: 'start' }, '', location.pathname);
     openJob(job);
     return true;
   } catch {
-    history.replaceState(null, '', location.pathname);
+    history.replaceState({ step: 'start' }, '', location.pathname);
     return false;
   }
 }
@@ -668,7 +689,7 @@ function runInBrowser() {
   state.disposeViewer?.();
   leaveBrowserRun();
   Object.assign(state, { jobId: null, run: ++runCounter, disposeViewer: null, browser: { done: {}, files: {}, urls: [], downloads: new Map(), finished: false } });
-  history.replaceState(null, '', location.pathname);
+  enterStep('job');
   stopCamera();
   resetProgress();
   showStep('progress');
@@ -761,14 +782,23 @@ function showBrowserResult() {
   });
 }
 
-/** Returns to the first step and clears everything. */
+/**
+ * Returns to the first step and clears everything. From a later step that is the browser's
+ * Back, so the history does not grow a start entry for every round.
+ */
 function startOver() {
+  if (!atStart()) return history.back();
+  resetToStart();
+}
+
+/** Clears everything and shows the first step, on the start's history entry. */
+function resetToStart() {
   clearTimeout(state.pollTimer);
   state.disposeViewer?.();
   leaveBrowserRun();
   setPreview(null);
   Object.assign(state, freshJobState(), { run: ++runCounter });
-  history.replaceState(null, '', location.pathname);
+  history.replaceState({ step: 'start' }, '', location.pathname);
   $('job-name').value = '';
   showStep('source');
   startCamera();
@@ -790,7 +820,7 @@ document.addEventListener('fullscreenchange', () => {
   $('fullscreen-toggle').setAttribute('aria-pressed', String(document.fullscreenElement === $('camera-stage')));
 });
 onSaveMonsterPhoto(NO_BACKEND ? null : saveMonsterPhoto);
-$('retake').addEventListener('click', () => { showStep('source'); startCamera(); });
+$('retake').addEventListener('click', startOver);
 $('flakify').addEventListener('click', startJob);
 $('home-link').addEventListener('click', (event) => {
   // Let the browser open a new tab or window as usual; a plain click resets in place.
@@ -802,6 +832,13 @@ $('try-again').addEventListener('click', startOver);
 $('start-over').addEventListener('click', startOver);
 $('delete-job').addEventListener('click', async () => {
   if (await deleteJob({ id: state.jobId, name: state.name })) startOver();
+});
+// Back and Forward between the start and the later steps.
+window.addEventListener('popstate', async () => {
+  if (history.state?.step === 'job' && (await restoreFromUrl())) return;
+  // The start, or Forward to a step that cannot come back: the photo check or an in-browser
+  // run, whose photo went when Back cleared everything.
+  resetToStart();
 });
 $('recent-more').addEventListener('click', () => { state.showAllRecent = true; renderRecent(); });
 
@@ -822,6 +859,8 @@ await loadFigures();
 // a photo checks again anyway.
 loadAvailability();
 if (!(await restoreFromUrl())) {
+  // A reload of the photo check: the photo is gone, so this entry becomes the start.
+  history.replaceState({ step: 'start' }, '', location.pathname);
   showStep('source', { focus: false });
   startCamera();
 }
