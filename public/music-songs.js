@@ -1,6 +1,6 @@
 /**
- * The song players on the music page: play and pause, a position slider and the time, for
- * each song's MP3. Only one song or the music video plays at a time.
+ * The song players on the music page: a play and pause button and the time, for each song's
+ * MP3. Only one song or the music video plays at a time.
  */
 
 /** "1:05" for 65 seconds; "0:00" while the length is not known yet. */
@@ -23,22 +23,14 @@ function announce(title) {
 function setUp(song) {
   const audio = song.querySelector('audio');
   const play = song.querySelector('.song-play');
-  const seek = song.querySelector('.song-seek');
   const time = song.querySelector('.song-time');
-  const name = seek.getAttribute('aria-label').replace(/^Position in /, '');
-  let dragging = false;
+  const name = play.getAttribute('aria-label').replace(/^Play /, '');
 
   function render() {
     const playing = !audio.paused && !audio.ended;
-    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
     // The button draws a play or pause icon from the song's class; its label says which.
     song.classList.toggle('playing', playing);
     play.setAttribute('aria-label', `${playing ? 'Pause' : 'Play'} ${name}`);
-    seek.max = String(duration);
-    // While someone drags the slider, the song's progress must not pull the thumb away from them.
-    if (!dragging) seek.value = String(audio.currentTime);
-    seek.style.setProperty('--progress', `${duration ? (audio.currentTime / duration) * 100 : 0}%`);
-    seek.setAttribute('aria-valuetext', `${clock(audio.currentTime)} of ${clock(audio.duration)}`);
     time.textContent = `${clock(audio.currentTime)} / ${clock(audio.duration)}`;
   }
 
@@ -50,13 +42,6 @@ function setUp(song) {
     if (audio.paused || audio.ended) audio.play().catch(() => {});
     else audio.pause();
   });
-  seek.addEventListener('input', () => {
-    audio.currentTime = Number(seek.value);
-  });
-  seek.addEventListener('pointerdown', () => { dragging = true; });
-  for (const event of ['pointerup', 'pointercancel']) {
-    seek.addEventListener(event, () => { dragging = false; });
-  }
   audio.addEventListener('play', () => announce(song.querySelector('h3').textContent));
   for (const event of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'durationchange', 'seeked']) {
     audio.addEventListener(event, render);
@@ -69,7 +54,6 @@ function setUp(song) {
   /** A song whose MP3 cannot be loaded says so, instead of a play button that does nothing. */
   function unavailable() {
     play.disabled = true;
-    seek.disabled = true;
     time.textContent = 'Not available';
   }
 }
