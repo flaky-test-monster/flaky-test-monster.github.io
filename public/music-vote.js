@@ -25,17 +25,19 @@ function buildVotes() {
     const hidden = document.createElement('span');
     hidden.className = 'visually-hidden';
     hidden.textContent = ` for ${songs[index]}`;
-    label.append('Your points', hidden);
+    label.append('Points', hidden);
     const select = document.createElement('select');
     select.id = `vote-song-${index}`;
     select.name = `song-${index}`;
     select.setAttribute('form', form.id);
     select.add(new Option('No points', ''));
     for (const points of POINTS) select.add(new Option(points === 1 ? '1 point' : `${points} points`, String(points)));
-    select.addEventListener('change', render);
+    select.addEventListener('change', () => {
+      render();
+      hideCopy();
+    });
     vote.append(label, select);
-    // Inserted after the player, not wrapped around it: moving an iframe would reload it.
-    song.querySelector('iframe').after(vote);
+    song.querySelector('.player').after(vote);
   });
 }
 
@@ -61,6 +63,13 @@ function ballot() {
   const jury = $('vote-jury').value.replace(/\s+/g, ' ').trim();
   const lines = votes.map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
   return [`Good evening Flaky Test Monster, this is the jury of ${jury || 'an undisclosed country'}.`, '', ...lines, ''].join('\n');
+}
+
+/** Hides the votes shown for copying by hand, and the message that goes with them. */
+function hideCopy() {
+  if ($('vote-copy-field').hidden) return;
+  $('vote-copy-field').hidden = true;
+  say('');
 }
 
 /** Shows a message under the votes. */
@@ -92,9 +101,11 @@ $('vote-copy').addEventListener('click', async () => {
     say(form.dataset.email ? `Copied. Paste your votes into an email to ${form.dataset.email}.` : 'Copied. Paste your votes into an email.');
   } catch {
     // No clipboard here (an old browser, or a page not served over HTTPS): show the votes to copy by hand.
-    $('vote-text').textContent = `${SUBJECT}\n\n${body}`;
-    $('vote-text').hidden = false;
-    say('Copying did not work in this browser. Select your votes below and copy them by hand.');
+    $('vote-text').value = `${SUBJECT}\n\n${body}`;
+    $('vote-copy-field').hidden = false;
+    $('vote-text').focus();
+    $('vote-text').select();
+    say('Copying did not work in this browser. Your votes are selected below: copy them with Ctrl+C or ⌘C.');
   }
 });
 
@@ -102,8 +113,11 @@ $('vote-copy').addEventListener('click', async () => {
 form.addEventListener('reset', () => setTimeout(() => {
   render();
   say('');
-  $('vote-text').hidden = true;
+  hideCopy();
 }));
+
+// The votes to copy by hand are a snapshot: once the points or the jury change, they are out of date.
+$('vote-jury').addEventListener('input', hideCopy);
 
 buildVotes();
 render();
