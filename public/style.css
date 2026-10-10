@@ -496,6 +496,7 @@ body {
 .music-lead { margin: 0 0 16px; color: var(--muted); }
 .music-lead strong { color: var(--fg); }
 .music-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
+.music-note { margin: 0 0 8px; font-size: 0.8125rem; color: var(--muted); }
 .music-video { margin-top: 48px; }
 .music-video-player {
   display: block;
