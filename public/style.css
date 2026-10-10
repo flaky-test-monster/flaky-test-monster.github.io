@@ -383,6 +383,8 @@ body {
   pointer-events: none;
 }
 .camera-call[hidden] { display: none; }
+/* Not over the Take photo countdown, or over a photo shown in place of the video. */
+.camera-stage:has(.countdown:not([hidden]), .camera-photo:not([hidden])) .camera-call { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   .camera-call:not([hidden]) { animation: camera-call-pulse 1.2s ease-in-out infinite alternate; }
 }
