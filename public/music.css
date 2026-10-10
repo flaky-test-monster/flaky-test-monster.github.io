@@ -37,12 +37,17 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
   pointer-events: none;
 }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 40px 0; }
-.wordmark { font: italic 700 clamp(24px, 4vw, 40px)/1 var(--display); text-decoration: none; color: var(--ink); }
+/* Masthead: the monster in a circle, as on the start page, beside the wordmark and the pills. */
+.masthead { display: flex; align-items: center; gap: 18px; width: fit-content; max-width: 100%; color: var(--ink); text-decoration: none; border-radius: 8px; }
+.mascot { flex: none; width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
+.masthead:hover .mascot { border-color: var(--ink); }
+.masthead-text { min-width: 0; }
+.wordmark { display: block; font: italic 700 clamp(24px, 4vw, 40px)/1 var(--display); }
 em { color: var(--red); }
-.status { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 12px var(--utility); }
 .pill.accent { color: var(--red); }
-.intro { font-size: 14px; max-width: 580px; }
+.intro { margin-top: 16px; font-size: 14px; max-width: 580px; }
 .hero { width: 52%; padding: 36px 0 22px; }
 h1 { font: italic 900 clamp(54px, 8.8vw, 106px)/.88 var(--display); letter-spacing: -.06em; margin: 0 0 20px; }
 .subtitle { font-size: clamp(17px, 2vw, 23px); font-weight: bold; line-height: 1.25; }
@@ -79,6 +84,8 @@ footer p { margin: 8px 0 0; }
 
 @media (max-width: 640px) {
   .container { width: calc(100% - 32px); padding-top: 24px; }
+  .masthead { gap: 12px; }
+  .mascot { width: 56px; height: 56px; }
   .page::before { background-size: auto 850px; background-position: 38% 130px; opacity: .28; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(58px, 15vw, 90px); }
