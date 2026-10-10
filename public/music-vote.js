@@ -6,41 +6,48 @@
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
-const rows = $('vote-rows');
 const status = $('vote-status');
 const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
 const SUBJECT = 'From Flaky With Love: my votes';
 
-/** The song titles, in the order of the song list. */
-const songs = [...document.querySelectorAll('.song h3')].map((heading) => heading.textContent.trim());
+/** The songs, in the order of the song list. */
+const songItems = [...document.querySelectorAll('.song')];
+const songs = songItems.map((song) => song.querySelector('h3').textContent.trim());
 
-/** One row per song: its title and a choice of points. */
-function buildRows() {
-  songs.forEach((title, index) => {
-    const row = document.createElement('li');
-    row.className = 'vote-row';
+/** Puts a choice of points right next to each song's player. The choices sit outside the form,
+ * so they join it with the form attribute: then reset clears them too. */
+function buildVotes() {
+  songItems.forEach((song, index) => {
+    const vote = document.createElement('div');
+    vote.className = 'song-vote';
     const label = document.createElement('label');
     label.htmlFor = `vote-song-${index}`;
-    label.textContent = title;
+    const hidden = document.createElement('span');
+    hidden.className = 'visually-hidden';
+    hidden.textContent = ` for ${songs[index]}`;
+    label.append('Your points', hidden);
     const select = document.createElement('select');
     select.id = `vote-song-${index}`;
     select.name = `song-${index}`;
+    select.setAttribute('form', form.id);
     select.add(new Option('No points', ''));
     for (const points of POINTS) select.add(new Option(points === 1 ? '1 point' : `${points} points`, String(points)));
-    row.append(label, select);
-    rows.append(row);
+    select.addEventListener('change', render);
+    vote.append(label, select);
+    // Inserted after the player, not wrapped around it: moving an iframe would reload it.
+    song.querySelector('iframe').after(vote);
   });
 }
 
 /** @returns {HTMLSelectElement[]} */
-const selects = () => [...rows.querySelectorAll('select')];
+const selects = () => songItems.map((song) => song.querySelector('.song-vote select'));
 
 /** Each score goes to one song only: a score given to one song cannot be picked for another. */
 function render() {
   const given = new Set(selects().map((select) => select.value).filter(Boolean));
   for (const select of selects()) {
     for (const option of select.options) option.disabled = option.value !== '' && option.value !== select.value && given.has(option.value);
-    select.closest('.vote-row').classList.toggle('vote-row-top', select.value === '12');
+    select.closest('.song').classList.toggle('song-top', select.value === '12');
   }
 }
 
@@ -61,13 +68,11 @@ function say(message) {
   status.textContent = message;
 }
 
-form.addEventListener('change', render);
-
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const body = ballot();
   if (!body) {
-    say('Give at least one song some points first.');
+    say('Give at least one song some points first: the choice is next to each song.');
     selects()[0]?.focus();
     return;
   }
@@ -98,5 +103,5 @@ form.addEventListener('reset', () => setTimeout(() => {
   $('vote-text').hidden = true;
 }));
 
-buildRows();
+buildVotes();
 render();

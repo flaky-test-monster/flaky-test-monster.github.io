@@ -35,7 +35,9 @@
 
         <section class="songs" aria-labelledby="songs-title">
           <h2 id="songs-title">Songs</h2>
-          <!-- One list item per song: a heading, a note, the Suno embed (with a title, nothing inside) and the song's Suno link. -->
+          <p class="songs-intro">You are the jury. As at the Eurovision Song Contest, give 12 points to your favourite, then 10, 8, 7 and down to 1, right next to each song. Each score goes to one song only.</p>
+          <!-- One list item per song: a heading, a note, the Suno embed (with a title, nothing inside) and the song's Suno link.
+               music-vote.js puts the choice of points next to each embed. -->
           <ul class="song-list">
             <li class="song">
               <h3>From Flaky with love: the international version</h3>
@@ -84,15 +86,14 @@
 
         <section class="vote" aria-labelledby="vote-title">
           <h2 id="vote-title">Your votes</h2>
-          <p class="vote-intro">You are the jury. As at the Eurovision Song Contest, give 12 points to your favourite, then 10, 8, 7 and down to 1. Each score goes to one song only. Then send your votes by email.</p>
-          <!-- The rows are made from the song list above by music-vote.js. data-email is where
-               the votes go; when it is empty, the email opens without a recipient. -->
+          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email.</p>
+          <!-- The points are chosen next to each song above. data-email is where the votes go;
+               when it is empty, the email opens without a recipient. -->
           <form id="vote-form" class="vote-form" data-email="" novalidate>
             <label class="vote-field">
               <span>Jury of</span>
               <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
             </label>
-            <ol id="vote-rows" class="vote-rows"></ol>
             <p id="vote-status" class="helper vote-status" role="status"></p>
             <pre id="vote-text" class="vote-text" hidden></pre>
             <button type="submit" class="primary">Send my votes by email</button>

@@ -114,17 +114,25 @@ footer p { margin: 8px 0 0; }
   .video-time { margin-left: 0; width: 100%; }
 }
 
-/* The jury vote: one row per song, the title and its points. */
+/* The jury vote: the points next to each song's player, then who votes and the email. */
+.songs-intro { font-size: 0.875rem; max-width: 580px; }
+.song:has(.song-vote) { display: grid; grid-template-columns: minmax(0, 1fr) 148px; column-gap: 12px; }
+.song:has(.song-vote) > :not(iframe, .song-vote) { grid-column: 1 / -1; }
+.song-link { justify-self: start; }
+.song-vote { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgb(245 234 213 / .85); font: bold 0.75rem var(--utility); }
+.song-vote select { min-height: 40px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: bold 0.875rem var(--utility); }
+.song-top { border-color: var(--red); }
+.song-top .song-vote { border-color: var(--red); }
+.song-top .song-vote select { border-color: var(--red); background: var(--red); color: #fff8ed; }
 .vote { margin-top: 32px; }
 .vote-intro { font-size: 0.875rem; max-width: 580px; }
 .vote-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 12px; font: bold 0.8125rem var(--utility); }
 .vote-field input { flex: 1 1 220px; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: rgb(245 234 213 / .85); color: var(--ink); font: 0.875rem var(--body); }
-.vote-rows { list-style: none; padding: 0; margin: 0; }
-.vote-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin: 6px 0; background: rgb(245 234 213 / .85); font: 0.8125rem/1.5 var(--utility); }
-.vote-row label { flex: 1 1 260px; }
-.vote-row select { flex: none; min-height: 40px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: bold 0.875rem var(--utility); }
-.vote-row-top { border-color: var(--red); }
-.vote-row-top select { border-color: var(--red); background: var(--red); color: #fff8ed; }
 .vote-status { min-height: 1.6em; margin: 8px 0 0; color: var(--muted); }
 .vote-text { margin: 8px 0 0; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; white-space: pre-wrap; font: 0.8125rem/1.5 var(--utility); user-select: all; }
 .vote-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Too narrow for the player and the points side by side: the points go under the player, in one row. */
+@media (max-width: 640px) {
+  .song:has(.song-vote) { grid-template-columns: minmax(0, 1fr); }
+  .song-vote { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 8px; }
+}
