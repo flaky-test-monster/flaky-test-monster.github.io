@@ -85,6 +85,8 @@ button { font: bold 16px var(--utility); cursor: pointer; }
 .video-time { margin-left: auto; font-variant-numeric: tabular-nums; }
 
 .songs { margin-top: 32px; }
+.video { margin-top: 32px; }
+.video-note { margin: -4px 0 12px; color: var(--muted); }
 h2 { font: bold 14px var(--utility); letter-spacing: .12em; }
 .song-list { list-style: none; padding: 0; margin: 0; }
 .song { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 6px 0; font: 13px/1.5 var(--utility); }

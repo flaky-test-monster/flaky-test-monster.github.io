@@ -32,21 +32,6 @@
         <p class="subtitle">Making the Eurovision Song Contest flaky.</p>
       </section>
 
-      <section aria-labelledby="video-title">
-        <h2 class="visually-hidden" id="video-title">Music video</h2>
-        <div class="stage">
-          <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata" aria-label="Music video: From Flaky with love"></video>
-          <span class="pill stage-label">Music video</span>
-        </div>
-        <button type="button" id="video-play" class="primary">Play</button>
-        <div class="video-controls">
-          <button type="button" id="video-stop" class="secondary" aria-label="Stop the video">Stop</button>
-          <button type="button" id="video-repeat" class="secondary video-repeat" aria-pressed="true">Repeat</button>
-          <button type="button" id="video-fullscreen" class="secondary">Full screen</button>
-          <span id="video-time" class="helper video-time">0:00 / 0:00</span>
-        </div>
-      </section>
-
       <section class="songs" aria-labelledby="songs-title">
         <h2 id="songs-title">// SONGS</h2>
         <!-- One list item per song: paste the Suno embed code and give the iframe a title. -->
@@ -60,6 +45,22 @@
             <iframe title="Suggestion for the Greek song contest, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/02da7e95-6557-4d02-a7c4-0982ebf05806" width="760" height="240" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"><a href="https://suno.com/song/02da7e95-6557-4d02-a7c4-0982ebf05806">Listen on Suno</a></iframe>
           </li>
         </ul>
+      </section>
+
+      <section class="video" aria-labelledby="video-title">
+        <h2 id="video-title">// MUSIC VIDEO</h2>
+        <p class="helper video-note">Preview: slop mitigation is being applied.</p>
+        <div class="stage">
+          <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata" aria-label="Music video: From Flaky with love"></video>
+          <span class="pill stage-label">Preview</span>
+        </div>
+        <button type="button" id="video-play" class="primary">Play</button>
+        <div class="video-controls">
+          <button type="button" id="video-stop" class="secondary" aria-label="Stop the video">Stop</button>
+          <button type="button" id="video-repeat" class="secondary video-repeat" aria-pressed="true">Repeat</button>
+          <button type="button" id="video-fullscreen" class="secondary">Full screen</button>
+          <span id="video-time" class="helper video-time">0:00 / 0:00</span>
+        </div>
       </section>
 
       <footer>
