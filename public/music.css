@@ -37,6 +37,13 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
   pointer-events: none;
 }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 40px 0; }
+/* Header: the masthead, and links between the start page and the music page. */
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
+.site-nav { display: flex; gap: 8px; }
+.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: rgb(245 234 213 / .85); color: var(--ink); font: 13px var(--utility); text-decoration: none; }
+.site-nav a:hover { border-color: var(--red); color: var(--red); }
+.site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
+
 /* Masthead: the monster in a circle, as on the start page, beside the wordmark and the pills. */
 .masthead { display: flex; align-items: center; gap: 18px; width: fit-content; max-width: 100%; color: var(--ink); text-decoration: none; border-radius: 8px; }
 .mascot { flex: none; width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
