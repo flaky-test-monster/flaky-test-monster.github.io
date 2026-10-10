@@ -98,8 +98,10 @@ function setCameraLook(score) {
 function renderCameraScore(shown) {
   $('camera-score').hidden = shown === null;
   $('camera-big-score').hidden = !(shown > 100);
-  renderCall(shown);
-  if (shown === null) return;
+  if (shown === null) {
+    endCall();
+    return;
+  }
   if (shown > 100) $('camera-big-score').textContent = shown;
   const result = verdict(shown);
   $('camera-score').dataset.verdict = result.key;
@@ -111,14 +113,17 @@ function renderCameraScore(shown) {
 
 /**
  * Shows the call to open the mouth once per human: from the first low score after they step
- * in, until their score is no longer human or CALL_MS is up. Hidden while no face is in view.
- * @param {number | null} shown rounded score
+ * in, until no face in view is human any more or CALL_MS is up. Each face is judged on its own
+ * score, so a human next to a monster still gets it. Hidden, but not ended, while no face is
+ * in view, so a face the tracker loses for a few frames keeps its call.
  */
-function renderCall(shown) {
-  const low = shown !== null && verdict(shown).key === 'human';
-  if (!low) endCall();
-  else if (callDue && faces.length) {
+function renderCall() {
+  const low = faces.some((face) => verdict(Math.round(face.score)).key === 'human');
+  if (faces.length && !low) endCall();
+  else if (callDue && low) {
     callDue = false;
+    // A new human's call starts afresh, so the timer of an earlier one cannot cut it short.
+    clearTimeout(callTimer);
     callTimer = setTimeout(endCall, CALL_MS);
   }
   $('camera-call').hidden = callTimer === null || !faces.length;
@@ -217,6 +222,8 @@ function scanFrame(video, tracker) {
     monsterCount = monsters.length;
     render();
   }
+  // Every frame, since a human's own score can change while the readout stays the same.
+  renderCall();
   drawFaces(video, monsters.map((face) => face.landmarks));
   if (Math.round(score) >= 100 && now - lastPhotoAt >= PHOTO_EVERY_MS) takePhoto(video);
 }
