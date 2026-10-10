@@ -13,14 +13,16 @@
   <div class="page">
     <div class="container">
       <header class="site-header">
-        <a class="masthead" href="./" aria-label="From Flaky With Love: back to flakifier">
-          <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
-          <span class="wordmark">From <em>Flaky</em> With <em>Love</em></span>
-        </a>
-        <nav class="site-nav" aria-label="Pages">
-          <a href="./">flakifier</a>
-          <a href="music.html" aria-current="page">music</a>
-        </nav>
+        <div class="site-bar">
+          <a class="masthead" href="./" aria-label="From Flaky With Love: back to flakifier">
+            <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
+            <span class="wordmark">From <em>Flaky</em> With <em>Love</em></span>
+          </a>
+          <nav class="site-nav" aria-label="Pages">
+            <a href="./">flakifier</a>
+            <a href="music.html" aria-current="page">music</a>
+          </nav>
+        </div>
       </header>
 
       <main>
@@ -32,7 +34,7 @@
         </section>
 
         <section class="songs" aria-labelledby="songs-title">
-          <h2 id="songs-title">// SONGS</h2>
+          <h2 id="songs-title">Songs</h2>
           <!-- One list item per song: a heading, a note, the Suno embed (with a title, nothing inside) and the song's Suno link. -->
           <ul class="song-list">
             <li class="song">
@@ -81,8 +83,8 @@
         </section>
 
         <section class="video" aria-labelledby="video-title">
-          <h2 id="video-title">// MUSIC VIDEO</h2>
-          <p class="helper video-note">Preview: slop mitigation is being applied.</p>
+          <h2 id="video-title">Music video</h2>
+          <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
           <div class="stage">
             <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
             <span class="pill stage-label">Preview</span>

@@ -27,11 +27,14 @@ function togglePlay() {
   else video.pause();
 }
 
-/** Stops the video and goes back to its start. */
+/** Stops the video and goes back to its start. Stop is then disabled, so keyboard focus moves
+ * on to Play instead of falling back to the top of the page. */
 function stop() {
+  const hadFocus = document.activeElement === $('video-stop');
   video.pause();
   video.currentTime = 0;
   render();
+  if (hadFocus) $('video-play').focus();
 }
 
 /** Full screen for the video, or the iPhone's own video player where elements cannot go full screen. */
@@ -54,4 +57,9 @@ video.addEventListener('click', () => {
   if (document.fullscreenElement !== video) togglePlay();
 });
 for (const event of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'seeked']) video.addEventListener(event, render);
+// Without this, a video that fails to load leaves a black box and buttons that do nothing.
+video.addEventListener('error', () => {
+  $('video-note').textContent = 'The video could not be loaded. Try again later.';
+  for (const id of ['video-play', 'video-stop', 'video-fullscreen']) $(id).disabled = true;
+});
 render();

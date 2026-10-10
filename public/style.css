@@ -71,7 +71,7 @@ body {
 
 /* Header: one compact row, shaped like the music page's: the mascot and the title, which
    ends in an ellipsis when space runs out, and the links between the two pages. */
-.site-header {
+.site-bar {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -818,7 +818,7 @@ body {
 
 @media (max-width: 560px) {
   .app { padding: 32px 16px 48px; }
-  .site-header, .masthead { gap: 10px; }
+  .site-bar, .masthead { gap: 10px; }
   .mascot { width: 44px; height: 44px; }
   .site-nav { gap: 6px; }
   .site-nav a { padding: 4px 10px; }
