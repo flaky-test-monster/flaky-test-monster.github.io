@@ -27,13 +27,19 @@
 }
 body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); }
 .page { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; }
-/* Decorative: the parchment, the red disk and the singer on the right; the left stays free for text. */
+/* Decorative: the parchment, the red disk and the singer on the right; the left stays free for text.
+ * Capped and kept at the right edge on wide screens, so the singer does not outgrow the page;
+ * its left edge fades into the plain paper. */
 .page::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: 0;
-  background: url('media/music-background.jpg') top center / 100% auto no-repeat;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(100%, 1400px);
+  background: url('media/music-background.jpg') top right / 100% auto no-repeat;
+  mask-image: linear-gradient(to right, transparent, #000 20%);
   pointer-events: none;
 }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 40px 0; }
@@ -54,7 +60,7 @@ em { color: var(--red); }
 .status { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 12px var(--utility); }
 .pill.accent { color: var(--red); }
-.intro { margin-top: 16px; font-size: 14px; max-width: 580px; }
+.intro { margin-top: 16px; font-size: 14px; max-width: min(580px, 52%); }
 .hero { width: 52%; padding: 36px 0 22px; }
 h1 { font: italic 900 clamp(54px, 8.8vw, 106px)/.88 var(--display); letter-spacing: -.06em; margin: 0 0 20px; }
 .subtitle { font-size: clamp(17px, 2vw, 23px); font-weight: bold; line-height: 1.25; }
@@ -89,11 +95,15 @@ footer { margin-top: 24px; text-align: center; font-size: 15px; }
 footer p { margin: 8px 0 0; }
 .back { font: 13px var(--utility); color: var(--red); }
 
+/* Too narrow for text and singer side by side: the singer fades behind the text. */
+@media (max-width: 960px) {
+  .page::before { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; opacity: .28; }
+  .intro { max-width: 580px; }
+}
 @media (max-width: 640px) {
   .container { width: calc(100% - 32px); padding-top: 24px; }
   .masthead { gap: 12px; }
   .mascot { width: 56px; height: 56px; }
-  .page::before { background-size: auto 850px; background-position: 38% 130px; opacity: .28; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(58px, 15vw, 90px); }
   .intro { max-width: 100%; }
