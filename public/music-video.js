@@ -1,5 +1,5 @@
 /**
- * The music video on the start page, with its own controls: play and pause, stop, repeat
+ * The music video on the music page, with its own controls: play and pause, stop, repeat
  * (on by default, so it plays round and round) and full screen.
  */
 
@@ -39,11 +39,6 @@ function fullscreen() {
   if (document.fullscreenElement === video) document.exitFullscreen();
   else if (video.requestFullscreen) video.requestFullscreen().catch(() => {});
   else video.webkitEnterFullscreen?.();
-}
-
-/** Pauses the video, for when the start page makes way for another step. */
-export function pauseMusicVideo() {
-  video.pause();
 }
 
 $('video-play').addEventListener('click', togglePlay);

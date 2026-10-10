@@ -1,0 +1,87 @@
+/* The music page, "From Flaky With Love": cream parchment, black and oxblood lettering, and
+ * the singing monster in the background. Green belongs to the monster only, never the interface. */
+:root {
+  color-scheme: light;
+  --paper: #f5ead5;
+  --ink: #17130e;
+  --red: #921f1a;
+  --red-hover: #741713;
+  --muted: #5d5145;
+  --border: #564735;
+  --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
+  --body: Georgia, serif;
+  --utility: 'Courier New', monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); }
+.page { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; }
+/* Decorative: the parchment, the red disk and the singer on the right; the left stays free for text. */
+.page::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('media/music-background.jpg') top center / 100% auto no-repeat;
+  pointer-events: none;
+}
+.container { width: min(100% - 64px, 1040px); margin: auto; padding: 40px 0; }
+.wordmark { font: italic 700 clamp(24px, 4vw, 40px)/1 var(--display); text-decoration: none; color: var(--ink); }
+em { color: var(--red); }
+.status { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 12px var(--utility); }
+.pill.accent { color: var(--red); }
+.intro { font-size: 14px; max-width: 580px; }
+.hero { width: 52%; padding: 36px 0 22px; }
+h1 { font: italic 900 clamp(54px, 8.8vw, 106px)/.88 var(--display); letter-spacing: -.06em; margin: 0 0 20px; }
+.subtitle { font-size: clamp(17px, 2vw, 23px); font-weight: bold; line-height: 1.25; }
+
+/* The video sits in the frame the design kit draws around the camera. */
+.stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
+.stage-video:fullscreen { cursor: auto; }
+.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: rgb(23 19 14 / .55); pointer-events: none; }
+
+button { font: bold 16px var(--utility); cursor: pointer; }
+.primary { display: block; width: 100%; min-height: 48px; margin: 12px 0; border: 1px solid var(--red); border-radius: 6px; background: var(--red); color: #fff8ed; }
+.primary:hover { background: var(--red-hover); }
+.secondary { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 14px; }
+.secondary:hover { border-color: var(--red); color: var(--red); }
+.secondary:disabled { opacity: .5; cursor: default; border-color: var(--border); color: var(--ink); }
+.video-repeat[aria-pressed="true"] { border-color: var(--red); color: var(--red); }
+.video-repeat::before { content: "↻ "; content: "↻ " / ""; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
+.video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.helper { font: 12px/1.6 var(--utility); }
+.video-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+.songs { margin-top: 32px; }
+h2 { font: bold 14px var(--utility); letter-spacing: .12em; }
+.song-list { list-style: none; padding: 0; margin: 0; }
+.song { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 6px 0; font: 13px/1.5 var(--utility); }
+.song small { display: block; margin-bottom: 12px; color: var(--muted); }
+.song iframe { display: block; width: 100%; height: 240px; border: 0; border-radius: 6px; }
+
+footer { margin-top: 24px; text-align: center; font-size: 15px; }
+footer p { margin: 8px 0 0; }
+.back { font: 13px var(--utility); color: var(--red); }
+
+@media (max-width: 640px) {
+  .container { width: calc(100% - 32px); padding-top: 24px; }
+  .page::before { background-size: auto 850px; background-position: 38% 130px; opacity: .28; }
+  .hero { width: 100%; padding-top: 32px; }
+  h1 { max-width: 420px; font-size: clamp(58px, 15vw, 90px); }
+  .intro { max-width: 100%; }
+  .video-time { margin-left: 0; width: 100%; }
+}

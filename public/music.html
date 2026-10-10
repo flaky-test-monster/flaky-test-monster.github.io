@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>From Flaky With Love · flakifier</title>
+  <meta name="description" content="The Flaky Test Monster's songs and music video for the Eurovision Song Contest.">
+  <meta name="theme-color" content="#f5ead5">
+  <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/music.css">
+</head>
+<body>
+  <div class="page">
+    <main class="container">
+      <header>
+        <a class="wordmark" href="./" aria-label="Back to flakifier">From <em>Flaky</em> With <em>Love</em></a>
+        <div class="status"><span class="pill">human</span><span class="pill accent">flaky test monster</span></div>
+        <p class="intro">Next plan of the monster: <strong>win the Eurovision Song Contest.</strong> Flaky on CI, flawless on stage. Listen to the songs that will get it there.</p>
+      </header>
+
+      <section class="hero" aria-labelledby="title">
+        <h1 id="title">From<br><em>Flaky</em><br>With <em>Love</em></h1>
+        <p class="subtitle">Making the Eurovision Song Contest flaky.</p>
+      </section>
+
+      <section aria-labelledby="video-title">
+        <h2 class="visually-hidden" id="video-title">Music video</h2>
+        <div class="stage">
+          <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata" aria-label="Music video: From Flaky with love"></video>
+          <span class="pill stage-label">Music video</span>
+        </div>
+        <button type="button" id="video-play" class="primary">Play</button>
+        <div class="video-controls">
+          <button type="button" id="video-stop" class="secondary" aria-label="Stop the video">Stop</button>
+          <button type="button" id="video-repeat" class="secondary video-repeat" aria-pressed="true">Repeat</button>
+          <button type="button" id="video-fullscreen" class="secondary">Full screen</button>
+          <span id="video-time" class="helper video-time">0:00 / 0:00</span>
+        </div>
+      </section>
+
+      <section class="songs" aria-labelledby="songs-title">
+        <h2 id="songs-title">// SONGS</h2>
+        <!-- One list item per song: paste the Suno embed code and give the iframe a title. -->
+        <ul class="song-list">
+          <li class="song">
+            From Flaky with love<small>For the Eurovision Song Contest</small>
+            <iframe title="From Flaky with love, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/164a73d5-1264-4e41-b692-be59b9cb9dba" width="760" height="240" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"><a href="https://suno.com/song/164a73d5-1264-4e41-b692-be59b9cb9dba">Listen on Suno</a></iframe>
+          </li>
+          <li class="song">
+            Greek entry<small>Suggestion for the Greek song contest</small>
+            <iframe title="Suggestion for the Greek song contest, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/02da7e95-6557-4d02-a7c4-0982ebf05806" width="760" height="240" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"><a href="https://suno.com/song/02da7e95-6557-4d02-a7c4-0982ebf05806">Listen on Suno</a></iframe>
+          </li>
+        </ul>
+      </section>
+
+      <footer>
+        <a class="back" href="./"><span aria-hidden="true">← </span>Back to flakifier</a>
+        <p>Born in Happylab</p>
+      </footer>
+    </main>
+  </div>
+  <script type="module" src="public/music-video.js"></script>
+</body>
+</html>

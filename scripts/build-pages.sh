@@ -25,4 +25,7 @@ sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html
   | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
     --minify-css true > _site/index.html
 grep -q 'data-backend="none"' _site/index.html
+# The music page needs no backend.
+npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+  --minify-css true public/music.html > _site/music.html
 touch _site/.nojekyll

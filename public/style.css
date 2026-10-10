@@ -491,34 +491,24 @@ body {
 /* Recent conversions */
 .recent { margin-top: 48px; }
 
-/* Music: the monster's songs for the Eurovision Song Contest, embedded from Suno. */
+/* Music: a link to the monster's own page with its Eurovision songs and music video. */
 .music { margin-top: 48px; }
-.music-lead { margin: 0 0 16px; color: var(--muted); }
-.music-lead strong { color: var(--fg); }
-.music-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
-.music-note { margin: 0 0 8px; font-size: 0.8125rem; color: var(--muted); }
-.music-video { margin-top: 48px; }
-.music-video-player {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-.music-video-player:fullscreen { border-radius: 0; cursor: auto; }
-.video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
-.video-repeat[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-.video-repeat::before { content: "↻ "; content: "↻ " / ""; }
-.video-time { margin-left: auto; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.music-list iframe {
-  display: block;
-  width: 100%;
-  height: 240px;
+.music-link {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  color: var(--muted);
+  text-decoration: none;
 }
+.music-link:hover { border-color: var(--accent); }
+.music-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.music-link-title { font: italic 900 1.75rem/1 'Bodoni MT', Didot, 'Times New Roman', serif; letter-spacing: -0.03em; color: var(--fg); }
+.music-link-title em { color: #c0392b; }
+.music-link strong { color: var(--fg); }
+.music-link-cta { color: var(--accent); font-weight: 600; }
 .recent-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 
 .recent-row { display: flex; align-items: stretch; gap: 6px; }
