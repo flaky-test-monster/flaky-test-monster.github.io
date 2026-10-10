@@ -20,14 +20,18 @@
 </head>
 <body>
   <div class="app">
-    <header>
-      <a class="masthead" id="home-link" href="./" aria-label="flakifier: back to the start">
-        <img class="mascot" src="public/monster.jpg" width="72" height="72" alt="">
-        <div class="masthead-text">
+    <header class="site-header">
+      <div class="site-bar">
+        <a class="masthead" id="home-link" href="./" aria-label="flakifier: back to the start">
+          <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
           <h1 class="title">flakifier</h1>
-          <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
-        </div>
-      </a>
+        </a>
+        <nav class="site-nav" aria-label="Pages">
+          <a href="./" aria-current="page">flakifier</a>
+          <a href="music.html">music</a>
+        </nav>
+      </div>
+      <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
     </header>
     <p id="no-backend-notice" class="notice" hidden>Browser-only preview: the camera, the monster scan and the in-browser figures work. The other ways to make a figure, and recent runs, need the <a href="https://github.com/kertal/flakifier#install">Flakifier server</a>.</p>
 
@@ -81,26 +85,11 @@
       </div>
       <section class="music" aria-labelledby="music-title">
         <h2 class="section-title" id="music-title">Music</h2>
-        <p class="music-lead">Next plan of the monster: <strong>win the Eurovision Song Contest.</strong> Flaky on CI, flawless on stage. Listen to the songs that will get it there.</p>
-        <!-- One list item per song: paste the Suno embed code and give the iframe a title. -->
-        <ul class="music-list">
-          <li><iframe title="From Flaky with love, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/164a73d5-1264-4e41-b692-be59b9cb9dba" width="760" height="240" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"><a href="https://suno.com/song/164a73d5-1264-4e41-b692-be59b9cb9dba">Listen on Suno</a></iframe></li>
-          <li>
-            <p class="music-note">Suggestion for the Greek song contest</p>
-            <iframe title="Suggestion for the Greek song contest, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/02da7e95-6557-4d02-a7c4-0982ebf05806" width="760" height="240" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"><a href="https://suno.com/song/02da7e95-6557-4d02-a7c4-0982ebf05806">Listen on Suno</a></iframe>
-          </li>
-        </ul>
-      </section>
-      <section class="music-video" aria-labelledby="video-title">
-        <h2 class="section-title" id="video-title">Video</h2>
-        <video id="music-video" class="music-video-player" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata" aria-label="Music video: From Flaky with love"></video>
-        <div class="video-controls">
-          <button type="button" id="video-play" class="btn btn-primary">Play</button>
-          <button type="button" id="video-stop" class="btn" aria-label="Stop the video">Stop</button>
-          <button type="button" id="video-repeat" class="btn video-repeat" aria-pressed="true">Repeat</button>
-          <button type="button" id="video-fullscreen" class="btn">Full screen</button>
-          <span id="video-time" class="video-time">0:00 / 0:00</span>
-        </div>
+        <a class="music-link" href="music.html">
+          <span class="music-link-title">From <em>Flaky</em> With <em>Love</em></span>
+          <span class="music-link-text">Next plan of the monster: <strong>find a country that would nominate it for the Eurovision Song Contest.</strong> Listen to a song for every candidate and watch the music video.</span>
+          <span class="music-link-cta">Go to the music <span aria-hidden="true">→</span></span>
+        </a>
       </section>
     </section>
 
