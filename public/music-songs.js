@@ -26,6 +26,7 @@ function setUp(song) {
   const seek = song.querySelector('.song-seek');
   const time = song.querySelector('.song-time');
   const name = seek.getAttribute('aria-label').replace(/^Position in /, '');
+  let dragging = false;
 
   function render() {
     const playing = !audio.paused && !audio.ended;
@@ -34,7 +35,8 @@ function setUp(song) {
     song.classList.toggle('playing', playing);
     play.setAttribute('aria-label', `${playing ? 'Pause' : 'Play'} ${name}`);
     seek.max = String(duration);
-    seek.value = String(audio.currentTime);
+    // While someone drags the slider, the song's progress must not pull the thumb away from them.
+    if (!dragging) seek.value = String(audio.currentTime);
     seek.style.setProperty('--progress', `${duration ? (audio.currentTime / duration) * 100 : 0}%`);
     seek.setAttribute('aria-valuetext', `${clock(audio.currentTime)} of ${clock(audio.duration)}`);
     time.textContent = `${clock(audio.currentTime)} / ${clock(audio.duration)}`;
@@ -51,11 +53,25 @@ function setUp(song) {
   seek.addEventListener('input', () => {
     audio.currentTime = Number(seek.value);
   });
+  seek.addEventListener('pointerdown', () => { dragging = true; });
+  for (const event of ['pointerup', 'pointercancel']) {
+    seek.addEventListener(event, () => { dragging = false; });
+  }
   audio.addEventListener('play', () => announce(song.querySelector('h3').textContent));
   for (const event of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'durationchange', 'seeked']) {
     audio.addEventListener(event, render);
   }
-  render();
+  audio.addEventListener('error', unavailable);
+  // The MP3 may have failed before this module ran.
+  if (audio.error) unavailable();
+  else render();
+
+  /** A song whose MP3 cannot be loaded says so, instead of a play button that does nothing. */
+  function unavailable() {
+    play.disabled = true;
+    seek.disabled = true;
+    time.textContent = 'Not available';
+  }
 }
 
 document.querySelectorAll('.song').forEach(setUp);

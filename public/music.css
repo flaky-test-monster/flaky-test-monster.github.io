@@ -93,7 +93,8 @@ h2::before { content: "// "; content: "// " / ""; }
 /* One row per song: the track number, then title, note and player. */
 .song { display: grid; grid-template-columns: 3rem 1fr; column-gap: 16px; padding: 18px 0; counter-increment: track; }
 .song + .song { border-top: 1px solid var(--rule); }
-.song::before { content: counter(track, decimal-leading-zero); grid-row: 1 / span 3; font: italic 700 2rem/1 var(--display); color: var(--border); opacity: .55; }
+/* Decoration, like the slashes before h2: the empty alt text keeps screen readers from reading the number. */
+.song::before { content: counter(track, decimal-leading-zero); content: counter(track, decimal-leading-zero) / ""; grid-row: 1 / span 3; font: italic 700 2rem/1 var(--display); color: var(--border); opacity: .55; }
 .song.playing::before { color: var(--red); opacity: 1; }
 .song h3 { margin: 0; font: italic 700 1.3125rem/1.25 var(--display); }
 .song.playing h3 { color: var(--red); }
@@ -112,6 +113,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .song-seek::-moz-range-track { height: 4px; border-radius: 2px; background: var(--rule); }
 .song-seek::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--red); }
 .song-seek::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid #fff8ed; border-radius: 50%; background: var(--red); }
+.song-play:disabled { border-color: var(--rule); color: var(--muted); background: transparent; cursor: default; }
 .song-time { flex: none; min-width: 7.5em; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 footer { margin-top: 24px; text-align: center; font-size: 0.9375rem; }
