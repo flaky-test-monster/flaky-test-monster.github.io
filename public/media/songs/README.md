@@ -13,5 +13,6 @@ it here under this name:
 | `spanish.mp3`      | The Spanish version                    | `83bf41bd-3062-4478-87b8-92675189b2e5` |
 | `italian.mp3`      | The Italian version                    | `51bca58a-97ca-47ca-9da8-efb71cf21d42` |
 | `polish.mp3`       | The Polish version                     | `590c1df7-1e11-46bf-b9e8-5ab85d2556a4` |
+| `french.mp3`       | The French version                     | `c9e7e593-6a7d-4be9-8301-b0046bfbf979` |
 
 Until a file is here, the page shows Suno's embed for that song instead.

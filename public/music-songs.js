@@ -12,6 +12,9 @@ function clock(seconds) {
 
 /** Puts Suno's embed in place of the player, with the name the player had. */
 function fallBackToSuno(song, name) {
+  // An error already set when this module ran can still have its event queued: fall back once.
+  const player = song.querySelector('.player');
+  if (!player) return;
   const iframe = document.createElement('iframe');
   iframe.title = `${name}, on Suno`;
   iframe.src = `https://suno.com/embed/${song.dataset.suno}`;
@@ -20,7 +23,7 @@ function fallBackToSuno(song, name) {
   iframe.allow = 'autoplay; encrypted-media; fullscreen';
   iframe.loading = 'lazy';
   iframe.referrerPolicy = 'no-referrer-when-downgrade';
-  song.querySelector('.player').replaceWith(iframe);
+  player.replaceWith(iframe);
 }
 
 /** Tells the lock screen and headphone controls which song is playing. */
