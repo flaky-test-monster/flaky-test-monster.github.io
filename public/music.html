@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/music.css">
@@ -82,6 +82,27 @@
           </ul>
         </section>
 
+        <section class="vote" aria-labelledby="vote-title">
+          <h2 id="vote-title">Your votes</h2>
+          <p class="vote-intro">You are the jury. As at the Eurovision Song Contest, give 12 points to your favourite, then 10, 8, 7 and down to 1. Each score goes to one song only. Then send your votes by email.</p>
+          <!-- The rows are made from the song list above by music-vote.js. data-email is where
+               the votes go; when it is empty, the email opens without a recipient. -->
+          <form id="vote-form" class="vote-form" data-email="" novalidate>
+            <label class="vote-field">
+              <span>Jury of</span>
+              <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
+            </label>
+            <ol id="vote-rows" class="vote-rows"></ol>
+            <p id="vote-status" class="helper vote-status" role="status"></p>
+            <pre id="vote-text" class="vote-text" hidden></pre>
+            <button type="submit" class="primary">Send my votes by email</button>
+            <div class="vote-actions">
+              <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
+              <button type="reset" class="secondary">Start over</button>
+            </div>
+          </form>
+        </section>
+
         <section class="video" aria-labelledby="video-title">
           <h2 id="video-title">Music video</h2>
           <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
@@ -107,5 +128,6 @@
     </div>
   </div>
   <script type="module" src="public/music-video.js"></script>
+  <script type="module" src="public/music-vote.js"></script>
 </body>
 </html>
