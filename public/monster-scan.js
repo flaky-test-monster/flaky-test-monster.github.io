@@ -20,6 +20,8 @@ const RETRY_MS = 5000;
 const EMPTY_BEFORE_WAVE_MS = 2000;
 /** How long the wave stays over the preview. */
 const WAVE_MS = 2500;
+/** Longest the call to open the mouth stays over the preview; it goes sooner once the human opens up. */
+const CALL_MS = 5000;
 /** What the score overlay asks for: no face in view, not a monster yet, a monster. */
 const HINTS = {
   noFace: 'Please look into the camera.',
@@ -45,6 +47,10 @@ let handTracker = null;
 let hands = [];
 /** When the view last had no face in it, or null while someone is in view. */
 let emptySince = null;
+/** Whether the human who stepped in last has yet to get the call to open the mouth. */
+let callDue = false;
+/** Ends the call to open the mouth while it shows, or null when it does not. */
+let callTimer = null;
 let lastAnnouncement = null;
 let lastPhotoAt = -Infinity;
 /**
@@ -88,13 +94,13 @@ function setCameraLook(score) {
 
 /**
  * Shows the score over the preview, with what to do next, or hides it when no scan has a score.
- * A human in view with a low score also gets a big call to open their mouth in the middle.
+ * A human who steps in with a low score also gets a big call to open their mouth in the middle, once.
  * @param {number | null} shown rounded score
  */
 function renderCameraScore(shown) {
   $('camera-score').hidden = shown === null;
   $('camera-big-score').hidden = !(shown > 100);
-  $('camera-call').hidden = !(shown !== null && faces.length && verdict(shown).key === 'human');
+  renderCall(shown);
   if (shown === null) return;
   if (shown > 100) $('camera-big-score').textContent = shown;
   const result = verdict(shown);
@@ -103,6 +109,27 @@ function renderCameraScore(shown) {
   $('camera-score-verdict').textContent = result.label;
   $('camera-score-bonus').hidden = !waving;
   $('camera-score-hint').textContent = hint(result.key);
+}
+
+/**
+ * Shows the call to open the mouth once per human: from the first low score after they step
+ * in, until their score is no longer human or CALL_MS is up. Hidden while no face is in view.
+ * @param {number | null} shown rounded score
+ */
+function renderCall(shown) {
+  const low = shown !== null && verdict(shown).key === 'human';
+  if (!low) endCall();
+  else if (callDue && faces.length) {
+    callDue = false;
+    callTimer = setTimeout(endCall, CALL_MS);
+  }
+  $('camera-call').hidden = callTimer === null || !faces.length;
+}
+
+function endCall() {
+  clearTimeout(callTimer);
+  callTimer = null;
+  $('camera-call').hidden = true;
 }
 
 /** What the score overlay asks for next, by the verdict of the top score. */
@@ -223,6 +250,7 @@ function waveAtNewcomer() {
   }
   const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_WAVE_MS;
   emptySince = null;
+  if (wasEmpty) callDue = true;
   if (wasEmpty && faces.some((face) => verdict(Math.round(face.score)).key !== 'monster')) wave();
 }
 
@@ -452,6 +480,8 @@ export async function startMonsterScan(video) {
   );
   // An empty view to start with, so whoever is in front of the camera gets a wave.
   emptySince = -Infinity;
+  callDue = false;
+  endCall();
   lastAnnouncement = null;
   setCameraLook(null);
   renderCameraScore(null);
