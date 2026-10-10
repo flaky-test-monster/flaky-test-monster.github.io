@@ -15,11 +15,9 @@ const PHOTO_EVERY_MS = 5000;
 const PHOTO_LIMIT = 6;
 /** Wait before a failed scan tries again; there is no button to restart it. */
 const RETRY_MS = 5000;
-/** How long the view must stay empty before the next human to step in gets a wave, so a
-    face the tracker loses for a few frames is not waved at twice. */
-const EMPTY_BEFORE_WAVE_MS = 2000;
-/** How long the wave stays over the preview. */
-const WAVE_MS = 2500;
+/** How long the view must stay empty before the next human to step in counts as new, so a
+    face the tracker loses for a few frames does not get the call to open the mouth twice. */
+const EMPTY_BEFORE_NEW_MS = 2000;
 /** Longest the call to open the mouth stays over the preview; it goes sooner once the human opens up. */
 const CALL_MS = 5000;
 /** What the score overlay asks for: no face in view, not a monster yet, a monster. */
@@ -210,7 +208,7 @@ function scanFrame(video, tracker) {
   hands = faces.some((face) => face.mouth > WAVE_FROM) ? trackHandsIn(video, aspect, now) : [];
   faces = trackFaces(faces, detected, aspect, hands.filter(isWaving).map((hand) => hand.palm));
   waving = faces.some((face) => face.waving);
-  waveAtNewcomer();
+  noticeNewcomer();
   // Judged on the rounded score, like the meter, so the tracker and the meter always agree.
   const monsters = faces.filter((face) => verdict(Math.round(face.score)).key === 'monster');
   score = faces.length ? Math.max(...faces.map((face) => face.score)) : smoothScore(score, 0);
@@ -239,35 +237,18 @@ function trackHandsIn(video, aspect, now) {
 }
 
 /**
- * Waves when a human steps into a view that has been empty for a while. Short gaps, where
- * the tracker loses a face for a few frames, do not count as empty.
+ * Lines up the call to open the mouth when a human steps into a view that has been empty for
+ * a while. Short gaps, where the tracker loses a face for a few frames, do not count as empty.
  */
-function waveAtNewcomer() {
+function noticeNewcomer() {
   const now = performance.now();
   if (!faces.length) {
     emptySince ??= now;
     return;
   }
-  const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_WAVE_MS;
+  const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_NEW_MS;
   emptySince = null;
   if (wasEmpty) callDue = true;
-  if (wasEmpty && faces.some((face) => verdict(Math.round(face.score)).key !== 'monster')) wave();
-}
-
-/** Waves a hand over the preview, without a word. */
-function wave() {
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const fade = (from, to) => ({ opacity: from, transform: `translateX(-50%)${still ? '' : ` scale(${from ? 1 : 0.8})`}` });
-  $('camera-wave').animate(
-    [fade(0), { ...fade(1), offset: 0.12 }, { ...fade(1), offset: 0.85 }, fade(0)],
-    { duration: WAVE_MS, easing: 'ease-out' },
-  );
-  if (!still) {
-    $('camera-wave').querySelector('.camera-wave-hand').animate(
-      [{ transform: 'rotate(0)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(0)' }],
-      { duration: 1000, delay: 200 },
-    );
-  }
 }
 
 /**
@@ -478,7 +459,7 @@ export async function startMonsterScan(video) {
     (tracker) => { if (id === runId) handTracker = tracker; },
     (err) => console.warn('Hand tracker unavailable, no wave bonus:', err),
   );
-  // An empty view to start with, so whoever is in front of the camera gets a wave.
+  // An empty view to start with, so whoever is in front of the camera gets the call.
   emptySince = -Infinity;
   callDue = false;
   endCall();

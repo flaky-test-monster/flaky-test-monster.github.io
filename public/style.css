@@ -409,20 +409,6 @@ body {
 #camera-monsters { color: #ff5b72; }
 .camera-stage:fullscreen .camera-counts { top: 80px; left: 16px; padding: 6px 14px; font-size: 1rem; }
 
-/* Waves at the first human to step into an empty view; run from monster-scan.js. */
-.camera-wave {
-  position: absolute;
-  top: 18%;
-  left: 50%;
-  z-index: 4;
-  margin: 0;
-  font-size: clamp(3rem, 12vw, 7rem);
-  line-height: 1;
-  opacity: 0;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.camera-wave-hand { display: inline-block; transform-origin: 70% 90%; }
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
 .camera-fullscreen {
