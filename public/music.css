@@ -212,6 +212,13 @@ footer p { margin: 8px 0 0; }
   transition: opacity var(--fade);
 }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: 1; }
+/* The title and subtitle fade to their Klingon twins. Both share one grid cell, so the
+ * longer of the two sets the height and nothing below jumps. */
+.swap { display: grid; }
+.swap > span { grid-area: 1 / 1; transition: opacity var(--fade); }
+.swap-klingon { opacity: 0; }
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-usual { opacity: 0; }
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-klingon { opacity: 1; }
 @media (max-width: 960px) {
   .page::after { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; }
   /* Faint behind the text, like the parchment singer, which gives way to it. */

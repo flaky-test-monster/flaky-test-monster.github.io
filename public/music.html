@@ -29,8 +29,16 @@
         <p class="intro">Flaky on CI, flaky on stage. <strong>Let’s make the Eurovision Song Contest flaky.</strong> First the monster needs a country brave enough to nominate it, so here is a song for every candidate. Which country will send a monster?</p>
 
         <section class="hero" aria-labelledby="title">
-          <h1 id="title">From<br><em>Flaky</em><br>With <em>Love</em></h1>
-          <p class="subtitle">Making the Eurovision Song Contest flaky.</p>
+          <!-- Each line has a Klingon twin, which fades in with the dark page (music.css).
+               Screen readers always read the first one, so nothing changes under them. -->
+          <h1 id="title" class="swap">
+            <span class="swap-usual">From<br><em>Flaky</em><br>With <em>Love</em></span>
+            <span class="swap-klingon" aria-hidden="true">From<br><em>Qo’noS</em><br>With <em>Honour</em></span>
+          </h1>
+          <p class="subtitle swap">
+            <span class="swap-usual">Making the Eurovision Song Contest flaky.</span>
+            <span class="swap-klingon" aria-hidden="true">Today is a good day for your ears to die.</span>
+          </p>
         </section>
 
         <section class="songs" aria-labelledby="songs-title">
