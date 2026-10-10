@@ -15,11 +15,11 @@ const PHOTO_EVERY_MS = 5000;
 const PHOTO_LIMIT = 6;
 /** Wait before a failed scan tries again; there is no button to restart it. */
 const RETRY_MS = 5000;
-/** How long the view must stay empty before the next human to step in gets a wave, so a
-    face the tracker loses for a few frames is not waved at twice. */
-const EMPTY_BEFORE_WAVE_MS = 2000;
-/** How long the wave stays over the preview. */
-const WAVE_MS = 2500;
+/** How long the view must stay empty before the next human to step in counts as new, so a
+    face the tracker loses for a few frames does not get the call to open the mouth twice. */
+const EMPTY_BEFORE_NEW_MS = 2000;
+/** Longest the call to open the mouth stays over the preview; it goes sooner once the human opens up. */
+const CALL_MS = 5000;
 /** What the score overlay asks for: no face in view, not a monster yet, a monster. */
 const HINTS = {
   noFace: 'Please look into the camera.',
@@ -45,6 +45,10 @@ let handTracker = null;
 let hands = [];
 /** When the view last had no face in it, or null while someone is in view. */
 let emptySince = null;
+/** Whether the human who stepped in last has yet to get the call to open the mouth. */
+let callDue = false;
+/** Ends the call to open the mouth while it shows, or null when it does not. */
+let callTimer = null;
 let lastAnnouncement = null;
 let lastPhotoAt = -Infinity;
 /**
@@ -88,12 +92,16 @@ function setCameraLook(score) {
 
 /**
  * Shows the score over the preview, with what to do next, or hides it when no scan has a score.
+ * A human who steps in with a low score also gets a big call to open their mouth in the middle, once.
  * @param {number | null} shown rounded score
  */
 function renderCameraScore(shown) {
   $('camera-score').hidden = shown === null;
   $('camera-big-score').hidden = !(shown > 100);
-  if (shown === null) return;
+  if (shown === null) {
+    endCall();
+    return;
+  }
   if (shown > 100) $('camera-big-score').textContent = shown;
   const result = verdict(shown);
   $('camera-score').dataset.verdict = result.key;
@@ -101,6 +109,30 @@ function renderCameraScore(shown) {
   $('camera-score-verdict').textContent = result.label;
   $('camera-score-bonus').hidden = !waving;
   $('camera-score-hint').textContent = hint(result.key);
+}
+
+/**
+ * Shows the call to open the mouth once per human: from the first low score after they step
+ * in, until no face in view is human any more or CALL_MS is up. Each face is judged on its own
+ * score, so a human next to a monster still gets it. Hidden, but not ended, while no face is
+ * in view, so a face the tracker loses for a few frames keeps its call.
+ */
+function renderCall() {
+  const low = faces.some((face) => verdict(Math.round(face.score)).key === 'human');
+  if (faces.length && !low) endCall();
+  else if (callDue && low) {
+    callDue = false;
+    // A new human's call starts afresh, so the timer of an earlier one cannot cut it short.
+    clearTimeout(callTimer);
+    callTimer = setTimeout(endCall, CALL_MS);
+  }
+  $('camera-call').hidden = callTimer === null || !faces.length;
+}
+
+function endCall() {
+  clearTimeout(callTimer);
+  callTimer = null;
+  $('camera-call').hidden = true;
 }
 
 /** What the score overlay asks for next, by the verdict of the top score. */
@@ -181,7 +213,7 @@ function scanFrame(video, tracker) {
   hands = faces.some((face) => face.mouth > WAVE_FROM) ? trackHandsIn(video, aspect, now) : [];
   faces = trackFaces(faces, detected, aspect, hands.filter(isWaving).map((hand) => hand.palm));
   waving = faces.some((face) => face.waving);
-  waveAtNewcomer();
+  noticeNewcomer();
   // Judged on the rounded score, like the meter, so the tracker and the meter always agree.
   const monsters = faces.filter((face) => verdict(Math.round(face.score)).key === 'monster');
   score = faces.length ? Math.max(...faces.map((face) => face.score)) : smoothScore(score, 0);
@@ -190,6 +222,8 @@ function scanFrame(video, tracker) {
     monsterCount = monsters.length;
     render();
   }
+  // Every frame, since a human's own score can change while the readout stays the same.
+  renderCall();
   drawFaces(video, monsters.map((face) => face.landmarks));
   if (Math.round(score) >= 100 && now - lastPhotoAt >= PHOTO_EVERY_MS) takePhoto(video);
 }
@@ -210,34 +244,18 @@ function trackHandsIn(video, aspect, now) {
 }
 
 /**
- * Waves when a human steps into a view that has been empty for a while. Short gaps, where
- * the tracker loses a face for a few frames, do not count as empty.
+ * Lines up the call to open the mouth when a human steps into a view that has been empty for
+ * a while. Short gaps, where the tracker loses a face for a few frames, do not count as empty.
  */
-function waveAtNewcomer() {
+function noticeNewcomer() {
   const now = performance.now();
   if (!faces.length) {
     emptySince ??= now;
     return;
   }
-  const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_WAVE_MS;
+  const wasEmpty = emptySince !== null && now - emptySince >= EMPTY_BEFORE_NEW_MS;
   emptySince = null;
-  if (wasEmpty && faces.some((face) => verdict(Math.round(face.score)).key !== 'monster')) wave();
-}
-
-/** Waves a hand over the preview, without a word. */
-function wave() {
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const fade = (from, to) => ({ opacity: from, transform: `translateX(-50%)${still ? '' : ` scale(${from ? 1 : 0.8})`}` });
-  $('camera-wave').animate(
-    [fade(0), { ...fade(1), offset: 0.12 }, { ...fade(1), offset: 0.85 }, fade(0)],
-    { duration: WAVE_MS, easing: 'ease-out' },
-  );
-  if (!still) {
-    $('camera-wave').querySelector('.camera-wave-hand').animate(
-      [{ transform: 'rotate(0)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'rotate(20deg)' }, { transform: 'rotate(0)' }],
-      { duration: 1000, delay: 200 },
-    );
-  }
+  if (wasEmpty) callDue = true;
 }
 
 /**
@@ -448,8 +466,10 @@ export async function startMonsterScan(video) {
     (tracker) => { if (id === runId) handTracker = tracker; },
     (err) => console.warn('Hand tracker unavailable, no wave bonus:', err),
   );
-  // An empty view to start with, so whoever is in front of the camera gets a wave.
+  // An empty view to start with, so whoever is in front of the camera gets the call.
   emptySince = -Infinity;
+  callDue = false;
+  endCall();
   lastAnnouncement = null;
   setCameraLook(null);
   renderCameraScore(null);

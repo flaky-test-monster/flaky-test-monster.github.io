@@ -386,6 +386,32 @@ body {
 }
 .camera-big-score[hidden] { display: none; }
 
+/* A human who steps in with a low score, once: a call to open up, in the middle of the video. */
+.camera-call {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0 8%;
+  font-size: clamp(1.25rem, 5.5cqw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 75%);
+  text-shadow: 0 2px 4px rgb(0 0 0 / 45%), 0 0 20px rgb(0 0 0 / 30%);
+  pointer-events: none;
+}
+.camera-call[hidden] { display: none; }
+/* Not over the Take photo countdown, or over a photo shown in place of the video. */
+.camera-stage:has(.countdown:not([hidden]), .camera-photo:not([hidden])) .camera-call { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .camera-call:not([hidden]) { animation: camera-call-pulse 1.2s ease-in-out infinite alternate; }
+}
+@keyframes camera-call-pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+
 /* How many humans and monsters are in view, top left; below the logo in full screen. */
 .camera-counts {
   position: absolute;
@@ -405,20 +431,6 @@ body {
 #camera-monsters { color: #ff5b72; }
 .camera-stage:fullscreen .camera-counts { top: 80px; left: 16px; padding: 6px 14px; font-size: 1rem; }
 
-/* Waves at the first human to step into an empty view; run from monster-scan.js. */
-.camera-wave {
-  position: absolute;
-  top: 18%;
-  left: 50%;
-  z-index: 4;
-  margin: 0;
-  font-size: clamp(3rem, 12vw, 7rem);
-  line-height: 1;
-  opacity: 0;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.camera-wave-hand { display: inline-block; transform-origin: 70% 90%; }
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
 .camera-fullscreen {
