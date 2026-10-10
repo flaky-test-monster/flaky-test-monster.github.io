@@ -35,48 +35,98 @@
 
         <section class="songs" aria-labelledby="songs-title">
           <h2 id="songs-title">Songs</h2>
-          <!-- One list item per song: a heading, a note, the Suno embed (with a title, nothing inside) and the song's Suno link. -->
+          <!-- One list item per song: a heading, a note, the player for the song's MP3 in public/media/songs/ and the song's Suno link.
+               data-suno is the song's Suno id: while its MP3 is missing, music-songs.js shows the Suno embed instead. -->
           <ul class="song-list">
-            <li class="song">
+            <li class="song" data-suno="164a73d5-1264-4e41-b692-be59b9cb9dba">
               <h3>From Flaky with love: the international version</h3>
               <p>In English. No risk, less fun.</p>
-              <iframe title="From Flaky with love, the international version in English, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/164a73d5-1264-4e41-b692-be59b9cb9dba" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/international.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play From Flaky with love, the international version in English, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in From Flaky with love, the international version in English, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/164a73d5-1264-4e41-b692-be59b9cb9dba">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="02da7e95-6557-4d02-a7c4-0982ebf05806">
               <h3>The Greek version</h3>
               <p>For a Greek hero: Panos, foe of the monster and tireless resolver of flaky tests.</p>
-              <iframe title="The Greek version, for Panos, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/02da7e95-6557-4d02-a7c4-0982ebf05806" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/greek.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Greek version, for Panos, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Greek version, for Panos, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/02da7e95-6557-4d02-a7c4-0982ebf05806">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="8d9af3b9-1c76-4d60-a391-a7360c44c3cb">
               <h3>The Austrian version</h3>
               <p>With a sort of German flavour. With some “creativity” and <span lang="de">knüppelharte</span> translation work, it could also be Germany’s candidate.</p>
-              <iframe title="The Austrian version, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/8d9af3b9-1c76-4d60-a391-a7360c44c3cb" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/austrian.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Austrian version, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Austrian version, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/8d9af3b9-1c76-4d60-a391-a7360c44c3cb">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="66968534-3430-47f9-b6b0-ed390b0b0453">
               <h3>The Klingon version</h3>
               <p>We have to talk with the European Broadcasting Union first. Canada might get in before Qo’noS does.</p>
-              <iframe title="The Klingon version, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/66968534-3430-47f9-b6b0-ed390b0b0453" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/klingon.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Klingon version, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Klingon version, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/66968534-3430-47f9-b6b0-ed390b0b0453">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="83bf41bd-3062-4478-87b8-92675189b2e5">
               <h3>The Spanish version</h3>
               <p>Spain is home to many of the fearless foes of the flaky test monster. One has to honour one’s foes!</p>
-              <iframe title="The Spanish version, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/83bf41bd-3062-4478-87b8-92675189b2e5" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/spanish.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Spanish version, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Spanish version, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/83bf41bd-3062-4478-87b8-92675189b2e5">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="51bca58a-97ca-47ca-9da8-efb71cf21d42">
               <h3>The Italian version</h3>
               <p>Italy has had success with stuff like this before. Why innovate?</p>
-              <iframe title="The Italian version, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/51bca58a-97ca-47ca-9da8-efb71cf21d42" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/italian.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Italian version, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Italian version, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/51bca58a-97ca-47ca-9da8-efb71cf21d42">Listen on Suno</a>
             </li>
-            <li class="song">
+            <li class="song" data-suno="590c1df7-1e11-46bf-b9e8-5ab85d2556a4">
               <h3>The Polish version</h3>
               <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes!</p>
-              <iframe title="The Polish version, by the Flaky Test Monster, on Suno" src="https://suno.com/embed/590c1df7-1e11-46bf-b9e8-5ab85d2556a4" width="760" height="240" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <div class="player">
+                <audio src="public/media/songs/polish.mp3" preload="metadata" controls></audio>
+                <div class="player-controls" hidden>
+                  <button type="button" class="secondary song-play" aria-label="Play The Polish version, by the Flaky Test Monster">Play</button>
+                  <input type="range" class="song-seek" min="0" max="0" step="any" value="0" aria-label="Position in The Polish version, by the Flaky Test Monster">
+                  <span class="helper song-time">0:00 / 0:00</span>
+                </div>
+              </div>
               <a class="song-link" href="https://suno.com/song/590c1df7-1e11-46bf-b9e8-5ab85d2556a4">Listen on Suno</a>
             </li>
           </ul>
@@ -107,5 +157,6 @@
     </div>
   </div>
   <script type="module" src="public/music-video.js"></script>
+  <script type="module" src="public/music-songs.js"></script>
 </body>
 </html>
