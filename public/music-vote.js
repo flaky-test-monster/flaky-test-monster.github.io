@@ -78,7 +78,9 @@ form.addEventListener('submit', (event) => {
   }
   // mailto: wants CRLF line breaks (RFC 6068) and %20, not +, for spaces.
   const params = new URLSearchParams({ subject: SUBJECT, body: body.replace(/\n/g, '\r\n') }).toString().replace(/\+/g, '%20');
-  location.href = `mailto:${encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@')}?${params}`;
+  // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
+  const to = encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@').replace(/%2B/g, '+');
+  location.href = `mailto:${to}?${params}`;
   say('Your email app should open with your votes. No email app? Copy your votes and send them from your webmail.');
 });
 
