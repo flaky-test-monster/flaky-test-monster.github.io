@@ -88,11 +88,13 @@ function setCameraLook(score) {
 
 /**
  * Shows the score over the preview, with what to do next, or hides it when no scan has a score.
+ * A human in view with a low score also gets a big call to open their mouth in the middle.
  * @param {number | null} shown rounded score
  */
 function renderCameraScore(shown) {
   $('camera-score').hidden = shown === null;
   $('camera-big-score').hidden = !(shown > 100);
+  $('camera-call').hidden = !(shown !== null && faces.length && verdict(shown).key === 'human');
   if (shown === null) return;
   if (shown > 100) $('camera-big-score').textContent = shown;
   const result = verdict(shown);

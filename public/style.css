@@ -364,6 +364,30 @@ body {
 }
 .camera-big-score[hidden] { display: none; }
 
+/* A human in view with a low score: a big call to open up, in the middle of the video. */
+.camera-call {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0 8%;
+  font-size: clamp(1.75rem, 8cqw, 5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 70%), 0 0 24px rgb(0 0 0 / 50%);
+  pointer-events: none;
+}
+.camera-call[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .camera-call:not([hidden]) { animation: camera-call-pulse 1.2s ease-in-out infinite alternate; }
+}
+@keyframes camera-call-pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+
 /* How many humans and monsters are in view, top left; below the logo in full screen. */
 .camera-counts {
   position: absolute;
