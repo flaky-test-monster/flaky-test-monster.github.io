@@ -42,24 +42,20 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
   mask-image: linear-gradient(to right, transparent, #000 20%);
   pointer-events: none;
 }
-.container { width: min(100% - 64px, 1040px); margin: auto; padding: 40px 0; }
-/* Header: the masthead, and links between the start page and the music page. */
-.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
-.site-nav { display: flex; gap: 8px; }
-.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: rgb(245 234 213 / .85); color: var(--ink); font: 13px var(--utility); text-decoration: none; }
+.container { width: min(100% - 64px, 1040px); margin: auto; padding: 56px 0 40px; }
+/* Header: one compact row, shaped like the start page's: the monster in a circle and the
+ * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
+.site-header { display: flex; align-items: center; gap: 16px; }
+.site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
+.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: rgb(245 234 213 / .85); color: var(--ink); font: 13px/1.4 var(--utility); text-decoration: none; }
 .site-nav a:hover { border-color: var(--red); color: var(--red); }
 .site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
-
-/* Masthead: the monster in a circle, as on the start page, beside the wordmark and the pills. */
-.masthead { display: flex; align-items: center; gap: 18px; width: fit-content; max-width: 100%; color: var(--ink); text-decoration: none; border-radius: 8px; }
-.mascot { flex: none; width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
+.masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
+.mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
 .masthead:hover .mascot { border-color: var(--ink); }
-.masthead-text { min-width: 0; }
-.wordmark { display: block; font: italic 700 clamp(24px, 4vw, 40px)/1 var(--display); }
+.wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(20px, 1rem + 1.5vw, 32px)/1.2 var(--display); white-space: nowrap; text-overflow: ellipsis; }
 em { color: var(--red); }
-.status { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 12px var(--utility); }
-.pill.accent { color: var(--red); }
 .intro { margin-top: 16px; font-size: 14px; max-width: min(580px, 52%); }
 .hero { width: 52%; padding: 36px 0 22px; }
 h1 { font: italic 900 clamp(54px, 8.8vw, 106px)/.88 var(--display); letter-spacing: -.06em; margin: 0 0 20px; }
@@ -103,9 +99,11 @@ footer p { margin: 8px 0 0; }
   .intro { max-width: 580px; }
 }
 @media (max-width: 640px) {
-  .container { width: calc(100% - 32px); padding-top: 24px; }
-  .masthead { gap: 12px; }
-  .mascot { width: 56px; height: 56px; }
+  .container { width: calc(100% - 32px); padding-top: 32px; }
+  .site-header, .masthead { gap: 10px; }
+  .mascot { width: 44px; height: 44px; }
+  .site-nav { gap: 6px; }
+  .site-nav a { padding: 4px 10px; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(58px, 15vw, 90px); }
   .intro { max-width: 100%; }
