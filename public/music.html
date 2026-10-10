@@ -29,8 +29,16 @@
         <p class="intro">Flaky on CI, flaky on stage. <strong>Let’s make the Eurovision Song Contest flaky.</strong> First the monster needs a country brave enough to nominate it, so here is a song for every candidate. Which country will send a monster?</p>
 
         <section class="hero" aria-labelledby="title">
-          <h1 id="title">From<br><em>Flaky</em><br>With <em>Love</em></h1>
-          <p class="subtitle">Making the Eurovision Song Contest flaky.</p>
+          <!-- Each line has a Klingon twin, which fades in with the dark page (music.css).
+               Screen readers always read the first one, so nothing changes under them. -->
+          <h1 id="title" class="swap">
+            <span class="swap-usual">From<br><em>Flaky</em><br>With <em>Love</em></span>
+            <span class="swap-klingon" aria-hidden="true">From<br><em>Qo’noS</em><br>With <em>Honour</em></span>
+          </h1>
+          <p class="subtitle swap">
+            <span class="swap-usual">Making the Eurovision Song Contest flaky.</span>
+            <span class="swap-klingon" aria-hidden="true">Today is a good day for your ears to die.</span>
+          </p>
         </section>
 
         <section class="songs" aria-labelledby="songs-title">
@@ -72,9 +80,10 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <!-- song-klingon: hovering or playing this song turns the page dark and Klingon (music.css). -->
+            <li class="song song-klingon">
               <h3>The Klingon version</h3>
-              <p>We have to talk with the European Broadcasting Union first. Canada might get in before Qo’noS does.</p>
+              <p>First the European Broadcasting Union needs a word with the High Council. Australia got in, so why not Qo’noS? Klingons respect a worthy foe, and no foe is more worthy than a test that fails one run in ten. Klingon is the only language where a failing test is a glorious death, not a bug, so the monster feels at home. <span lang="tlh">Heghlu’meH QaQ jajvam</span>: today is a good day to die. Tomorrow too, if you re-run the pipeline. Press play and the lights go down: Klingons don’t do parchment. <span lang="tlh">Qapla’!</span></p>
               <div class="player">
                 <audio src="public/media/songs/the-flaky-test-monster-with-love-klingon.mp3" preload="metadata" controls></audio>
                 <div class="player-controls" hidden>

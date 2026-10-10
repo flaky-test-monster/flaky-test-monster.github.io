@@ -11,6 +11,8 @@
   /* The tracklist: parchment over the singer, so the text stays readable. */
   --panel: rgb(250 243 230 / .9);
   --rule: rgb(86 71 53 / .22);
+  /* Pills and fields over the singer. */
+  --veil: rgb(245 234 213 / .85);
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
@@ -50,7 +52,7 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
  * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
 .site-bar { display: flex; align-items: center; gap: 16px; }
 .site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
-.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: rgb(245 234 213 / .85); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
+.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
 .site-nav a:hover { border-color: var(--red); color: var(--red); }
 .site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
 .masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
@@ -149,7 +151,7 @@ footer p { margin: 8px 0 0; }
 .vote { margin-top: 32px; }
 .vote-intro { font-size: 0.875rem; max-width: 580px; }
 .vote-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 12px; font: bold 0.8125rem var(--utility); }
-.vote-field input { flex: 1 1 220px; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: rgb(245 234 213 / .85); color: var(--ink); font: 0.875rem var(--body); }
+.vote-field input { flex: 1 1 220px; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 0.875rem var(--body); }
 .vote-status { min-height: 1.6em; margin: 8px 0 0; color: var(--muted); }
 .vote-copy-field { display: block; margin-top: 8px; font: bold 0.75rem var(--utility); }
 .vote-copy-field[hidden] { display: none; }
@@ -162,4 +164,66 @@ footer p { margin: 8px 0 0; }
   .song-play { width: 36px; height: 36px; }
   .song-time { grid-column: 2 / -1; grid-row: 3; text-align: left; }
   .song-vote select { min-height: 32px; padding: 0 6px; font-size: 0.8125rem; }
+}
+
+/* The Klingon version: while its song is hovered, focused or playing, the page goes dark and the
+ * singer turns Klingon. Registered colours can be animated, so the whole palette fades in and out. */
+@property --paper { syntax: '<color>'; inherits: true; initial-value: #f5ead5; }
+@property --ink { syntax: '<color>'; inherits: true; initial-value: #17130e; }
+@property --red { syntax: '<color>'; inherits: true; initial-value: #921f1a; }
+@property --red-hover { syntax: '<color>'; inherits: true; initial-value: #741713; }
+@property --muted { syntax: '<color>'; inherits: true; initial-value: #5d5145; }
+@property --border { syntax: '<color>'; inherits: true; initial-value: #564735; }
+@property --panel { syntax: '<color>'; inherits: true; initial-value: rgb(250 243 230 / .9); }
+@property --rule { syntax: '<color>'; inherits: true; initial-value: rgb(86 71 53 / .22); }
+@property --veil { syntax: '<color>'; inherits: true; initial-value: rgb(245 234 213 / .85); }
+:root {
+  --fade: .8s ease;
+  transition: --paper var(--fade), --ink var(--fade), --red var(--fade), --red-hover var(--fade), --muted var(--fade),
+    --border var(--fade), --panel var(--fade), --rule var(--fade), --veil var(--fade);
+}
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) {
+  color-scheme: dark;
+  --paper: #0a0807;
+  --ink: #f1e6d2;
+  --red: #c8352c;
+  --red-hover: #a72a22;
+  --muted: #b3a28c;
+  --border: #8a7660;
+  --panel: rgb(16 12 10 / .82);
+  --rule: rgb(241 230 210 / .18);
+  --veil: rgb(16 12 10 / .7);
+}
+/* The Klingon singer lies over the parchment one, framed the same, and fades in with the colours. */
+.page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(100%, 1400px);
+  background: url('media/music-background-klingon.jpg') top right / 100% auto no-repeat;
+  mask-image: linear-gradient(to right, transparent, #000 20%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--fade);
+}
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: 1; }
+/* The title and subtitle fade to their Klingon twins. Both share one grid cell, so the
+ * longer of the two sets the height and nothing below jumps. */
+.swap { display: grid; }
+.swap > span { grid-area: 1 / 1; transition: opacity var(--fade); }
+.swap-klingon { opacity: 0; }
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-usual { opacity: 0; }
+:root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-klingon { opacity: 1; }
+@media (max-width: 960px) {
+  .page::after { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; }
+  /* Faint behind the text, like the parchment singer, which gives way to it. */
+  .page::before { transition: opacity var(--fade); }
+  :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::before { opacity: 0; }
+  :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: .28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --fade: 0s; }
 }
