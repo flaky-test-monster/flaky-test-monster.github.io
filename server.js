@@ -34,6 +34,7 @@ const STATIC_TYPES = {
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
   '.mp4': 'video/mp4',
+  '.mp3': 'audio/mpeg',
 };
 const DEFAULT_TYPE = 'application/octet-stream';
 
