@@ -49,7 +49,9 @@ function render() {
   const given = new Set(selects().map((select) => select.value).filter(Boolean));
   for (const select of selects()) {
     for (const option of select.options) option.disabled = option.value !== '' && option.value !== select.value && given.has(option.value);
-    select.closest('.song').classList.toggle('song-top', select.value === '12');
+    const song = select.closest('.song');
+    song.classList.toggle('song-voted', select.value !== '');
+    song.classList.toggle('song-top', select.value === '12');
   }
 }
 
