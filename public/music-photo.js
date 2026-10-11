@@ -14,8 +14,12 @@ const $ = (id) => document.getElementById(id);
 const canvas = $('photo-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: !('filter' in CanvasRenderingContext2D.prototype) });
 const video = $('photo-video');
+/** The picture's size; drawing is in these units at any resolution. */
 const W = canvas.width;
 const H = canvas.height;
+/** The live preview is drawn at half resolution, which is plenty for the preview on screen and
+    a quarter of the work per frame; the picture taken is drawn at full resolution. */
+const LIVE_SCALE = .5;
 const COUNTDOWN_SECONDS = 3;
 /** Longest name, from the field's maxlength in music.html: it has to fit on the picture. */
 const NAME_MAX = $('jury-name').maxLength;
@@ -45,10 +49,18 @@ let stream = null;
 /** The picture taken, as the raw camera frame, or null while the camera is live. */
 let still = null;
 let frameRequest = 0;
+/** Bumped whenever the camera is stopped, so a camera that arrives after that is let go. */
+let cameraRun = 0;
 /** Whether the camera is being asked for, so a second click cannot open a second stream. */
 let starting = false;
+/** Bumped when a picture is cancelled, so a countdown under way takes none. */
+let captureRun = 0;
 /** Whether the countdown runs. */
 let busy = false;
+/** The camera frame and the filter last drawn, so an unchanged frame is not drawn again. */
+let lastDrawn = '';
+/** The latest request for the photo file: an older one finishing last must not win. */
+let fileRequest = 0;
 /** The face tracker, once loaded; until then, or when it fails, the camera stays plain. */
 let tracker = null;
 let lastVideoTime = -1;
@@ -74,7 +86,7 @@ export function checkName({ focus = true } = {}) {
   const name = juryName();
   const error = !name ? 'Tell us your name first: it goes on your votes and your photo.'
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
-    : [...name].length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
+    : name.length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
   showNameError(error);
   if (error && focus) $('jury-name').focus();
@@ -88,8 +100,10 @@ function showNameError(message) {
   $('jury-name-error').hidden = !message;
 }
 
-/** The song with the douze points, as chosen next to the songs (music-vote.js marks it), or null. */
-const winner = () => document.querySelector('.song-top h3')?.textContent.trim() || null;
+/** The song with the douze points, as chosen next to the songs, or null. Read from the choices
+    themselves, which are up to date even before music-vote.js has marked the song. */
+const winner = () => [...document.querySelectorAll('.song-vote select')]
+  .find((select) => select.value === '12')?.closest('.song').querySelector('h3').textContent.trim() ?? null;
 
 /** Sets the largest font, up to size, at which text fits in maxWidth. */
 function fit(text, maxWidth, size, font) {
@@ -97,6 +111,14 @@ function fit(text, maxWidth, size, font) {
     ctx.font = font.replace('{size}', size);
     if (ctx.measureText(text).width <= maxWidth) return;
   }
+}
+
+/** Sets the resolution of the canvas, as a share of the picture's full size. */
+function setScale(scale) {
+  if (canvas.width === Math.round(W * scale)) return;
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
 }
 
 /** Draws the source cropped to fill the box, mirrored like a mirror, as the camera preview is. */
@@ -139,7 +161,7 @@ function photo(source, width, height, faces = null) {
   } else {
     // No canvas filters in this browser: the same look, pixel by pixel.
     cover(source, width, height, all);
-    posterize(ctx, W, H, { strength: 1, green: true });
+    posterize(ctx, canvas.width, canvas.height, { strength: 1, green: true });
   }
   if (source && faces?.width && faces.height) cover(faces, faces.width, faces.height, all);
 }
@@ -154,8 +176,10 @@ function glass({ x, y, w, h, r }, veil = .5) {
   ctx.roundRect(x, y, w, h, r);
   ctx.clip();
   if ('filter' in ctx) {
+    // The canvas as a source is in its own pixels, the destination in the picture's units.
+    const scale = canvas.width / W;
     ctx.filter = 'blur(18px)';
-    ctx.drawImage(canvas, x - 40, y - 40, w + 80, h + 80, x - 40, y - 40, w + 80, h + 80);
+    ctx.drawImage(canvas, (x - 40) * scale, (y - 40) * scale, (w + 80) * scale, (h + 80) * scale, x - 40, y - 40, w + 80, h + 80);
     ctx.filter = 'none';
   }
   ctx.fillStyle = `rgb(12 9 8 / ${veil})`;
@@ -249,10 +273,11 @@ function fileName() {
 /** Makes the file of the picture taken again, after the picture or the name changed. */
 function refreshFile() {
   photoFile = null;
+  const request = ++fileRequest;
   if (!still) return;
-  const taken = still;
+  const name = fileName();
   canvas.toBlob((blob) => {
-    if (blob && still === taken) photoFile = new File([blob], fileName(), { type: 'image/png' });
+    if (blob && request === fileRequest) photoFile = new File([blob], name, { type: 'image/png' });
   }, 'image/png');
 }
 
@@ -261,6 +286,7 @@ export const juryPhoto = () => photoFile;
 
 /** Draws the whole picture: the live camera, the picture taken, or an empty frame. */
 function draw() {
+  setScale(still || !stream ? 1 : LIVE_SCALE);
   ctx.clearRect(0, 0, W, H);
   if (still) photo(still, still.width, still.height, stillEyes);
   else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight, monsterInView() ? eyes : null);
@@ -287,9 +313,14 @@ function track() {
 /** Whether a face is in view, so the monster filter is on. */
 const monsterInView = () => performance.now() - faceSeenAt < LOOK_HOLD_MS;
 
+/** Draws the live camera, but only when there is a new frame or the filter goes on or off. */
 function loop() {
   track();
-  draw();
+  const frame = `${video.currentTime} ${monsterInView()}`;
+  if (frame !== lastDrawn) {
+    lastDrawn = frame;
+    draw();
+  }
   frameRequest = requestAnimationFrame(loop);
 }
 
@@ -313,14 +344,22 @@ async function startCamera() {
     return;
   }
   starting = true;
+  const run = cameraRun;
+  let started;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } }, audio: false });
+    started = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } }, audio: false });
   } catch {
-    say('The camera is blocked or missing. Allow camera access for this page in your browser and try again.');
+    if (run === cameraRun) say('The camera is blocked or missing. Allow camera access for this page in your browser and try again.');
     return;
   } finally {
     starting = false;
   }
+  // Left the page or started over while the browser asked: the camera is not wanted any more.
+  if (run !== cameraRun) {
+    started.getTracks().forEach((track) => track.stop());
+    return;
+  }
+  stream = started;
   video.srcObject = stream;
   await video.play().catch(() => {});
   still = null;
@@ -344,18 +383,21 @@ async function startCamera() {
 
 /** Turns the camera off, so its light goes off too. */
 function stopCamera() {
+  cameraRun += 1;
   cancelAnimationFrame(frameRequest);
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   video.srcObject = null;
   lastVideoTime = -1;
+  lastDrawn = '';
   faceSeenAt = -Infinity;
 }
 
-async function countdown() {
+/** Counts down 3, 2, 1, unless the picture is cancelled on the way. */
+async function countdown(run) {
   const overlay = $('photo-countdown');
   overlay.hidden = false;
-  for (let n = COUNTDOWN_SECONDS; n > 0; n--) {
+  for (let n = COUNTDOWN_SECONDS; n > 0 && run === captureRun; n--) {
     overlay.textContent = String(n);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
@@ -364,9 +406,11 @@ async function countdown() {
 
 async function takePicture() {
   if (!stream || busy) return;
+  const run = captureRun;
   busy = true;
   render();
-  await countdown();
+  await countdown(run);
+  if (run !== captureRun) return;
   busy = false;
   if (!stream || !video.videoWidth) return render();
   // Keep the frame itself, not the finished picture, so a change of name still shows up on it.
@@ -412,9 +456,28 @@ function redraw() {
   refreshFile();
 }
 
-/** How many of the characters the name may have are used. */
+/** How many of the characters the name may have are used, counted as maxlength counts them. */
 function renderCount() {
-  $('jury-name-count').textContent = `${[...$('jury-name').value].length}/${NAME_MAX}`;
+  $('jury-name-count').textContent = `${$('jury-name').value.length}/${NAME_MAX}`;
+}
+
+/** Cancels a countdown under way and turns the camera off. */
+function cancelCamera() {
+  captureRun += 1;
+  busy = false;
+  $('photo-countdown').hidden = true;
+  stopCamera();
+}
+
+/** Starts the photo over: no countdown, no camera, no picture taken. */
+function clearPhoto() {
+  cancelCamera();
+  still = null;
+  stillEyes = null;
+  refreshFile();
+  say('');
+  draw();
+  render();
 }
 
 $('jury-name').addEventListener('input', () => {
@@ -427,10 +490,11 @@ $('jury-name').addEventListener('input', () => {
 document.addEventListener('change', (event) => {
   if (event.target.closest?.('.song-vote')) redraw();
 });
+// Start over starts the photo over too. The form clears its fields only after this event.
 $('vote-form').addEventListener('reset', () => setTimeout(() => {
   showNameError('');
   renderCount();
-  redraw();
+  clearPhoto();
 }));
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
@@ -438,7 +502,7 @@ $('photo-retake').addEventListener('click', startCamera);
 $('photo-download').addEventListener('click', downloadPhoto);
 // Leaving the page turns the camera off, and the buttons with it, for when Back brings the page back.
 addEventListener('pagehide', () => {
-  stopCamera();
+  cancelCamera();
   render();
 });
 // Fonts may arrive after the first drawing.
