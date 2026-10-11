@@ -73,37 +73,26 @@ h1 .line { display: block; }
 .stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
 .stage-video:fullscreen { cursor: auto; }
-.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: rgb(23 19 14 / .55); pointer-events: none; transition: opacity .25s; }
+.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: var(--scrim); pointer-events: none; transition: opacity .25s; }
 /* The player's controls, over the bottom of the video on a dark fade: round see-through buttons
- * like the songs' play button, with the play and pause icon drawn the same way. */
+ * like the songs' play button, which they share the play and pause icon with. */
+.stage { --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
 .video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: #fff8ed; transition: opacity .25s; }
-.video-button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid rgb(255 248 237 / .45); border-radius: 50%; background: rgb(23 19 14 / .55); color: #fff8ed; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .15s, border-color .15s; }
-.video-button:hover { border-color: var(--red); background: var(--red); }
-.video-button:disabled { opacity: .5; cursor: default; border-color: rgb(255 248 237 / .45); background: rgb(23 19 14 / .55); }
+.video-button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--glass-edge); border-radius: 50%; background: var(--scrim); color: #fff8ed; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .15s, border-color .15s; }
+.video-button:not(:disabled):hover { border-color: var(--red); background: var(--red); }
+.video-button:disabled { opacity: .5; cursor: default; }
 .video-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.video-play { border-color: var(--red); background: rgb(146 31 26 / .85); }
-.video-play::before { content: ''; width: 12px; height: 14px; margin-left: 3px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
-.stage.playing .video-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
+.video-play, .video-repeat[aria-pressed="true"] { border-color: var(--red); background: var(--glass-red); }
 .video-stop::before { content: ''; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
-#video-repeat[aria-pressed="true"] { border-color: var(--red); background: rgb(146 31 26 / .85); }
 .video-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
 .video-time { margin-left: auto; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgb(23 19 14 / .8); }
-/* High contrast (forced colors) blanks the backgrounds the play, pause and stop icons are drawn with:
- * paint them in the button text colour, and mark Repeat when it is on. */
-@media (forced-colors: active) {
-  :is(.song-play, .video-button)::before { forced-color-adjust: none; color: ButtonText; }
-  :is(.song-play, .video-button):disabled::before { color: GrayText; }
-  #video-repeat[aria-pressed="true"] { forced-color-adjust: none; border-color: Highlight; background: Highlight; color: HighlightText; }
-}
 /* While the video plays, the controls and the label step out of the way, back on hover or keyboard focus.
  * On touch screens (no hover), a tap on the video pauses it, and they come back. */
-.stage.playing:not(:has(:focus-visible)) :is(.video-controls, .stage-label) { opacity: 0; pointer-events: none; }
+.stage.playing:not(:has(:focus-visible)) :is(.video-controls, .stage-label) { opacity: 0; }
+.stage.playing:not(:has(:focus-visible)) .video-controls { pointer-events: none; }
 @media (hover: hover) {
-  .stage.playing:hover :is(.video-controls, .stage-label) { opacity: 1; pointer-events: auto; }
-  .stage.playing:hover .stage-label { pointer-events: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .video-controls, .stage-label { transition: none; }
+  .stage.playing:hover :is(.video-controls, .stage-label) { opacity: 1; }
+  .stage.playing:hover .video-controls { pointer-events: auto; }
 }
 
 button { font: bold 1rem var(--utility); cursor: pointer; }
@@ -136,9 +125,9 @@ h2::before { content: "// "; content: "// " / ""; }
 .player:has(.player-controls:not([hidden])), .player-controls { display: contents; }
 /* Round play button; the icon is drawn here, so it can switch to pause while the song plays. */
 .song-play { display: grid; grid-column: 1; grid-row: 1 / span 2; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--red); border-radius: 50%; background: transparent; color: var(--red); transition: background .15s, color .15s; }
-.song-play::before { content: ''; width: 12px; height: 14px; margin-left: 3px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.song-play::before, .video-play::before { content: ''; width: 12px; height: 14px; margin-left: 3px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 .song-play:hover, .song.playing .song-play { background: var(--red); color: #fff8ed; }
-.song.playing .song-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
+.song.playing .song-play::before, .stage.playing .video-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
 .song-play:disabled { border-color: var(--rule); color: var(--muted); background: transparent; cursor: default; }
 .song-time { grid-column: 3; grid-row: 2; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -248,8 +237,16 @@ footer p { margin: 8px 0 0; }
   :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::before { opacity: 0; }
   :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: .28; }
 }
+/* High contrast (forced colors) blanks the backgrounds the play, pause and stop icons are drawn with:
+ * paint them in the button text colour, and mark Repeat when it is on. */
+@media (forced-colors: active) {
+  :is(.song-play, .video-button)::before { forced-color-adjust: none; color: ButtonText; }
+  :is(.song-play, .video-button):disabled::before { color: GrayText; }
+  .video-repeat[aria-pressed="true"] { forced-color-adjust: none; border-color: Highlight; background: Highlight; color: HighlightText; }
+}
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
+  .video-controls, .stage-label, .video-button, .song-play { transition: none; }
 }
 
 /* The jury photo, compact: drawn on a canvas, wide like a webcam picture, with its buttons in

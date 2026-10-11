@@ -16,8 +16,9 @@ function clock(seconds) {
 function render() {
   const playing = !video.paused && !video.ended;
   $('video-stage').classList.toggle('playing', playing);
-  $('video-play').title = playing ? 'Pause' : 'Play';
-  $('video-play').setAttribute('aria-label', playing ? 'Pause the video' : 'Play the video');
+  const action = playing ? 'Pause' : 'Play';
+  $('video-play').title = action;
+  $('video-play').setAttribute('aria-label', `${action} the video`);
   $('video-stop').disabled = video.currentTime === 0 && !playing;
   $('video-repeat').setAttribute('aria-pressed', String(video.loop));
   $('video-time').textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
