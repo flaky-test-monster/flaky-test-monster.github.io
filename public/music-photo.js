@@ -4,7 +4,7 @@
  * gets the douze points and the Flaky sign, to download as a PNG. The monster
  * filter of the start page is always on while a face is in view: the green poster look, and the
  * monster's eyes and tongue on every face. Everything is drawn on a canvas in this page; the
- * photo never leaves the device, unless it goes with the votes (music-vote.js).
+ * photo never leaves the device, unless it is shared (music-vote.js).
  */
 
 import { drawFaces, loadFaceTracker, posterize } from './monster-face.js';
@@ -376,7 +376,7 @@ async function takePicture() {
   draw();
   refreshFile();
   render();
-  say('Douze points! It goes with your votes too.');
+  say('Douze points! Your jury photo is ready.');
   $('photo-download').focus();
 }
 

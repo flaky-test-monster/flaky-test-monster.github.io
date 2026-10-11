@@ -1,12 +1,11 @@
 /**
  * The jury vote on the music page: points for the songs as at the Eurovision Song Contest
  * (12, 10, 8 and down to 1, each score to one song only), sent by email. There is no backend,
- * so the votes go out as a mailto: link, or are copied for pasting into webmail. A mailto: link
- * cannot carry a file, so the jury photo goes through the share sheet where the browser can share
- * files; elsewhere it is downloaded, for attaching by hand.
+ * so the votes go out as a mailto: link, or are copied for pasting into webmail. The jury photo
+ * and the votes can also be shared, through the share sheet of browsers that can share images.
  */
 
-import { checkName, downloadPhoto, juryName, juryPhoto } from './music-photo.js';
+import { checkName, juryName, juryPhoto } from './music-photo.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
@@ -59,16 +58,20 @@ function render() {
   }
 }
 
-/** The votes, highest score first, as the lines of the email. */
-function ballot() {
-  const votes = selects()
+/** The votes, highest score first, one line each: "Douze points: The Greek version". */
+function voteLines() {
+  return selects()
     .map((select, index) => ({ points: Number(select.value), title: songs[index] }))
     .filter((vote) => vote.points > 0)
-    .sort((a, b) => b.points - a.points);
-  if (votes.length === 0) return null;
-  const lines = votes.map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
-  const photo = juryPhoto() ? ['', 'Our jury photo is attached.'] : [];
-  return [`Good evening Flaky Test Monster, this is ${juryName()} from the jury.`, '', ...lines, ...photo, ''].join('\n');
+    .sort((a, b) => b.points - a.points)
+    .map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
+}
+
+/** The votes as the email, or null when no song has points yet. */
+function ballot() {
+  const lines = voteLines();
+  if (lines.length === 0) return null;
+  return [`Good evening Flaky Test Monster, this is ${juryName()} from the jury.`, '', ...lines, ''].join('\n');
 }
 
 /** Hides the votes shown for copying by hand, and the message that goes with them. */
@@ -92,35 +95,41 @@ form.addEventListener('submit', (event) => {
     selects()[0]?.focus();
     return;
   }
-  const photo = juryPhoto();
-  if (photo && navigator.canShare?.({ files: [photo] })) return share(body, photo);
-  sendEmail(body, photo);
-});
-
-/** The votes and the photo through the share sheet. It cannot fill in the recipient, so the page says who it is. */
-function share(body, photo) {
-  const to = form.dataset.email;
-  say(to ? `Choose your email app and send your votes and photo to ${to}.` : 'Choose your email app and send your votes and photo.');
-  navigator.share({ title: SUBJECT, text: body, files: [photo] }).catch((error) => {
-    if (error.name === 'AbortError') say('Sharing was cancelled. Send your votes again when you are ready.');
-    // Sharing is not allowed after all: the email, and the photo to attach by hand.
-    else sendEmail(body, photo);
-  });
-}
-
-/** The votes as an email; a photo is downloaded, to attach by hand. */
-function sendEmail(body, photo) {
   // mailto: wants CRLF line breaks (RFC 6068) and %20, not +, for spaces.
   const params = new URLSearchParams({ subject: SUBJECT, body: body.replace(/\n/g, '\r\n') }).toString().replace(/\+/g, '%20');
   // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
   const to = encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@').replace(/%2B/g, '+');
   location.href = `mailto:${to}?${params}`;
-  if (photo) {
-    downloadPhoto();
-    say(`Your email app should open with your votes. Attach your jury photo, ${photo.name}, which is now in your downloads.`);
-  } else {
-    say('Your email app should open with your votes. No email app? Copy your votes and send them from your webmail.');
+  say('Your email app should open with your votes. No email app? Copy your votes and send them from your webmail.');
+});
+
+/** Whether this browser can share an image, through the share sheet of the phone or computer. */
+const canShareImages = () => {
+  try {
+    return Boolean(navigator.canShare?.({ files: [new File([''], 'test.png', { type: 'image/png' })] }));
+  } catch {
+    return false;
   }
+};
+
+/**
+ * Shares the jury photo and the votes, to any app the share sheet offers, with a link to this
+ * page so whoever gets them can vote too. It starts right on the click: the photo file is made
+ * ahead of time, since browsers only allow sharing straight after a click.
+ */
+function share() {
+  if (!checkName()) return say('');
+  const photo = juryPhoto();
+  if (!photo) return say('The photo is still being made. Try again in a moment.');
+  const lines = voteLines();
+  const text = [`${juryName()}, live from the Flaky jury.`, ...(lines.length ? ['', ...lines] : []), '', 'Vote too:'].join('\n');
+  say('');
+  navigator.share({ title: 'From Flaky With Love', text, url: location.origin + location.pathname, files: [photo] }).then(
+    () => say('Shared. Douze points for you!'),
+    (error) => {
+      if (error.name !== 'AbortError') say('Sharing did not work in this browser. Download the photo instead.');
+    },
+  );
 }
 
 $('vote-copy').addEventListener('click', async () => {
@@ -129,8 +138,7 @@ $('vote-copy').addEventListener('click', async () => {
   if (!body) return say('Give at least one song some points first.');
   try {
     await navigator.clipboard.writeText(`${SUBJECT}\n\n${body}`);
-    const attach = juryPhoto() ? ' and attach your jury photo' : '';
-    say(form.dataset.email ? `Copied. Paste your votes into an email to ${form.dataset.email}${attach}.` : `Copied. Paste your votes into an email${attach}.`);
+    say(form.dataset.email ? `Copied. Paste your votes into an email to ${form.dataset.email}.` : 'Copied. Paste your votes into an email.');
   } catch {
     // No clipboard here (an old browser, or a page not served over HTTPS): show the votes to copy by hand.
     $('vote-text').value = `${SUBJECT}\n\n${body}`;
@@ -150,6 +158,9 @@ form.addEventListener('reset', () => setTimeout(() => {
 
 // The votes to copy by hand are a snapshot: once the points or the name change, they are out of date.
 $('jury-name').addEventListener('input', hideCopy);
+
+$('photo-share').hidden = !canShareImages();
+$('photo-share').addEventListener('click', share);
 
 buildVotes();
 render();

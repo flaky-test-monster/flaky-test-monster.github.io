@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email with a jury photo, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, a jury photo to share, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/music.css">
@@ -141,7 +141,7 @@
 
         <section class="vote" aria-labelledby="vote-title">
           <h2 id="vote-title">Your jury</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us your name, turn into the monster for a jury photo if you like, and send your votes by email. The photo goes with them and stays on your device until then.</p>
+          <p class="vote-intro">Given your points next to the songs? Tell us your name and send your votes by email. Then turn into the monster for a jury photo, and share it with your votes. The photo stays on your device until you share it.</p>
           <!-- The points are chosen next to each song above (music-vote.js). music-photo.js draws the
                camera, the overlay, the name and the song with the douze points on the canvas.
                data-email is where the votes go; when it is empty, the email opens without a recipient. -->
@@ -162,7 +162,8 @@
                 <button type="button" id="photo-take" class="secondary" hidden>Take the picture</button>
                 <div id="photo-actions" class="photo-actions" hidden>
                   <button type="button" id="photo-download" class="secondary">Download</button>
-                  <button type="button" id="photo-retake" class="secondary">Take another</button>
+                  <button type="button" id="photo-share" class="secondary" hidden>Share</button>
+                  <button type="button" id="photo-retake" class="secondary">Retake</button>
                 </div>
                 <p id="photo-status" class="helper photo-status" role="status"></p>
                 <button type="submit" class="primary">Send my votes by email</button>
