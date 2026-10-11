@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, a jury photo, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/music.css">
@@ -162,6 +162,33 @@
           </form>
         </section>
 
+        <section class="photo" aria-labelledby="photo-title">
+          <h2 id="photo-title">Jury photo</h2>
+          <p class="photo-intro">Every jury gets its moment on the big screen. Take a picture with the webcam, framed for the Eurovision Monster Contest with your jury’s name, and download it. The photo stays on your device: nothing is uploaded.</p>
+          <!-- music-photo.js draws the live camera, the frame and the name on the canvas.
+               The name here and the name on the vote above fill each other in. -->
+          <label class="vote-field">
+            <span>Jury of</span>
+            <input id="photo-jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
+          </label>
+          <div class="photo-body">
+            <div class="photo-stage">
+              <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you in the Eurovision Monster Contest frame, with the name of your jury and twelve points from the Flaky Test Monster"></canvas>
+              <video id="photo-video" class="visually-hidden" playsinline muted></video>
+              <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
+            </div>
+            <div class="photo-controls">
+              <p id="photo-status" class="helper photo-status" role="status"></p>
+              <button type="button" id="photo-start" class="primary">Start the camera</button>
+              <button type="button" id="photo-take" class="primary" hidden>Take the picture</button>
+              <div id="photo-actions" class="photo-actions" hidden>
+                <button type="button" id="photo-download" class="primary">Download the photo</button>
+                <button type="button" id="photo-retake" class="secondary">Take another</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="video" aria-labelledby="video-title">
           <h2 id="video-title">Music video</h2>
           <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
@@ -189,5 +216,6 @@
   <script type="module" src="public/music-video.js"></script>
   <script type="module" src="public/music-songs.js"></script>
   <script type="module" src="public/music-vote.js"></script>
+  <script type="module" src="public/music-photo.js"></script>
 </body>
 </html>

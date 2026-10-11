@@ -227,3 +227,16 @@ footer p { margin: 8px 0 0; }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
 }
+
+/* The jury photo: the picture drawn on a canvas, portrait like a phone screen, with the
+ * controls beside it on wide screens and under it on narrow ones. */
+.photo { margin-top: 32px; }
+.photo-intro { font-size: 0.875rem; max-width: 580px; }
+.photo .vote-field { max-width: 580px; }
+.photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
+.photo-stage { position: relative; width: min(100%, 420px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgb(23 19 14 / .18); }
+.photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); }
+.photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 9rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
+.photo-controls { width: min(100%, 420px); }
+.photo-status { min-height: 1.6em; margin: 8px 0 0; color: var(--muted); }
+.photo-actions .primary { margin-bottom: 8px; }
