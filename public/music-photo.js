@@ -1,19 +1,28 @@
 /**
  * The jury photo on the music page: a selfie from the webcam with a light overlay, the Flaky
- * sign on the right and the name of the jury at the bottom, to download as a PNG. Everything is
- * drawn on a canvas in this page; the photo never leaves the device, unless it goes with the
- * votes (music-vote.js).
+ * sign on the right and the name of the jury at the bottom, to download as a PNG. The monster
+ * filter of the start page is always on while a face is in view: the green poster look, and the
+ * monster's eyes and tongue on every face. Everything is drawn on a canvas in this page; the
+ * photo never leaves the device, unless it goes with the votes (music-vote.js).
  */
+
+import { drawFaces, loadFaceTracker, posterize } from './monster-face.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('photo-canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { willReadFrequently: !('filter' in CanvasRenderingContext2D.prototype) });
 const video = $('photo-video');
 const W = canvas.width;
 const H = canvas.height;
 const COUNTDOWN_SECONDS = 3;
 /** The space kept free along the edges of the picture. */
 const MARGIN = 56;
+/** The start page's monster look at full strength, as in style.css and monster-face.js. */
+const POSTER_FILTER = 'grayscale(1) contrast(7) brightness(1.15)';
+const MONSTER_GREEN = 'rgb(47 209 47)';
+/** How long the filter stays on after the face is lost, so a face the tracker misses for a
+    few frames does not make the picture flicker. */
+const LOOK_HOLD_MS = 500;
 const DISPLAY = "'Bodoni MT', Didot, 'Times New Roman', serif";
 const UTILITY = "'Courier New', monospace";
 
@@ -27,6 +36,15 @@ let stream = null;
 let still = null;
 let frameRequest = 0;
 let busy = false;
+/** The face tracker, once loaded; until then, or when it fails, the camera stays plain. */
+let tracker = null;
+let lastVideoTime = -1;
+/** When the last face was in view. */
+let faceSeenAt = -Infinity;
+/** The monster's eyes and tongue for the live camera, at the video's own size. */
+const eyes = document.createElement('canvas');
+/** The eyes and tongue of the picture taken, or null when there was no face in it. */
+let stillEyes = null;
 /** The finished picture as a PNG file, made ahead of time: sharing it must start right on the
  * click, and the browser forgets the click while the canvas is still being encoded. */
 let photoFile = null;
@@ -55,9 +73,32 @@ function cover(source, sourceWidth, sourceHeight, { x, y, w, h }) {
   ctx.restore();
 }
 
-/** The camera picture across the whole canvas, or a dark space waiting for it. */
-function photo(source, width, height) {
-  if (source) return cover(source, width, height, { x: 0, y: 0, w: W, h: H });
+/**
+ * The camera picture across the whole canvas, or a dark space waiting for it. With faces, it
+ * gets the monster look: the stark poster, the green over it, and the eyes and tongue on top.
+ * @param {HTMLCanvasElement | null} [faces] the eyes and tongue, at the size of the source
+ */
+function photo(source, width, height, faces = null) {
+  const all = { x: 0, y: 0, w: W, h: H };
+  if (source && !faces) return cover(source, width, height, all);
+  if (source) {
+    if ('filter' in ctx) {
+      ctx.filter = POSTER_FILTER;
+      cover(source, width, height, all);
+      ctx.filter = 'none';
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = MONSTER_GREEN;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    } else {
+      // No canvas filters in this browser: the same look, pixel by pixel.
+      cover(source, width, height, all);
+      posterize(ctx, W, H, { strength: 1, green: true });
+    }
+    if (faces.width && faces.height) cover(faces, faces.width, faces.height, all);
+    return;
+  }
   ctx.fillStyle = '#17130e';
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = 'rgb(255 248 237 / .7)';
@@ -147,15 +188,34 @@ export const juryPhoto = () => photoFile;
 /** Draws the whole picture: the live camera, the picture taken, or an empty frame. */
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  if (still) photo(still, still.width, still.height);
-  else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight);
+  if (still) photo(still, still.width, still.height, stillEyes);
+  else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight, monsterInView() ? eyes : null);
   else photo(null);
   shade();
   sign();
   caption();
 }
 
+/** Finds the faces in a new camera frame and paints the monster's eyes and tongue on them. */
+function track() {
+  if (!tracker || !video.videoWidth || video.currentTime === lastVideoTime) return;
+  lastVideoTime = video.currentTime;
+  let faces = [];
+  try {
+    faces = tracker.detectForVideo(video, performance.now()).faceLandmarks;
+  } catch (err) {
+    console.warn('Face tracking failed, no monster filter:', err);
+    tracker = null;
+  }
+  drawFaces(video, faces, eyes);
+  if (faces.length) faceSeenAt = performance.now();
+}
+
+/** Whether a face is in view, so the monster filter is on. */
+const monsterInView = () => performance.now() - faceSeenAt < LOOK_HOLD_MS;
+
 function loop() {
+  track();
   draw();
   frameRequest = requestAnimationFrame(loop);
 }
@@ -186,8 +246,18 @@ async function startCamera() {
   video.srcObject = stream;
   await video.play().catch(() => {});
   still = null;
+  stillEyes = null;
   photoFile = null;
-  say('Smile for the monster!');
+  say(tracker ? 'Look into the camera: the monster sees you.' : 'Loading the monster filter…');
+  if (!tracker) {
+    loadFaceTracker().then((loaded) => {
+      tracker = loaded;
+      if (stream) say('Look into the camera: the monster sees you.');
+    }, (err) => {
+      console.warn('Face tracker unavailable, no monster filter:', err);
+      if (stream) say('The monster filter could not load, so the picture is taken without it.');
+    });
+  }
   cancelAnimationFrame(frameRequest);
   loop();
   render();
@@ -200,6 +270,8 @@ function stopCamera() {
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   video.srcObject = null;
+  lastVideoTime = -1;
+  faceSeenAt = -Infinity;
 }
 
 async function countdown() {
@@ -224,6 +296,14 @@ async function takePicture() {
   still.width = video.videoWidth;
   still.height = video.videoHeight;
   still.getContext('2d').drawImage(video, 0, 0);
+  // The monster filter as it was at the click: with a face in view, its eyes and tongue go with the picture.
+  stillEyes = null;
+  if (monsterInView()) {
+    stillEyes = document.createElement('canvas');
+    stillEyes.width = eyes.width;
+    stillEyes.height = eyes.height;
+    if (eyes.width && eyes.height) stillEyes.getContext('2d').drawImage(eyes, 0, 0);
+  }
   stopCamera();
   draw();
   refreshFile();

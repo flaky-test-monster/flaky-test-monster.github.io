@@ -112,9 +112,9 @@ export async function findFaces(blob) {
  * landmark coordinates map straight onto it.
  * @param {HTMLVideoElement} video
  * @param {{ x: number, y: number }[][]} faces landmarks per face, normalized 0..1
+ * @param {HTMLCanvasElement} [canvas] where to paint them: the preview's by default
  */
-export function drawFaces(video, faces) {
-  const canvas = $('eyes');
+export function drawFaces(video, faces, canvas = $('eyes')) {
   if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -225,7 +225,7 @@ export function snapshotPreview(video, look) {
  * @param {number} height
  * @param {{ strength: number, green: boolean }} look
  */
-function posterize(ctx, width, height, { strength, green }) {
+export function posterize(ctx, width, height, { strength, green }) {
   const image = ctx.getImageData(0, 0, width, height);
   const pixels = image.data;
   const clamp = (value) => Math.min(255, Math.max(0, value));
