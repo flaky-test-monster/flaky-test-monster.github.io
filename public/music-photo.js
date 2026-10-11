@@ -25,8 +25,9 @@ const COUNTDOWN_SECONDS = 3;
 const NAME_MAX = $('jury-name').maxLength;
 /** The space kept free along the edges of the picture. */
 const MARGIN = 48;
-/** The panel at the bottom, the lower third, and the sign inside it on the right. */
-const PANEL = { x: MARGIN, y: H - MARGIN - 240, w: W - MARGIN * 2, h: 240, r: 24 };
+/** The panel at the bottom, the lower third, and the sign inside it on the right. On the wide
+    picture it keeps to the left, as on TV, at a width that suits the name and the song. */
+const PANEL = { x: MARGIN, y: H - MARGIN - 240, w: Math.min(W - MARGIN * 2, 1000), h: 240, r: 24 };
 const SIGN_RADIUS = 68;
 const GOLD = '#f7c948';
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -142,7 +143,7 @@ function photo(source, width, height, faces = null) {
   const all = { x: 0, y: 0, w: W, h: H };
   if (!source) {
     // The start button sits in the middle of this (music.html).
-    const dark = ctx.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, H * .75);
+    const dark = ctx.createRadialGradient(W / 2, H * .4, 0, W / 2, H * .4, W * .6);
     dark.addColorStop(0, '#3a2a24');
     dark.addColorStop(1, '#0d0a08');
     ctx.fillStyle = dark;
@@ -349,7 +350,7 @@ async function startCamera() {
   const run = cameraRun;
   let started;
   try {
-    started = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } }, audio: false });
+    started = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1600 }, aspectRatio: { ideal: 16 / 9 } }, audio: false });
   } catch {
     if (run === cameraRun) say('The camera is blocked or missing. Allow camera access for this page in your browser and try again.');
     return;
