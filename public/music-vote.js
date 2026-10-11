@@ -5,7 +5,7 @@
  * the share sheet of browsers that can share images.
  */
 
-import { checkName, juryName, juryPhoto, sayPhoto } from './music-photo.js';
+import { juryName, juryPhoto, nameError, nameMessage, sayPhoto } from './music-photo.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
@@ -79,13 +79,10 @@ function say(message) {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  if (!checkName()) return say('');
+  const error = nameError();
+  if (error) return say(nameMessage(error));
   const body = ballot();
-  if (!body) {
-    say('Give at least one song some points first: the choice is next to each song.');
-    selects()[0]?.focus();
-    return;
-  }
+  if (!body) return say('Give at least one song some points first: the choice is next to each song.');
   // mailto: wants CRLF line breaks (RFC 6068) and %20, not +, for spaces.
   const params = new URLSearchParams({ subject: SUBJECT, body: body.replace(/\n/g, '\r\n') }).toString().replace(/\+/g, '%20');
   // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
@@ -109,7 +106,8 @@ const canShareImages = () => {
  * ahead of time, since browsers only allow sharing straight after a click.
  */
 function share() {
-  if (!checkName()) return sayPhoto('');
+  const error = nameError();
+  if (error) return sayPhoto(nameMessage(error));
   const photo = juryPhoto();
   if (!photo) return sayPhoto('The photo is still being made. Try again in a moment.');
   const lines = voteLines();

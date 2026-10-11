@@ -92,20 +92,23 @@ export const juryName = () => typedName() || MONSTER_NAME;
 
 /**
  * Checks a typed name before the camera starts, the votes go out or the photo is saved, and
- * shows what is wrong at the field: it needs a letter or number, and fits on the picture.
- * No name is fine: the jury member then goes by the monster name.
- * @returns {boolean} whether the name is fine
+ * marks the field with what is wrong: it needs a letter or number, and fits on the picture.
+ * No name is fine: the jury member then goes by the monster name. The page stays where it is;
+ * the caller says what is wrong next to the button that was pressed.
+ * @returns {string} what is wrong, or '' when the name is fine
  */
-export function checkName({ focus = true } = {}) {
+export function nameError() {
   const name = typedName();
   const error = !name ? ''
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
     : name.length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
   showNameError(error);
-  if (error && focus) $('jury-name').focus();
-  return !error;
+  return error;
 }
+
+/** What to say next to a button when the name is wrong: the reason, and where to fix it. */
+export const nameMessage = (error) => `${error} Fix it at the top, or clear it to go by ${MONSTER_NAME}.`;
 
 /** Marks the name field as wrong with the message, or clears it with an empty one. */
 function showNameError(message) {
@@ -354,7 +357,9 @@ function render() {
 
 async function startCamera() {
   // The name first: the picture is made with it.
-  if (stream || starting || !checkName()) return;
+  if (stream || starting) return;
+  const error = nameError();
+  if (error) return say(nameMessage(error));
   if (!navigator.mediaDevices?.getUserMedia) {
     say('This browser cannot use the camera here. Try a recent browser, on a page served over HTTPS.');
     return;
@@ -452,7 +457,8 @@ async function takePicture() {
 
 /** Saves the jury photo to the device. */
 function downloadPhoto() {
-  if (!checkName()) return;
+  const error = nameError();
+  if (error) return say(nameMessage(error));
   canvas.toBlob((blob) => {
     if (!blob) return say('The photo could not be saved in this browser.');
     const link = document.createElement('a');
@@ -488,7 +494,7 @@ function cancelCamera() {
 $('jury-name').addEventListener('input', () => {
   renderCount();
   // Once marked wrong, the field says as soon as it is fine again.
-  if ($('jury-name').getAttribute('aria-invalid') === 'true') checkName({ focus: false });
+  if ($('jury-name').getAttribute('aria-invalid') === 'true') nameError();
   redraw();
 });
 // The douze points are chosen next to the songs; music-vote.js marks the song before this runs.
