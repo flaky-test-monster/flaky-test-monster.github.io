@@ -1,6 +1,6 @@
 /**
- * The jury photo on the music page: a selfie from the webcam in a Eurovision Monster Contest
- * frame, with the name of the jury on a scoreboard plate, to download as a PNG. Everything is
+ * The jury photo on the music page: a selfie from the webcam with a light overlay, the Flaky
+ * sign on the right and the name of the jury at the bottom, to download as a PNG. Everything is
  * drawn on a canvas in this page; the photo never leaves the device, unless it goes with the
  * votes (music-vote.js).
  */
@@ -12,8 +12,8 @@ const video = $('photo-video');
 const W = canvas.width;
 const H = canvas.height;
 const COUNTDOWN_SECONDS = 3;
-/** The photo inside the frame, and the heart with the 12 points on its top right corner. */
-const FRAME = { x: 70, y: 230, w: 940, h: 820, r: 28 };
+/** The space kept free along the edges of the picture. */
+const MARGIN = 56;
 const DISPLAY = "'Bodoni MT', Didot, 'Times New Roman', serif";
 const UTILITY = "'Courier New', monospace";
 
@@ -33,22 +33,6 @@ let photoFile = null;
 
 /** The name of the jury, shared with the vote: whoever votes is in the picture. */
 const juryName = () => $('photo-jury').value.replace(/\s+/g, ' ').trim();
-
-/** Sparkles that do not move between frames: the same pseudo-random places every time. */
-const SPARKLES = Array.from({ length: 70 }, (_, i) => {
-  const r = (n) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
-  return { x: r(1) * W, y: r(2) * H, size: 1 + r(3) * 3.5, alpha: .25 + r(4) * .6 };
-});
-
-function heart(x, y, size) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + size * .3);
-  ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + size * .3);
-  ctx.bezierCurveTo(x - size / 2, y + size * .6, x, y + size * .78, x, y + size);
-  ctx.bezierCurveTo(x, y + size * .78, x + size / 2, y + size * .6, x + size / 2, y + size * .3);
-  ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + size * .3);
-  ctx.closePath();
-}
 
 /** The largest font, up to size, at which text fits in maxWidth. */
 function fit(text, maxWidth, size, font) {
@@ -71,170 +55,74 @@ function cover(source, sourceWidth, sourceHeight, { x, y, w, h }) {
   ctx.restore();
 }
 
-function background() {
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#12062a');
-  sky.addColorStop(.55, '#4b0b45');
-  sky.addColorStop(1, '#921f1a');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H);
-  // Stage lights: beams fanning out from the top.
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (const [from, to, colour] of [[180, -120, '255 80 200'], [540, 540, '120 160 255'], [900, 1200, '255 200 90']]) {
-    const beam = ctx.createLinearGradient(from, 0, to, H);
-    beam.addColorStop(0, `rgb(${colour} / .35)`);
-    beam.addColorStop(1, `rgb(${colour} / 0)`);
-    ctx.fillStyle = beam;
-    ctx.beginPath();
-    ctx.moveTo(from - 20, 0);
-    ctx.lineTo(from + 20, 0);
-    ctx.lineTo(to + 260, H);
-    ctx.lineTo(to - 260, H);
-    ctx.fill();
-  }
-  for (const { x, y, size, alpha } of SPARKLES) {
-    ctx.fillStyle = `rgb(255 240 210 / ${alpha})`;
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function header() {
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#f7c948';
-  ctx.font = `bold 32px ${UTILITY}`;
-  ctx.letterSpacing = '8px';
-  ctx.fillText('EUROVISION MONSTER CONTEST', W / 2, 92);
-  ctx.letterSpacing = '0px';
-  ctx.fillStyle = '#fff8ed';
-  ctx.font = `italic 900 88px ${DISPLAY}`;
-  ctx.shadowColor = 'rgb(255 60 170 / .8)';
-  ctx.shadowBlur = 30;
-  ctx.fillText('From Flaky With Love', W / 2, 190);
-  ctx.shadowBlur = 0;
-}
-
+/** The camera picture across the whole canvas, or a dark space waiting for it. */
 function photo(source, width, height) {
-  const { x, y, w, h, r } = FRAME;
-  ctx.save();
-  ctx.shadowColor = 'rgb(255 60 170 / .9)';
-  ctx.shadowBlur = 50;
+  if (source) return cover(source, width, height, { x: 0, y: 0, w: W, h: H });
   ctx.fillStyle = '#17130e';
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-  ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-  ctx.clip();
-  if (source) {
-    cover(source, width, height, FRAME);
-  } else {
-    ctx.fillStyle = 'rgb(255 248 237 / .7)';
-    ctx.textAlign = 'center';
-    ctx.font = `italic 700 56px ${DISPLAY}`;
-    ctx.fillText('Your face here', x + w / 2, y + h / 2);
-    ctx.font = `bold 26px ${UTILITY}`;
-    ctx.fillText('Start the camera below', x + w / 2, y + h / 2 + 52);
-  }
-  ctx.restore();
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = '#f7c948';
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-  ctx.stroke();
-}
-
-/** The heart with douze points, stuck on the top right corner of the photo. */
-function points() {
-  ctx.save();
-  ctx.translate(FRAME.x + FRAME.w - 60, FRAME.y + 80);
-  ctx.rotate(.18);
-  ctx.shadowColor = 'rgb(0 0 0 / .45)';
-  ctx.shadowBlur = 20;
-  heart(0, -80, 190);
-  ctx.fillStyle = '#e0245e';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = '#fff8ed';
-  ctx.stroke();
-  ctx.fillStyle = '#fff8ed';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgb(255 248 237 / .7)';
   ctx.textAlign = 'center';
-  ctx.font = `900 76px ${DISPLAY}`;
-  ctx.fillText('12', 0, 20);
-  ctx.font = `bold 22px ${UTILITY}`;
-  ctx.fillText('POINTS', 0, 48);
-  ctx.restore();
+  ctx.font = `italic 700 56px ${DISPLAY}`;
+  ctx.fillText('Your face here', W / 2, H / 2 - 60);
+  ctx.font = `bold 26px ${UTILITY}`;
+  ctx.fillText('Start the camera below', W / 2, H / 2 - 8);
 }
 
-/** The monster in a circle, peeking over the bottom left corner of the photo. */
-function mascot() {
-  const cx = 180;
-  const cy = 1060;
-  const radius = 115;
+/** A soft shadow along the bottom, so the name stays readable on any picture. */
+function shade() {
+  const fade = ctx.createLinearGradient(0, H * .62, 0, H);
+  fade.addColorStop(0, 'rgb(23 19 14 / 0)');
+  fade.addColorStop(1, 'rgb(23 19 14 / .72)');
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, H * .62, W, H * .38);
+}
+
+/** The Flaky sign on the right: the monster in a circle, with its name under it. */
+function sign() {
+  const radius = 78;
+  const cx = W - MARGIN - radius;
+  const cy = H - MARGIN - 44 - radius;
   ctx.save();
-  ctx.shadowColor = 'rgb(0 0 0 / .5)';
-  ctx.shadowBlur = 24;
+  ctx.shadowColor = 'rgb(0 0 0 / .4)';
+  ctx.shadowBlur = 18;
   ctx.fillStyle = '#f5ead5';
   ctx.beginPath();
-  ctx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
+  ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
-  if (!monster.complete || !monster.naturalWidth) return;
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.clip();
-  const side = Math.min(monster.naturalWidth, monster.naturalHeight);
-  ctx.drawImage(monster, (monster.naturalWidth - side) / 2, (monster.naturalHeight - side) / 2, side, side, cx - radius, cy - radius, radius * 2, radius * 2);
-  ctx.restore();
-}
-
-/** The scoreboard plate with the name of the jury, as the hosts read them out on the night. */
-function plate() {
-  const x = 320;
-  const y = 1095;
-  const w = 690;
-  const h = 130;
-  ctx.save();
-  ctx.shadowColor = 'rgb(0 0 0 / .45)';
-  ctx.shadowBlur = 24;
-  const fill = ctx.createLinearGradient(x, 0, x + w, 0);
-  fill.addColorStop(0, '#fff8ed');
-  fill.addColorStop(1, '#f5ead5');
-  ctx.fillStyle = fill;
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, 16);
-  ctx.fill();
-  ctx.restore();
-  ctx.fillStyle = '#921f1a';
-  ctx.beginPath();
-  ctx.roundRect(x, y, 18, h, [16, 0, 0, 16]);
-  ctx.fill();
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#921f1a';
-  ctx.font = `bold 26px ${UTILITY}`;
-  ctx.letterSpacing = '6px';
-  ctx.fillText('JURY OF', x + 44, y + 42);
-  ctx.letterSpacing = '0px';
-  const name = juryName() || 'an undisclosed country';
-  fit(name, w - 80, 64, `italic 700 {size}px ${DISPLAY}`);
-  ctx.fillStyle = '#17130e';
-  ctx.fillText(name, x + 44, y + 106);
-}
-
-function footer() {
-  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (monster.complete && monster.naturalWidth) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.clip();
+    const side = Math.min(monster.naturalWidth, monster.naturalHeight);
+    ctx.drawImage(monster, (monster.naturalWidth - side) / 2, (monster.naturalHeight - side) / 2, side, side, cx - radius, cy - radius, radius * 2, radius * 2);
+    ctx.restore();
+  }
   ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff8ed';
+  ctx.font = `bold 20px ${UTILITY}`;
+  ctx.letterSpacing = '4px';
+  ctx.fillText('FLAKY', cx + 2, H - MARGIN);
+  ctx.letterSpacing = '0px';
+}
+
+/** "Jury of" and the name, at the bottom left, beside the sign. */
+function caption() {
+  const maxWidth = W - MARGIN * 2 - 220;
+  ctx.textAlign = 'left';
+  ctx.shadowColor = 'rgb(0 0 0 / .5)';
+  ctx.shadowBlur = 12;
   ctx.fillStyle = 'rgb(255 248 237 / .85)';
   ctx.font = `bold 24px ${UTILITY}`;
-  ctx.fillText(`Live from the jury room · ${date}`, W / 2, 1300);
+  ctx.letterSpacing = '6px';
+  ctx.fillText('JURY OF', MARGIN, H - MARGIN - 78);
+  ctx.letterSpacing = '0px';
+  const name = juryName() || 'an undisclosed country';
+  fit(name, maxWidth, 64, `italic 700 {size}px ${DISPLAY}`);
+  ctx.fillStyle = '#fff8ed';
+  ctx.fillText(name, MARGIN, H - MARGIN);
+  ctx.shadowBlur = 0;
 }
 
 /** The file name, with the name of the jury: flaky-jury-austria.png. */
@@ -259,15 +147,12 @@ export const juryPhoto = () => photoFile;
 /** Draws the whole picture: the live camera, the picture taken, or an empty frame. */
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  background();
-  header();
   if (still) photo(still, still.width, still.height);
   else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight);
   else photo(null);
-  points();
-  mascot();
-  plate();
-  footer();
+  shade();
+  sign();
+  caption();
 }
 
 function loop() {
