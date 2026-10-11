@@ -77,6 +77,11 @@ function say(message) {
   status.textContent = message;
 }
 
+// Enter in a text field, such as the name, should not send the votes by email: only the button does.
+form.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.isComposing && event.target.matches('input')) event.preventDefault();
+});
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const error = nameError();
