@@ -75,17 +75,30 @@ let stillEyes = null;
  * click, and the browser forgets the click while the canvas is still being encoded. */
 let photoFile = null;
 
-/** The name of the jury member: in the picture and on the votes. */
-export const juryName = () => $('jury-name').value.replace(/\s+/g, ' ').trim();
+/** A fantasy monster name, made up once per visit, for a jury member who enters none:
+    "Gloomfang the Flaky". Every one fits in the name's 24 characters. */
+const MONSTER_NAME = (() => {
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const start = pick(['Grim', 'Gloom', 'Snarl', 'Bog', 'Fizz', 'Murk', 'Grub', 'Wobble', 'Crag', 'Snag', 'Glob', 'Flake']);
+  const end = pick(['fang', 'tooth', 'claw', 'snout', 'maw', 'horn', 'belly', 'toe', 'wart', 'bottom']);
+  return `${start}${end} ${pick(['the Flaky', 'the Retried', 'the Skipped', 'the Red'])}`;
+})();
+
+/** What was typed in the name field, tidied up; empty when nothing was. */
+const typedName = () => $('jury-name').value.replace(/\s+/g, ' ').trim();
+
+/** The name of the jury member, in the picture and on the votes: the one typed, or the monster name. */
+export const juryName = () => typedName() || MONSTER_NAME;
 
 /**
- * Checks the name before the camera starts, the votes go out or the photo is saved, and shows
- * what is wrong at the field: it is required, needs a letter or number, and fits on the picture.
+ * Checks a typed name before the camera starts, the votes go out or the photo is saved, and
+ * shows what is wrong at the field: it needs a letter or number, and fits on the picture.
+ * No name is fine: the jury member then goes by the monster name.
  * @returns {boolean} whether the name is fine
  */
 export function checkName({ focus = true } = {}) {
-  const name = juryName();
-  const error = !name ? 'Tell us your name first: it goes on your votes and your photo.'
+  const name = typedName();
+  const error = !name ? ''
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
     : name.length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
@@ -224,7 +237,7 @@ function lowerThird() {
   const textWidth = signX - SIGN_RADIUS - 32 - left;
 
   ctx.textAlign = 'left';
-  const name = juryName() || 'The Flaky Jury';
+  const name = juryName();
   fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
   ctx.fillStyle = '#fff';
   ctx.fillText(name, left, y + 92);
@@ -494,6 +507,8 @@ addEventListener('pagehide', () => {
 // Fonts may arrive after the first drawing.
 document.fonts?.ready.then(redraw);
 
+// The empty field shows the monster name its jury member will go by.
+$('jury-name').placeholder = `${MONSTER_NAME}, or type your name`;
 renderCount();
 draw();
 render();
