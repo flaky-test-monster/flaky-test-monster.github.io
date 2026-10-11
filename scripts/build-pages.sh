@@ -28,4 +28,10 @@ grep -q 'data-backend="none"' _site/index.html
 # The music page needs no backend.
 npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
   --minify-css true public/music.html > _site/music.html
+# Every link to a script or stylesheet, in the pages and in the modules' imports, carries the
+# commit, so a new deploy never runs next to files the browser cached from the last one: Pages
+# lets browsers keep them for ten minutes, and an old module against a new page breaks it.
+VERSION=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
+sed -E -i "s#\"((\./|public/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VERSION\"#g" _site/*.html _site/public/*.js
+grep -q "music-photo.js?v=$VERSION" _site/public/music-vote.js
 touch _site/.nojekyll

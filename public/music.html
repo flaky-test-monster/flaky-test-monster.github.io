@@ -162,29 +162,35 @@
           <p class="photo-intro">Turn into the monster, with your name and your <span lang="fr">douze points</span> on the picture. Click the name on the picture to change it: it goes on your votes too. Download it, or share it with your votes. The photo stays on your device until you share it.</p>
           <!-- music-photo.js draws the camera, the overlay, the name and the song with the douze
                points on the canvas; music-vote.js shares the photo with the votes. -->
-          <div class="photo-body">
-            <div class="photo-stage">
-              <canvas id="photo-canvas" class="photo-canvas" width="1600" height="900" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
-              <video id="photo-video" class="visually-hidden" aria-hidden="true" playsinline muted></video>
-              <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
-              <button type="button" id="photo-start" class="photo-start">Start the camera</button>
-              <!-- The name of the jury member, typed right where it sits on the picture; music-photo.js
-                   keeps it level with the panel and draws it into the photo file. It goes on the votes too. -->
-              <label for="jury-name" class="visually-hidden">Your name, on the photo and the votes</label>
-              <input id="jury-name" class="photo-name" name="name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="jury-name-hint jury-name-error">
-            </div>
+          <!-- The buttons sit over the picture on the right, like the video's controls, clear of the
+               name panel on the left; the shutter is drawn in CSS. -->
+          <div class="stage photo-stage">
+            <canvas id="photo-canvas" class="photo-canvas" width="1600" height="900" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
+            <video id="photo-video" class="visually-hidden" aria-hidden="true" playsinline muted></video>
+            <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
+            <button type="button" id="photo-start" class="photo-start">Start the camera</button>
+            <!-- The name of the jury member, typed right where it sits on the picture; music-photo.js
+                 keeps it level with the panel and draws it into the photo file. It goes on the votes too. -->
+            <label for="jury-name" class="visually-hidden">Your name, on the photo and the votes</label>
+            <input id="jury-name" class="photo-name" name="name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="jury-name-hint jury-name-error">
             <div class="photo-controls">
-              <button type="button" id="photo-take" class="secondary" hidden>Take the picture</button>
+              <button type="button" id="photo-take" class="video-button photo-take" aria-label="Take the picture" title="Take the picture" hidden></button>
               <div id="photo-actions" class="photo-actions" hidden>
-                <button type="button" id="photo-download" class="secondary">Download</button>
-                <button type="button" id="photo-share" class="secondary" hidden>Share</button>
-                <button type="button" id="photo-retake" class="secondary">Retake</button>
+                <button type="button" id="photo-retake" class="video-button" aria-label="Retake" title="Retake">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+                <button type="button" id="photo-share" class="video-button" aria-label="Share" title="Share" hidden>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+                </button>
+                <button type="button" id="photo-download" class="video-button photo-download" aria-label="Download" title="Download">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+                </button>
               </div>
-              <p id="jury-name-hint" class="visually-hidden">Up to 24 characters.</p>
-              <p id="jury-name-error" class="field-error" hidden></p>
-              <p id="photo-status" class="helper photo-status" role="status"></p>
             </div>
           </div>
+          <p id="jury-name-hint" class="visually-hidden">Up to 24 characters.</p>
+          <p id="jury-name-error" class="field-error" hidden></p>
+          <p id="photo-status" class="helper photo-status" role="status"></p>
         </section>
 
         <section class="video" aria-labelledby="video-title">
