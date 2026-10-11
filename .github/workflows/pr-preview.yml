@@ -23,6 +23,11 @@ jobs:
       - name: Build site
         if: github.event.action != 'closed'
         run: scripts/build-pages.sh
+        # The online jury vote on the music page; see supabase/migrations/.
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
 
       # Publishes to gh-pages under pr-preview/pr-<number>/, comments the URL on the
       # PR, and removes the preview when the PR is closed or merged.

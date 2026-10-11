@@ -25,7 +25,19 @@ sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html
   | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
     --minify-css true > _site/index.html
 grep -q 'data-backend="none"' _site/index.html
-# The music page needs no backend.
-npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-  --minify-css true public/music.html > _site/music.html
+# The music page needs no backend. Its online vote does need a Supabase project: the workflows
+# pass the repository variables SUPABASE_URL, SUPABASE_ANON_KEY and, optionally,
+# TURNSTILE_SITE_KEY, which go into the page's meta tags. All three are public by design.
+# Without them the votes go by email.
+for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
+  if [[ ! ${!name:-} =~ ^[A-Za-z0-9._:/-]*$ ]]; then
+    echo "build-pages.sh: unexpected characters in $name" >&2
+    exit 1
+  fi
+done
+meta() { printf 's#<meta name="%s" content="">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
+sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
+  public/music.html \
+  | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+    --minify-css true > _site/music.html
 touch _site/.nojekyll

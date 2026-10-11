@@ -1,8 +1,11 @@
 /**
  * The jury vote on the music page: points for the songs as at the Eurovision Song Contest
- * (12, 10, 8 and down to 1, each score to one song only), sent by email. There is no backend,
- * so the votes go out as a mailto: link, or are copied for pasting into webmail.
+ * (12, 10, 8 and down to 1, each score to one song only). With a Supabase project set up in the
+ * page's meta tags the votes are cast online (music-online.js), and the scoreboard shows the
+ * totals; without one, they go out as a mailto: link, or are copied for pasting into webmail.
  */
+
+import { castBallot, myBallot, online } from './music-online.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
@@ -10,9 +13,10 @@ const status = $('vote-status');
 const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
 const SUBJECT = 'From Flaky With Love: my votes';
 
-/** The songs, in the order of the song list. */
+/** The songs, in the order of the song list, and their ids in the database. */
 const songItems = [...document.querySelectorAll('.song')];
 const songs = songItems.map((song) => song.querySelector('h3').textContent.trim());
+const songIds = songItems.map((song) => song.dataset.song);
 
 /** Puts a choice of points right next to each song's player. The choices sit outside the form,
  * so they join it with the form attribute: then reset clears them too. */
@@ -55,6 +59,13 @@ function render() {
   }
 }
 
+/** The votes for the database: song id to points. */
+function votes() {
+  return Object.fromEntries(selects()
+    .map((select, index) => [songIds[index], Number(select.value)])
+    .filter(([, points]) => points > 0));
+}
+
 /** The votes, highest score first, as the lines of the email. */
 function ballot() {
   const votes = selects()
@@ -87,13 +98,35 @@ form.addEventListener('submit', (event) => {
     selects()[0]?.focus();
     return;
   }
+  if (online) cast();
+  else email(body);
+});
+
+/** Casts the votes online; the scoreboard hears about it and updates. */
+async function cast() {
+  const submit = form.querySelector('[type="submit"]');
+  submit.disabled = true;
+  say('Casting your votes…');
+  try {
+    await castBallot($('vote-jury').value, votes(), $('vote-captcha'));
+    say('Your votes are in, thank you! Changed your mind? Change the points and cast them again.');
+    document.dispatchEvent(new CustomEvent('flaky:voted'));
+  } catch (error) {
+    say(error.message);
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+/** Opens the email app with the votes. */
+function email(body) {
   // mailto: wants CRLF line breaks (RFC 6068) and %20, not +, for spaces.
   const params = new URLSearchParams({ subject: SUBJECT, body: body.replace(/\n/g, '\r\n') }).toString().replace(/\+/g, '%20');
   // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
   const to = encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@').replace(/%2B/g, '+');
   location.href = `mailto:${to}?${params}`;
   say('Your email app should open with your votes. No email app? Copy your votes and send them from your webmail.');
-});
+}
 
 $('vote-copy').addEventListener('click', async () => {
   const body = ballot();
@@ -121,5 +154,24 @@ form.addEventListener('reset', () => setTimeout(() => {
 // The votes to copy by hand are a snapshot: once the points or the jury change, they are out of date.
 $('vote-jury').addEventListener('input', hideCopy);
 
+/** Online, the form says so, and a jury that voted before from this browser gets its votes back. */
+async function goOnline() {
+  $('vote-intro').textContent = 'Given your points next to the songs? Tell us who is voting and cast your votes. You can change them until voting closes.';
+  form.querySelector('[type="submit"]').textContent = 'Cast my votes';
+  try {
+    const mine = await myBallot();
+    if (!mine) return;
+    // Only if nothing was picked while the ballot loaded.
+    if (selects().some((select) => select.value) || $('vote-jury').value) return;
+    $('vote-jury').value = mine.jury;
+    selects().forEach((select, index) => { select.value = String(mine.votes[songIds[index]] ?? ''); });
+    render();
+    say('Welcome back, jury. These are the votes you cast: change them and cast them again, if you like.');
+  } catch {
+    // Not knowing the earlier votes is fine: casting again replaces them.
+  }
+}
+
 buildVotes();
 render();
+if (online) goOnline();

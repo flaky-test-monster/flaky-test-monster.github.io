@@ -311,6 +311,48 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
 the first deploy.
 
+## Music page vote and scoreboard
+
+The music page (`public/music.html`) lets visitors give the songs Eurovision points (12, 10,
+8 and down to 1, each score to one song only). With a [Supabase](https://supabase.com)
+project the votes are cast online and a scoreboard shows the totals, updating every 30
+seconds and right after a vote. Without one, the votes go out by email as before and the
+scoreboard stays hidden.
+
+How it stays safe, with only a static page and the public anon key in the browser:
+
+- **One ballot per voter.** Voters sign in anonymously with Supabase Auth, only when they
+  cast their first votes. Casting again replaces the ballot, and the browser keeps the
+  session, so a returning jury sees its own votes.
+- **No direct table access.** Row level security is on and anon and authenticated have no
+  rights on the tables. The page can only call three functions:
+  `cast_ballot` checks every vote in the database (known songs, valid points, each score
+  once, a jury name of at most 60 characters, voting open, at most one change every 5
+  seconds), `my_ballot` returns the caller's own ballot only, and `scoreboard` returns the
+  totals only: never who gave what, and never the typed-in jury names.
+- **Limits on new voters.** Supabase rate-limits anonymous sign-ins per IP address, and a
+  Cloudflare Turnstile captcha can be required on top. Someone who clears their browser
+  can still vote again; that is the trade-off of voting without an account.
+
+Setup:
+
+1. Create a Supabase project. In **Authentication → Sign In / Providers**, turn on
+   **Allow anonymous sign-ins**.
+2. Run `supabase/migrations/20261011000000_music_votes.sql` in the SQL editor (or
+   `supabase db push`). It can be run again; it upserts the songs. A song's id is the
+   `data-song` attribute of its list item on the music page, so add new songs to both.
+3. Give the page the project URL and the anon (publishable) key from **Project Settings →
+   API**. For GitHub Pages, set them as repository variables (**Settings → Secrets and
+   variables → Actions → Variables**) named `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the
+   build writes them into the page's meta tags. For `npm start`, fill in the
+   `flaky-supabase-*` meta tags in `public/music.html`. Both values are public by design.
+4. Recommended: add a captcha. Create a Cloudflare Turnstile widget, enter its secret key
+   in Supabase under **Authentication → Attack Protection**, and set its site key as the
+   variable `TURNSTILE_SITE_KEY` (or the `flaky-captcha-sitekey` meta tag).
+
+To close voting: `update public.contest set open = false;` (and `true` to open it again).
+The scoreboard keeps showing the final totals.
+
 ## Notes
 
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block

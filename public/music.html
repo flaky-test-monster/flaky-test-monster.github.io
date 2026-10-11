@@ -4,10 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote, a scoreboard, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/music.css">
+  <!-- The online jury vote and scoreboard (public/music-online.js, supabase/migrations/): the
+       Supabase project URL and its public anon key. Both empty: votes go by email, no scoreboard.
+       The captcha site key is for Cloudflare Turnstile, when the project asks for a captcha. -->
+  <meta name="flaky-supabase-url" content="">
+  <meta name="flaky-supabase-key" content="">
+  <meta name="flaky-captcha-sitekey" content="">
 </head>
 <body>
   <div class="page">
@@ -45,9 +51,10 @@
           <h2 id="songs-title">Songs</h2>
           <p class="songs-intro">You are the jury. As at the Eurovision Song Contest, give 12 points to your favourite, then 10, 8, 7 and down to 1, right next to each song. Each score goes to one song only.</p>
           <!-- One list item per song: a heading, a note, the player for the song's MP3 in public/media/songs/.
+               data-song is the song's id in the database (supabase/migrations/).
                music-vote.js puts the choice of points next to each player. -->
           <ul class="song-list">
-            <li class="song">
+            <li class="song" data-song="international">
               <h3>From Flaky with love: the international version</h3>
               <p>In English. No risk, less fun.</p>
               <div class="player">
@@ -58,7 +65,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="greek">
               <h3>The Greek version</h3>
               <p>For a Greek hero: Panos, foe of the monster and tireless resolver of flaky tests.</p>
               <div class="player">
@@ -69,7 +76,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="austrian">
               <h3>The Austrian version</h3>
               <p>With a sort of German flavour. With some “creativity” and <span lang="de">knüppelharte</span> translation work, it could also be Germany’s candidate. Or Great Britain’s: Look Mum No Computer’s recent song was partly in German too, and the monster’s father liked it.</p>
               <div class="player">
@@ -81,7 +88,7 @@
               </div>
             </li>
             <!-- song-klingon: hovering or playing this song turns the page dark and Klingon (music.css). -->
-            <li class="song song-klingon">
+            <li class="song song-klingon" data-song="klingon">
               <h3>The Klingon version</h3>
               <p>First the European Broadcasting Union needs a word with the High Council. Australia got in, so why not Qo’noS? Klingons respect a worthy foe, and no foe is more worthy than a test that fails one run in ten. Klingon is the only language where a failing test is a glorious death, not a bug, so the monster feels at home. <span lang="tlh">Heghlu’meH QaQ jajvam</span>: today is a good day to die. Tomorrow too, if you re-run the pipeline. Press play and the lights go down: Klingons don’t do parchment. <span lang="tlh">Qapla’!</span></p>
               <div class="player">
@@ -92,7 +99,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="spanish">
               <h3>The Spanish version</h3>
               <p>Spain is home to many of the fearless foes of the flaky test monster. One has to honour one’s foes!</p>
               <div class="player">
@@ -103,7 +110,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="italian">
               <h3>The Italian version</h3>
               <p>Italy has had success with stuff like this before. Why innovate?</p>
               <div class="player">
@@ -114,7 +121,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="polish">
               <h3>The Polish version</h3>
               <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes!</p>
               <div class="player">
@@ -125,7 +132,7 @@
                 </div>
               </div>
             </li>
-            <li class="song">
+            <li class="song" data-song="french">
               <h3>The French version</h3>
               <p>France last won in 1977. Time to go back to the basics: grand emotion, a <span lang="fr">chanson</span>. After all, flaky tests aren’t funny. They are a hidden tragedy.</p>
               <div class="player">
@@ -141,7 +148,7 @@
 
         <section class="vote" aria-labelledby="vote-title">
           <h2 id="vote-title">Your votes</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email.</p>
+          <p id="vote-intro" class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email.</p>
           <!-- The points are chosen next to each song above. data-email is where the votes go;
                when it is empty, the email opens without a recipient. -->
           <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
@@ -149,6 +156,8 @@
               <span>Jury of</span>
               <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
             </label>
+            <!-- The captcha, when the Supabase project asks for one at sign in. -->
+            <div id="vote-captcha" class="vote-captcha" hidden></div>
             <p id="vote-status" class="helper vote-status" role="status"></p>
             <label class="vote-copy-field" id="vote-copy-field" hidden>
               <span>Your votes, to copy</span>
@@ -160,6 +169,17 @@
               <button type="reset" class="secondary">Start over</button>
             </div>
           </form>
+        </section>
+
+        <!-- Filled in by music-scoreboard.js, with the online vote only. -->
+        <section id="scoreboard" class="scoreboard" aria-labelledby="scoreboard-title" hidden>
+          <h2 id="scoreboard-title">Scoreboard</h2>
+          <p class="scoreboard-intro">The points from every jury so far. Only the totals are shown: who gave what stays secret.</p>
+          <ol id="scoreboard-list" class="scoreboard-list"></ol>
+          <div class="scoreboard-actions">
+            <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
+            <button type="button" id="scoreboard-refresh" class="secondary">Refresh</button>
+          </div>
         </section>
 
         <section class="video" aria-labelledby="video-title">
@@ -189,5 +209,6 @@
   <script type="module" src="public/music-video.js"></script>
   <script type="module" src="public/music-songs.js"></script>
   <script type="module" src="public/music-vote.js"></script>
+  <script type="module" src="public/music-scoreboard.js"></script>
 </body>
 </html>
