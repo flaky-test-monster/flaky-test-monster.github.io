@@ -1,7 +1,8 @@
 /**
  * The jury photo on the music page: a selfie from the webcam in a Eurovision Monster Contest
  * frame, with the name of the jury on a scoreboard plate, to download as a PNG. Everything is
- * drawn on a canvas in this page; the photo never leaves the device.
+ * drawn on a canvas in this page; the photo never leaves the device, unless it goes with the
+ * votes (music-vote.js).
  */
 
 const $ = (id) => document.getElementById(id);
@@ -26,6 +27,9 @@ let stream = null;
 let still = null;
 let frameRequest = 0;
 let busy = false;
+/** The finished picture as a PNG file, made ahead of time: sharing it must start right on the
+ * click, and the browser forgets the click while the canvas is still being encoded. */
+let photoFile = null;
 
 /** The name of the jury, shared with the vote: whoever votes is in the picture. */
 const juryName = () => $('photo-jury').value.replace(/\s+/g, ' ').trim();
@@ -233,6 +237,25 @@ function footer() {
   ctx.fillText(`Live from the jury room · ${date}`, W / 2, 1300);
 }
 
+/** The file name, with the name of the jury: flaky-jury-austria.png. */
+function fileName() {
+  const slug = juryName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return `flaky-jury${slug ? `-${slug}` : ''}.png`;
+}
+
+/** Makes the file of the picture taken again, after the picture or the name changed. */
+function refreshFile() {
+  photoFile = null;
+  if (!still) return;
+  const taken = still;
+  canvas.toBlob((blob) => {
+    if (blob && still === taken) photoFile = new File([blob], fileName(), { type: 'image/png' });
+  }, 'image/png');
+}
+
+/** The jury photo as a PNG file, or null when no picture has been taken. */
+export const juryPhoto = () => photoFile;
+
 /** Draws the whole picture: the live camera, the picture taken, or an empty frame. */
 function draw() {
   ctx.clearRect(0, 0, W, H);
@@ -278,6 +301,7 @@ async function startCamera() {
   video.srcObject = stream;
   await video.play().catch(() => {});
   still = null;
+  photoFile = null;
   say('Smile for the monster!');
   cancelAnimationFrame(frameRequest);
   loop();
@@ -317,18 +341,19 @@ async function takePicture() {
   still.getContext('2d').drawImage(video, 0, 0);
   stopCamera();
   draw();
+  refreshFile();
   render();
-  say('Douze points! Download your jury photo, or take another.');
+  say('Douze points! Download your jury photo, or take another. It also goes with your votes.');
   $('photo-download').focus();
 }
 
-function download() {
+/** Saves the jury photo to the device. */
+export function downloadPhoto() {
   canvas.toBlob((blob) => {
     if (!blob) return say('The photo could not be saved in this browser.');
-    const slug = juryName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `flaky-jury${slug ? `-${slug}` : ''}.png`;
+    link.download = fileName();
     document.body.append(link);
     link.click();
     link.remove();
@@ -343,7 +368,10 @@ function syncJury(from, to) {
       to.value = from.value;
       to.dispatchEvent(new Event('input'));
     }
-    if (!stream) draw();
+    if (!stream) {
+      draw();
+      refreshFile();
+    }
   });
 }
 
@@ -351,17 +379,23 @@ syncJury($('photo-jury'), $('vote-jury'));
 syncJury($('vote-jury'), $('photo-jury'));
 $('vote-form').addEventListener('reset', () => setTimeout(() => {
   $('photo-jury').value = $('vote-jury').value;
-  if (!stream) draw();
+  if (!stream) {
+    draw();
+    refreshFile();
+  }
 }));
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);
-$('photo-download').addEventListener('click', download);
+$('photo-download').addEventListener('click', downloadPhoto);
 // Leaving the page turns the camera off.
 addEventListener('pagehide', stopCamera);
 // Fonts may arrive after the first drawing.
 document.fonts?.ready.then(() => {
-  if (!stream) draw();
+  if (!stream) {
+    draw();
+    refreshFile();
+  }
 });
 
 draw();

@@ -139,34 +139,11 @@
           </ul>
         </section>
 
-        <section class="vote" aria-labelledby="vote-title">
-          <h2 id="vote-title">Your votes</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email.</p>
-          <!-- The points are chosen next to each song above. data-email is where the votes go;
-               when it is empty, the email opens without a recipient. -->
-          <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
-            <label class="vote-field">
-              <span>Jury of</span>
-              <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
-            </label>
-            <p id="vote-status" class="helper vote-status" role="status"></p>
-            <label class="vote-copy-field" id="vote-copy-field" hidden>
-              <span>Your votes, to copy</span>
-              <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
-            </label>
-            <button type="submit" class="primary">Send my votes by email</button>
-            <div class="vote-actions">
-              <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
-              <button type="reset" class="secondary">Start over</button>
-            </div>
-          </form>
-        </section>
-
         <section class="photo" aria-labelledby="photo-title">
           <h2 id="photo-title">Jury photo</h2>
-          <p class="photo-intro">Every jury gets its moment on the big screen. Take a picture with the webcam, framed for the Eurovision Monster Contest with your jury’s name, and download it. The photo stays on your device: nothing is uploaded.</p>
+          <p class="photo-intro">Every jury gets its moment on the big screen. Take a picture with the webcam, framed for the Eurovision Monster Contest with your jury’s name, and download it. It goes with your votes too. The photo stays on your device until you send it.</p>
           <!-- music-photo.js draws the live camera, the frame and the name on the canvas.
-               The name here and the name on the vote above fill each other in. -->
+               The name here and the name on the vote below fill each other in. -->
           <label class="vote-field">
             <span>Jury of</span>
             <input id="photo-jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
@@ -187,6 +164,29 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <section class="vote" aria-labelledby="vote-title">
+          <h2 id="vote-title">Your votes</h2>
+          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email. Your jury photo, if you took one, goes with them.</p>
+          <!-- The points are chosen next to each song above. data-email is where the votes go;
+               when it is empty, the email opens without a recipient. -->
+          <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
+            <label class="vote-field">
+              <span>Jury of</span>
+              <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
+            </label>
+            <p id="vote-status" class="helper vote-status" role="status"></p>
+            <label class="vote-copy-field" id="vote-copy-field" hidden>
+              <span>Your votes, to copy</span>
+              <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
+            </label>
+            <button type="submit" class="primary">Send my votes by email</button>
+            <div class="vote-actions">
+              <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
+              <button type="reset" class="secondary">Start over</button>
+            </div>
+          </form>
         </section>
 
         <section class="video" aria-labelledby="video-title">
