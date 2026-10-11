@@ -54,8 +54,30 @@ let stillEyes = null;
  * click, and the browser forgets the click while the canvas is still being encoded. */
 let photoFile = null;
 
-/** The name in the picture. */
-const photoName = () => $('photo-name').value.replace(/\s+/g, ' ').trim();
+/** The name of the jury member: in the picture and on the votes. */
+export const juryName = () => $('jury-name').value.replace(/\s+/g, ' ').trim();
+
+/**
+ * Checks the name before the votes go out or the photo is saved, and shows what is wrong at
+ * the field: it is required, and needs at least one letter or number.
+ * @returns {boolean} whether the name is fine
+ */
+export function checkName({ focus = true } = {}) {
+  const name = juryName();
+  const error = !name ? 'Tell us your name first: it goes on your votes and your photo.'
+    : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
+    : '';
+  showNameError(error);
+  if (error && focus) $('jury-name').focus();
+  return !error;
+}
+
+/** Marks the name field as wrong with the message, or clears it with an empty one. */
+function showNameError(message) {
+  $('jury-name').setAttribute('aria-invalid', String(Boolean(message)));
+  $('jury-name-error').textContent = message;
+  $('jury-name-error').hidden = !message;
+}
 
 /** The song with the douze points, as chosen next to the songs (music-vote.js marks it), or null. */
 const winner = () => document.querySelector('.song-top h3')?.textContent.trim() || null;
@@ -172,7 +194,7 @@ function lowerThird() {
   const textWidth = signX - SIGN_RADIUS - 32 - left;
 
   ctx.textAlign = 'left';
-  const name = photoName() || 'The Flaky Jury';
+  const name = juryName() || 'The Flaky Jury';
   fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
   ctx.fillStyle = '#fff';
   ctx.fillText(name, left, y + 92);
@@ -215,7 +237,7 @@ function lowerThird() {
 
 /** The file name, with the name of the jury: flaky-jury-austria.png. */
 function fileName() {
-  const slug = photoName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = juryName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return `flaky-jury${slug ? `-${slug}` : ''}.png`;
 }
 
@@ -360,6 +382,7 @@ async function takePicture() {
 
 /** Saves the jury photo to the device. */
 export function downloadPhoto() {
+  if (!checkName()) return;
   canvas.toBlob((blob) => {
     if (!blob) return say('The photo could not be saved in this browser.');
     const link = document.createElement('a');
@@ -379,12 +402,19 @@ function redraw() {
   refreshFile();
 }
 
-$('photo-name').addEventListener('input', redraw);
+$('jury-name').addEventListener('input', () => {
+  // Once marked wrong, the field says as soon as it is fine again.
+  if ($('jury-name').getAttribute('aria-invalid') === 'true') checkName({ focus: false });
+  redraw();
+});
 // The douze points are chosen next to the songs; music-vote.js marks the song before this runs.
 document.addEventListener('change', (event) => {
   if (event.target.closest?.('.song-vote')) redraw();
 });
-$('vote-form').addEventListener('reset', () => setTimeout(redraw));
+$('vote-form').addEventListener('reset', () => setTimeout(() => {
+  showNameError('');
+  redraw();
+}));
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, a jury photo, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email with a jury photo, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/music.css">
@@ -139,52 +139,43 @@
           </ul>
         </section>
 
-        <section class="photo" aria-labelledby="photo-title">
-          <h2 id="photo-title">Jury photo</h2>
-          <p class="photo-intro">Turn into the monster on the big screen, with your name and your douze points. The photo goes with your votes and stays on your device until then.</p>
-          <!-- music-photo.js draws the live camera, the overlay, the name and the song with the
-               douze points (from the points next to the songs) on the canvas. -->
-          <div class="photo-body">
-            <div class="photo-stage">
-              <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
-              <video id="photo-video" class="visually-hidden" playsinline muted></video>
-              <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
-              <button type="button" id="photo-start" class="photo-start">Start the camera</button>
-            </div>
-            <div class="photo-controls">
-              <label class="photo-field">
-                <span>Your name</span>
-                <input id="photo-name" type="text" maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name">
-              </label>
-              <button type="button" id="photo-take" class="primary" hidden>Take the picture</button>
-              <div id="photo-actions" class="photo-actions" hidden>
-                <button type="button" id="photo-download" class="primary">Download</button>
-                <button type="button" id="photo-retake" class="secondary">Take another</button>
-              </div>
-              <p id="photo-status" class="helper photo-status" role="status"></p>
-            </div>
-          </div>
-        </section>
-
         <section class="vote" aria-labelledby="vote-title">
-          <h2 id="vote-title">Your votes</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email. Your jury photo, if you took one, goes with them.</p>
-          <!-- The points are chosen next to each song above. data-email is where the votes go;
-               when it is empty, the email opens without a recipient. -->
+          <h2 id="vote-title">Your jury</h2>
+          <p class="vote-intro">Given your points next to the songs? Tell us your name, turn into the monster for a jury photo if you like, and send your votes by email. The photo goes with them and stays on your device until then.</p>
+          <!-- The points are chosen next to each song above (music-vote.js). music-photo.js draws the
+               camera, the overlay, the name and the song with the douze points on the canvas.
+               data-email is where the votes go; when it is empty, the email opens without a recipient. -->
           <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
-            <label class="vote-field">
-              <span>Jury of</span>
-              <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
-            </label>
-            <p id="vote-status" class="helper vote-status" role="status"></p>
-            <label class="vote-copy-field" id="vote-copy-field" hidden>
-              <span>Your votes, to copy</span>
-              <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
-            </label>
-            <button type="submit" class="primary">Send my votes by email</button>
-            <div class="vote-actions">
-              <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
-              <button type="reset" class="secondary">Start over</button>
+            <div class="photo-body">
+              <div class="photo-stage">
+                <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
+                <video id="photo-video" class="visually-hidden" playsinline muted></video>
+                <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
+                <button type="button" id="photo-start" class="photo-start">Start the camera</button>
+              </div>
+              <div class="photo-controls">
+                <label class="photo-field">
+                  <span>Your name</span>
+                  <input id="jury-name" name="name" type="text" required maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name" aria-describedby="jury-name-error">
+                </label>
+                <p id="jury-name-error" class="field-error" hidden></p>
+                <button type="button" id="photo-take" class="secondary" hidden>Take the picture</button>
+                <div id="photo-actions" class="photo-actions" hidden>
+                  <button type="button" id="photo-download" class="secondary">Download</button>
+                  <button type="button" id="photo-retake" class="secondary">Take another</button>
+                </div>
+                <p id="photo-status" class="helper photo-status" role="status"></p>
+                <button type="submit" class="primary">Send my votes by email</button>
+                <div class="vote-actions">
+                  <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
+                  <button type="reset" class="secondary">Start over</button>
+                </div>
+                <p id="vote-status" class="helper vote-status" role="status"></p>
+                <label class="vote-copy-field" id="vote-copy-field" hidden>
+                  <span>Your votes, to copy</span>
+                  <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
+                </label>
+              </div>
             </div>
           </form>
         </section>

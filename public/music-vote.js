@@ -6,7 +6,7 @@
  * files; elsewhere it is downloaded, for attaching by hand.
  */
 
-import { downloadPhoto, juryPhoto } from './music-photo.js';
+import { checkName, downloadPhoto, juryName, juryPhoto } from './music-photo.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
@@ -66,10 +66,9 @@ function ballot() {
     .filter((vote) => vote.points > 0)
     .sort((a, b) => b.points - a.points);
   if (votes.length === 0) return null;
-  const jury = $('vote-jury').value.replace(/\s+/g, ' ').trim();
   const lines = votes.map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
   const photo = juryPhoto() ? ['', 'Our jury photo is attached.'] : [];
-  return [`Good evening Flaky Test Monster, this is the jury of ${jury || 'an undisclosed country'}.`, '', ...lines, ...photo, ''].join('\n');
+  return [`Good evening Flaky Test Monster, this is ${juryName()} from the jury.`, '', ...lines, ...photo, ''].join('\n');
 }
 
 /** Hides the votes shown for copying by hand, and the message that goes with them. */
@@ -86,6 +85,7 @@ function say(message) {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
+  if (!checkName()) return say('');
   const body = ballot();
   if (!body) {
     say('Give at least one song some points first: the choice is next to each song.');
@@ -124,6 +124,7 @@ function sendEmail(body, photo) {
 }
 
 $('vote-copy').addEventListener('click', async () => {
+  if (!checkName()) return say('');
   const body = ballot();
   if (!body) return say('Give at least one song some points first.');
   try {
@@ -147,8 +148,8 @@ form.addEventListener('reset', () => setTimeout(() => {
   hideCopy();
 }));
 
-// The votes to copy by hand are a snapshot: once the points or the jury change, they are out of date.
-$('vote-jury').addEventListener('input', hideCopy);
+// The votes to copy by hand are a snapshot: once the points or the name change, they are out of date.
+$('jury-name').addEventListener('input', hideCopy);
 
 buildVotes();
 render();
