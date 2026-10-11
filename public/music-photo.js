@@ -324,9 +324,11 @@ function loop() {
   frameRequest = requestAnimationFrame(loop);
 }
 
-function say(message) {
+/** Shows a message under the photo; music-vote.js uses it for sharing. */
+export function sayPhoto(message) {
   $('photo-status').textContent = message;
 }
+const say = sayPhoto;
 
 /** Shows the buttons that fit: start, take, or download, share and retake. */
 function render() {
@@ -469,17 +471,6 @@ function cancelCamera() {
   stopCamera();
 }
 
-/** Starts the photo over: no countdown, no camera, no picture taken. */
-function clearPhoto() {
-  cancelCamera();
-  still = null;
-  stillEyes = null;
-  refreshFile();
-  say('');
-  draw();
-  render();
-}
-
 $('jury-name').addEventListener('input', () => {
   renderCount();
   // Once marked wrong, the field says as soon as it is fine again.
@@ -490,12 +481,6 @@ $('jury-name').addEventListener('input', () => {
 document.addEventListener('change', (event) => {
   if (event.target.closest?.('.song-vote')) redraw();
 });
-// Start over starts the photo over too. The form clears its fields only after this event.
-$('vote-form').addEventListener('reset', () => setTimeout(() => {
-  showNameError('');
-  renderCount();
-  clearPhoto();
-}));
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);

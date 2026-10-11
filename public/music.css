@@ -148,13 +148,10 @@ footer p { margin: 8px 0 0; }
 .song-top .song-vote select { box-shadow: 0 0 0 3px rgb(146 31 26 / .25); font-size: 1rem; }
 .song-vote select option { background: var(--paper); color: var(--ink); }
 .songs-intro { font-size: 0.875rem; max-width: 580px; }
-.vote { margin-top: 32px; }
-.vote-intro { font-size: 0.875rem; max-width: 580px; }
+/* The vote, under the songs: send, and what happened. */
+.vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.vote-form .primary { margin: 0; }
 .vote-status { margin: 0; color: var(--muted); }
-.vote-copy-field { display: block; font: bold 0.75rem var(--utility); }
-.vote-copy-field[hidden] { display: none; }
-.vote-text { display: block; width: 100%; margin-top: 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: 0.8125rem/1.5 var(--utility); resize: vertical; }
-.vote-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 /* Narrow: the points stay beside the title, the note takes the width under it, then the time. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
@@ -226,8 +223,10 @@ footer p { margin: 8px 0 0; }
   :root { --fade: 0s; }
 }
 
-/* Your jury, compact: the jury photo drawn on a canvas, portrait like a phone screen, with the
- * name, the photo buttons and the vote in a narrow column beside it, under it on narrow screens. */
+/* The jury photo, compact: drawn on a canvas, portrait like a phone screen, with its buttons
+ * in a narrow column beside it, under it on narrow screens. */
+.photo { margin-top: 32px; }
+.photo-intro { font-size: 0.875rem; max-width: 580px; }
 .photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; }
 .photo-stage { position: relative; flex: none; width: min(100%, 300px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
 .photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); }
@@ -238,22 +237,22 @@ footer p { margin: 8px 0 0; }
 .photo-start:focus-visible { outline-color: #fff8ed; }
 .photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
 .photo-controls { display: flex; flex: 1 1 240px; flex-direction: column; gap: 8px; max-width: 320px; }
-/* The name comes first, above the camera, as wide as the column of buttons. */
-.photo-name { display: flex; flex-direction: column; gap: 4px; max-width: 320px; margin-bottom: 12px; }
+/* The name comes first, right under "You are the jury", across the full width. */
+.photo-name { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; padding: 12px 24px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .photo-field { display: flex; justify-content: space-between; font: bold 0.75rem var(--utility); }
 .photo-count { color: var(--muted); font-weight: normal; font-variant-numeric: tabular-nums; }
-.photo-name input { min-height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 0.875rem var(--body); }
+.photo-name input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 1rem var(--body); }
 .photo-name input[aria-invalid="true"] { border: 2px solid var(--red); }
 .field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
 .field-error::before { content: "! "; content: "! " / ""; }
-.photo-controls .primary { min-height: 44px; margin: 4px 0 0; font-size: 0.875rem; }
 .photo-controls .secondary { min-height: 36px; }
-.photo-actions, .photo-controls .vote-actions { display: flex; gap: 8px; }
-.photo-actions > *, .photo-controls .vote-actions > * { flex: 1; padding: 0 8px; }
+.photo-actions { display: flex; gap: 8px; }
+.photo-actions > * { flex: 1; padding: 0 8px; }
 .photo-status { margin: 0; color: var(--muted); }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
 .photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
 @media (max-width: 640px) {
   .photo-stage { width: 100%; max-width: 340px; }
-  .photo-controls, .photo-name { max-width: 340px; }
+  .photo-controls { max-width: 340px; }
+  .photo-name { padding: 10px 16px 12px; }
 }
