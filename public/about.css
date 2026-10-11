@@ -1,34 +1,45 @@
-/* The about page: the music page's parchment and oxblood, with the monster's story as a
- * timeline of photos. Green belongs to the monster only, never the interface. */
+/* The about page: black and white, like a newspaper. The photos are black and white too,
+ * except for green, which belongs to the monster: the only colour on the page. */
 :root {
-  color-scheme: light;
-  --paper: #f5ead5;
-  --ink: #17130e;
-  --red: #921f1a;
-  --muted: #5d5145;
-  --border: #564735;
-  --panel: #fbf4e7;
-  --rule: rgb(86 71 53 / .22);
+  color-scheme: light dark;
+  --paper: #fff;
+  --ink: #000;
+  --accent: #000;
+  --on-accent: #fff;
+  --muted: #555;
+  --border: #000;
+  --panel: #f2f2f2;
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #000;
+    --ink: #fff;
+    --accent: #fff;
+    --on-accent: #000;
+    --muted: #aaa;
+    --border: #fff;
+    --panel: #141414;
+  }
+}
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--paper); font: 1rem/1.6 var(--body); }
 .container { width: min(100% - 32px, 960px); margin: auto; padding: 40px 0; }
-em { color: var(--red); }
-a { color: var(--red); }
-:focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
+a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 img { display: block; max-width: 100%; height: auto; }
 
 /* Header: the same compact row as the music page. */
 .site-bar { display: flex; align-items: center; gap: 16px; }
 .site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
 .site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
-.site-nav a:hover { border-color: var(--red); color: var(--red); }
-.site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
+.site-nav a:hover { text-decoration: underline; }
+.site-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
-.mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); }
+.mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
 .wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display); white-space: nowrap; text-overflow: ellipsis; }
 
 .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; padding: 40px 0 24px; }
@@ -38,7 +49,7 @@ h1 { font: italic 900 clamp(2.75rem, 7vw, 5.5rem)/.9 var(--display); letter-spac
 
 h2 { font: italic 700 clamp(1.75rem, 4vw, 2.5rem)/1.1 var(--display); margin: 0 0 12px; }
 section { margin-top: 32px; }
-.tldr { padding: 20px 24px; border: 2px solid var(--red); border-radius: 8px; background: var(--panel); }
+.tldr { padding: 20px 24px; border: 2px solid var(--accent); border-radius: 8px; background: var(--panel); }
 .tldr p { margin: 0; }
 .explainer p { max-width: 68ch; }
 .aside { font: 0.875rem var(--utility); color: var(--muted); }
@@ -57,7 +68,7 @@ section { margin-top: 32px; }
   border-radius: 50%;
   background: var(--paper);
 }
-.event-now::before { border-color: var(--red); background: var(--red); }
+.event-now::before { border-color: var(--accent); background: var(--accent); }
 .event-next::before { border-style: dashed; }
 .event-next { padding-bottom: 0; }
 .when { margin: 0; font: 0.8125rem/1.5 var(--utility); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
