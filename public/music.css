@@ -255,15 +255,15 @@ h2::before { content: "// "; content: "// " / ""; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
-  .video-controls, .stage-label, .video-button, .song-play { transition: none; }
+  .video-controls, .stage-label, .video-button, .song-play, .photo-take::before { transition: none; }
 }
 
 /* The jury photo, compact: drawn on a canvas, wide like a webcam picture, with its buttons in
  * a narrow column beside it, under it on narrow screens. */
 .photo { margin-top: 32px; }
 .photo-intro { font-size: 0.875rem; max-width: 580px; }
-.photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; }
-.photo-stage { position: relative; flex: none; width: min(100%, 640px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
+/* The frame and the glass of the video's stage, at the video's width, with its round buttons. */
+.photo-stage { box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
 .photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); -webkit-touch-callout: none; }
 /* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
 .photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: rgb(146 31 26 / .85); color: #fff8ed; font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
@@ -271,7 +271,20 @@ h2::before { content: "// "; content: "// " / ""; }
 .photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
 .photo-start:focus-visible { outline-color: #fff8ed; }
 .photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
-.photo-controls { display: flex; flex: 1 1 220px; flex-direction: column; gap: 8px; max-width: 320px; }
+/* Bottom right, beside the name panel the canvas draws on the left (music-photo.js). */
+.photo-controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; }
+.photo-actions { display: flex; gap: 8px; }
+/* The round buttons are grids, which would otherwise show through hidden. */
+.photo-controls [hidden] { display: none; }
+.photo-download { border-color: var(--red); background: var(--glass-red); }
+/* The shutter: a bigger round button with a red dot, which shrinks while the countdown runs. */
+.photo-take { width: 56px; height: 56px; border-width: 3px; border-color: #fff8ed; }
+.photo-take::before { content: ''; width: 38px; height: 38px; border-radius: 50%; background: var(--red); transition: scale .15s; }
+.photo-take:disabled { opacity: 1; }
+.photo-take:disabled::before { scale: .6; }
+.photo-take:not(:disabled):hover { border-color: #fff8ed; background: var(--scrim); }
+.photo-take:not(:disabled):hover::before { background: var(--red-hover); }
+.photo-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
 /* The name, typed right on the picture: over the name's place in the lower third, in its white
  * italic, so it reads as the picture itself. Its place is the panel's in music-photo.js (PANEL),
  * as a share of the 1600 × 900 picture; music-photo.js sets the size the name fits at. */
@@ -284,13 +297,15 @@ h2::before { content: "// "; content: "// " / ""; }
 .photo-name[aria-invalid="true"] { border-bottom: 2px solid #ff5a7a; }
 .field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
 .field-error::before { content: "! "; content: "! " / ""; }
-.photo-controls .secondary { min-height: 36px; }
-.photo-actions { display: flex; gap: 8px; }
-.photo-actions > * { flex: 1; padding: 0 8px; }
-.photo-status { margin: 0; color: var(--muted); }
+.photo .field-error { margin-top: 8px; }
+.photo-status { margin: 8px 0 0; color: var(--muted); }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
 .photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
 @media (max-width: 640px) {
-  .photo-stage { width: 100%; }
-  .photo-controls { max-width: none; }
+  .photo-controls { right: 8px; bottom: 8px; }
+  /* A column up the right edge: a row this wide would reach into the name panel. */
+  .photo-actions { flex-direction: column; gap: 6px; }
+  .photo-actions .video-button { width: 36px; height: 36px; }
+  .photo-take { width: 44px; height: 44px; }
+  .photo-take::before { width: 28px; height: 28px; }
 }
