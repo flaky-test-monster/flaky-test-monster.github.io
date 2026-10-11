@@ -52,14 +52,17 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
  * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
 .site-bar { display: flex; align-items: center; gap: 16px; }
 .site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
-.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
-.site-nav a:hover { border-color: var(--red); color: var(--red); }
+/* Pill links: the pages here, and the people under Thanks. */
+.site-nav a, .thanks-list a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
+.site-nav a:hover, .thanks-list a:hover { border-color: var(--red); color: var(--red); }
 .site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
 .masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
 .mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
 .masthead:hover .mascot { border-color: var(--ink); }
 .wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display); white-space: nowrap; text-overflow: ellipsis; }
 em { color: var(--red); }
+/* Links in the text, visited or not, in the oxblood of the lettering. */
+a { color: var(--red); }
 .pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 0.75rem var(--utility); }
 /* Under the title, in the hero, which already keeps to the left half. */
 .intro { margin-top: 16px; font-size: 0.875rem; max-width: 580px; }
@@ -115,9 +118,13 @@ h2::before { content: "// "; content: "// " / ""; }
 .song-play:disabled { border-color: var(--rule); color: var(--muted); background: transparent; cursor: default; }
 .song-time { grid-column: 3; grid-row: 2; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-footer { margin-top: 24px; text-align: center; font-size: 0.9375rem; }
-footer p { margin: 8px 0 0; }
-.back { font: 0.8125rem var(--utility); color: var(--red); }
+/* Thanks: the people behind it, the GitHub ones as small avatar chips. */
+.thanks { margin-top: 32px; }
+.thanks p { font-size: 0.875rem; max-width: 580px; }
+.thanks-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.thanks-list a { display: flex; align-items: center; gap: 6px; padding-block: 3px; padding-left: 3px; }
+.thanks-list img { border-radius: 50%; background: var(--rule); }
+
 
 /* Too narrow for text and singer side by side: the singer fades behind the text. */
 @media (max-width: 960px) {
@@ -128,7 +135,8 @@ footer p { margin: 8px 0 0; }
   .site-bar, .masthead { gap: 10px; }
   .mascot { width: 44px; height: 44px; }
   .site-nav { gap: 6px; }
-  .site-nav a { padding: 4px 10px; }
+  .site-nav a, .thanks-list a { padding: 4px 10px; }
+  .thanks-list a { padding-block: 2px; padding-left: 2px; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
   .intro { max-width: 100%; }
