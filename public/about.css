@@ -75,6 +75,8 @@ section { margin-top: 32px; }
 h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
 .event > p:not(.when) { max-width: 68ch; margin: 0 0 12px; }
 
+.measures { max-width: 68ch; margin: 0 0 12px; padding-left: 20px; }
+.measures li + li { margin-top: 6px; }
 .photos { display: grid; gap: 12px; margin: 0 0 12px; }
 .photos img { width: 100%; height: 100%; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
 .photos-1 { max-width: 560px; }
