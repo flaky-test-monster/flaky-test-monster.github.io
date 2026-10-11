@@ -16,6 +16,8 @@ const video = $('photo-video');
 const W = canvas.width;
 const H = canvas.height;
 const COUNTDOWN_SECONDS = 3;
+/** Longest name, as the field's maxlength in music.html: it has to fit on the picture. */
+const NAME_MAX = 24;
 /** The space kept free along the edges of the picture. */
 const MARGIN = 48;
 /** The panel at the bottom, the lower third, and the sign inside it on the right. */
@@ -58,14 +60,15 @@ let photoFile = null;
 export const juryName = () => $('jury-name').value.replace(/\s+/g, ' ').trim();
 
 /**
- * Checks the name before the votes go out or the photo is saved, and shows what is wrong at
- * the field: it is required, and needs at least one letter or number.
+ * Checks the name before the camera starts, the votes go out or the photo is saved, and shows
+ * what is wrong at the field: it is required, needs a letter or number, and fits on the picture.
  * @returns {boolean} whether the name is fine
  */
 export function checkName({ focus = true } = {}) {
   const name = juryName();
   const error = !name ? 'Tell us your name first: it goes on your votes and your photo.'
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
+    : [...name].length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
   showNameError(error);
   if (error && focus) $('jury-name').focus();
@@ -301,6 +304,8 @@ function render() {
 }
 
 async function startCamera() {
+  // The name first: the picture is made with it.
+  if (!checkName()) return;
   if (!navigator.mediaDevices?.getUserMedia) {
     say('This browser cannot use the camera here. Try a recent browser, on a page served over HTTPS.');
     return;
@@ -402,7 +407,13 @@ function redraw() {
   refreshFile();
 }
 
+/** How many of the characters the name may have are used. */
+function renderCount() {
+  $('jury-name-count').textContent = `${[...$('jury-name').value].length}/${NAME_MAX}`;
+}
+
 $('jury-name').addEventListener('input', () => {
+  renderCount();
   // Once marked wrong, the field says as soon as it is fine again.
   if ($('jury-name').getAttribute('aria-invalid') === 'true') checkName({ focus: false });
   redraw();
@@ -413,6 +424,7 @@ document.addEventListener('change', (event) => {
 });
 $('vote-form').addEventListener('reset', () => setTimeout(() => {
   showNameError('');
+  renderCount();
   redraw();
 }));
 $('photo-start').addEventListener('click', startCamera);
@@ -424,5 +436,6 @@ addEventListener('pagehide', stopCamera);
 // Fonts may arrive after the first drawing.
 document.fonts?.ready.then(redraw);
 
+renderCount();
 draw();
 render();

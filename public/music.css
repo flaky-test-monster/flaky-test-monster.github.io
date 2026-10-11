@@ -238,10 +238,13 @@ footer p { margin: 8px 0 0; }
 .photo-start:focus-visible { outline-color: #fff8ed; }
 .photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
 .photo-controls { display: flex; flex: 1 1 240px; flex-direction: column; gap: 8px; max-width: 320px; }
-.photo-field { display: flex; flex-direction: column; gap: 4px; font: bold 0.75rem var(--utility); }
-.photo-field input { min-height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 0.875rem var(--body); }
-.photo-field input[aria-invalid="true"] { border: 2px solid var(--red); }
-.field-error { margin: -4px 0 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
+/* The name comes first, above the camera, as wide as the column of buttons. */
+.photo-name { display: flex; flex-direction: column; gap: 4px; max-width: 320px; margin-bottom: 12px; }
+.photo-field { display: flex; justify-content: space-between; font: bold 0.75rem var(--utility); }
+.photo-count { color: var(--muted); font-weight: normal; font-variant-numeric: tabular-nums; }
+.photo-name input { min-height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 0.875rem var(--body); }
+.photo-name input[aria-invalid="true"] { border: 2px solid var(--red); }
+.field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
 .field-error::before { content: "! "; content: "! " / ""; }
 .photo-controls .primary { min-height: 44px; margin: 4px 0 0; font-size: 0.875rem; }
 .photo-controls .secondary { min-height: 36px; }
@@ -252,5 +255,5 @@ footer p { margin: 8px 0 0; }
 .photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
 @media (max-width: 640px) {
   .photo-stage { width: 100%; max-width: 340px; }
-  .photo-controls { max-width: 340px; }
+  .photo-controls, .photo-name { max-width: 340px; }
 }

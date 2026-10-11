@@ -152,11 +152,20 @@
 
         <section class="vote" aria-labelledby="vote-title">
           <h2 id="vote-title">Your jury</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us your name and send your votes by email. Then turn into the monster for a jury photo, and share it with your votes. The photo stays on your device until you share it.</p>
+          <p class="vote-intro">Given your points next to the songs? Tell us your name first, then turn into the monster for a jury photo, send your votes by email and share the photo with them. The photo stays on your device until you share it.</p>
           <!-- The points are chosen next to each song above (music-vote.js). music-photo.js draws the
                camera, the overlay, the name and the song with the douze points on the canvas.
                data-email is where the votes go; when it is empty, the email opens without a recipient. -->
           <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
+            <div class="photo-name">
+              <label class="photo-field" for="jury-name">
+                <span>Your name</span>
+                <span id="jury-name-count" class="photo-count" aria-hidden="true">0/24</span>
+              </label>
+              <input id="jury-name" name="name" type="text" required maxlength="24" autocomplete="nickname" placeholder="your name, or your stage name" aria-describedby="jury-name-hint jury-name-error">
+              <p id="jury-name-hint" class="visually-hidden">Up to 24 characters.</p>
+              <p id="jury-name-error" class="field-error" hidden></p>
+            </div>
             <div class="photo-body">
               <div class="photo-stage">
                 <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
@@ -165,11 +174,6 @@
                 <button type="button" id="photo-start" class="photo-start">Start the camera</button>
               </div>
               <div class="photo-controls">
-                <label class="photo-field">
-                  <span>Your name</span>
-                  <input id="jury-name" name="name" type="text" required maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name" aria-describedby="jury-name-error">
-                </label>
-                <p id="jury-name-error" class="field-error" hidden></p>
                 <button type="button" id="photo-take" class="secondary" hidden>Take the picture</button>
                 <div id="photo-actions" class="photo-actions" hidden>
                   <button type="button" id="photo-download" class="secondary">Download</button>
