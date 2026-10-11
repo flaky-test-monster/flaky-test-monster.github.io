@@ -1,6 +1,7 @@
 /**
- * The jury photo on the music page: a selfie from the webcam with a light overlay, the Flaky
- * sign on the right and the name of the jury at the bottom, to download as a PNG. The monster
+ * The jury photo on the music page: a selfie from the webcam with a broadcast-style overlay, a
+ * live tag at the top and a semi-transparent panel at the bottom with the name, the song that
+ * gets the douze points and the Flaky sign, to download as a PNG. The monster
  * filter of the start page is always on while a face is in view: the green poster look, and the
  * monster's eyes and tongue on every face. Everything is drawn on a canvas in this page; the
  * photo never leaves the device, unless it goes with the votes (music-vote.js).
@@ -16,7 +17,12 @@ const W = canvas.width;
 const H = canvas.height;
 const COUNTDOWN_SECONDS = 3;
 /** The space kept free along the edges of the picture. */
-const MARGIN = 56;
+const MARGIN = 48;
+/** The panel at the bottom, the lower third, and the sign inside it on the right. */
+const PANEL = { x: MARGIN, y: H - MARGIN - 210, w: W - MARGIN * 2, h: 210, r: 24 };
+const SIGN_RADIUS = 60;
+const GOLD = '#f7c948';
+const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 /** The start page's monster look at full strength, as in style.css and monster-face.js. */
 const POSTER_FILTER = 'grayscale(1) contrast(7) brightness(1.15)';
 const MONSTER_GREEN = 'rgb(47 209 47)';
@@ -24,7 +30,6 @@ const MONSTER_GREEN = 'rgb(47 209 47)';
     few frames does not make the picture flicker. */
 const LOOK_HOLD_MS = 500;
 const DISPLAY = "'Bodoni MT', Didot, 'Times New Roman', serif";
-const UTILITY = "'Courier New', monospace";
 
 const monster = new Image();
 monster.src = 'public/monster.jpg';
@@ -49,8 +54,11 @@ let stillEyes = null;
  * click, and the browser forgets the click while the canvas is still being encoded. */
 let photoFile = null;
 
-/** The name of the jury, shared with the vote: whoever votes is in the picture. */
-const juryName = () => $('photo-jury').value.replace(/\s+/g, ' ').trim();
+/** The name in the picture. */
+const photoName = () => $('photo-name').value.replace(/\s+/g, ' ').trim();
+
+/** The song with the douze points, as chosen next to the songs (music-vote.js marks it), or null. */
+const winner = () => document.querySelector('.song-top h3')?.textContent.trim() || null;
 
 /** The largest font, up to size, at which text fits in maxWidth. */
 function fit(text, maxWidth, size, font) {
@@ -99,76 +107,115 @@ function photo(source, width, height, faces = null) {
     if (faces.width && faces.height) cover(faces, faces.width, faces.height, all);
     return;
   }
-  ctx.fillStyle = '#17130e';
+  // The start button sits in the middle of this (music.html).
+  const dark = ctx.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, H * .75);
+  dark.addColorStop(0, '#3a2a24');
+  dark.addColorStop(1, '#0d0a08');
+  ctx.fillStyle = dark;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgb(255 248 237 / .7)';
-  ctx.textAlign = 'center';
-  ctx.font = `italic 700 56px ${DISPLAY}`;
-  ctx.fillText('Your face here', W / 2, H / 2 - 60);
-  ctx.font = `bold 26px ${UTILITY}`;
-  ctx.fillText('Start the camera below', W / 2, H / 2 - 8);
 }
 
-/** A soft shadow along the bottom, so the name stays readable on any picture. */
-function shade() {
-  const fade = ctx.createLinearGradient(0, H * .62, 0, H);
-  fade.addColorStop(0, 'rgb(23 19 14 / 0)');
-  fade.addColorStop(1, 'rgb(23 19 14 / .72)');
-  ctx.fillStyle = fade;
-  ctx.fillRect(0, H * .62, W, H * .38);
-}
-
-/** The Flaky sign on the right: the monster in a circle, with its name under it. */
-function sign() {
-  const radius = 78;
-  const cx = W - MARGIN - radius;
-  const cy = H - MARGIN - 44 - radius;
+/**
+ * Frosted glass: the picture under the box blurred, where the browser can, then a dark veil
+ * and a fine light edge, so text on it reads well on any picture.
+ */
+function glass({ x, y, w, h, r }, veil = .5) {
   ctx.save();
-  ctx.shadowColor = 'rgb(0 0 0 / .4)';
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = '#f5ead5';
   ctx.beginPath();
-  ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.clip();
+  if ('filter' in ctx) {
+    ctx.filter = 'blur(18px)';
+    ctx.drawImage(canvas, x - 40, y - 40, w + 80, h + 80, x - 40, y - 40, w + 80, h + 80);
+    ctx.filter = 'none';
+  }
+  ctx.fillStyle = `rgb(12 9 8 / ${veil})`;
+  ctx.fillRect(x, y, w, h);
   ctx.restore();
+  ctx.strokeStyle = 'rgb(255 255 255 / .18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x + 1, y + 1, w - 2, h - 2, r);
+  ctx.stroke();
+}
+
+/** A live tag on the top left, as on a broadcast. */
+function liveTag() {
+  const label = 'LIVE · FROM FLAKY WITH LOVE';
+  ctx.font = `bold 22px ${SANS}`;
+  ctx.letterSpacing = '3px';
+  const box = { x: MARGIN, y: MARGIN, w: ctx.measureText(label).width + 76, h: 52, r: 26 };
+  glass(box, .45);
+  ctx.fillStyle = '#e0245e';
+  ctx.beginPath();
+  ctx.arc(box.x + 30, box.y + box.h / 2, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = `bold 22px ${SANS}`;
+  ctx.letterSpacing = '3px';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, box.x + 52, box.y + box.h / 2 + 1);
+  ctx.letterSpacing = '0px';
+  ctx.textBaseline = 'alphabetic';
+}
+
+/**
+ * The lower third: the name, the song that gets the douze points, and the Flaky sign on the
+ * right, on a semi-transparent panel.
+ */
+function lowerThird() {
+  const { x, y, w, h } = PANEL;
+  glass(PANEL);
+  const left = x + 40;
+  const signX = x + w - 40 - SIGN_RADIUS;
+  const textWidth = signX - SIGN_RADIUS - 32 - left;
+
+  ctx.textAlign = 'left';
+  const name = photoName() || 'The Flaky Jury';
+  fit(name, textWidth, 66, `italic 700 {size}px ${DISPLAY}`);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(name, left, y + 86);
+
+  ctx.fillStyle = 'rgb(255 255 255 / .2)';
+  ctx.fillRect(left, y + 112, textWidth, 2);
+
+  ctx.font = `bold 20px ${SANS}`;
+  ctx.letterSpacing = '4px';
+  ctx.fillStyle = GOLD;
+  ctx.fillText('DOUZE POINTS GO TO', left, y + 148);
+  ctx.letterSpacing = '0px';
+  const song = winner();
+  fit(song ?? 'the song still to be chosen…', textWidth, 32, `600 {size}px ${SANS}`);
+  ctx.fillStyle = song ? '#fff' : 'rgb(255 255 255 / .6)';
+  ctx.fillText(song ?? 'the song still to be chosen…', left, y + 186);
+
+  // The Flaky sign: the monster in a circle, with its name under it.
+  const cy = y + 92;
+  ctx.fillStyle = 'rgb(255 255 255 / .9)';
+  ctx.beginPath();
+  ctx.arc(signX, cy, SIGN_RADIUS + 4, 0, Math.PI * 2);
+  ctx.fill();
   if (monster.complete && monster.naturalWidth) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.arc(signX, cy, SIGN_RADIUS, 0, Math.PI * 2);
     ctx.clip();
     const side = Math.min(monster.naturalWidth, monster.naturalHeight);
-    ctx.drawImage(monster, (monster.naturalWidth - side) / 2, (monster.naturalHeight - side) / 2, side, side, cx - radius, cy - radius, radius * 2, radius * 2);
+    ctx.drawImage(monster, (monster.naturalWidth - side) / 2, (monster.naturalHeight - side) / 2, side, side, signX - SIGN_RADIUS, cy - SIGN_RADIUS, SIGN_RADIUS * 2, SIGN_RADIUS * 2);
     ctx.restore();
   }
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#fff8ed';
-  ctx.font = `bold 20px ${UTILITY}`;
-  ctx.letterSpacing = '4px';
-  ctx.fillText('FLAKY', cx + 2, H - MARGIN);
+  ctx.font = `bold 18px ${SANS}`;
+  ctx.letterSpacing = '5px';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('FLAKY', signX + 3, y + h - 22);
   ctx.letterSpacing = '0px';
-}
-
-/** "Jury of" and the name, at the bottom left, beside the sign. */
-function caption() {
-  const maxWidth = W - MARGIN * 2 - 220;
-  ctx.textAlign = 'left';
-  ctx.shadowColor = 'rgb(0 0 0 / .5)';
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = 'rgb(255 248 237 / .85)';
-  ctx.font = `bold 24px ${UTILITY}`;
-  ctx.letterSpacing = '6px';
-  ctx.fillText('JURY OF', MARGIN, H - MARGIN - 78);
-  ctx.letterSpacing = '0px';
-  const name = juryName() || 'an undisclosed country';
-  fit(name, maxWidth, 64, `italic 700 {size}px ${DISPLAY}`);
-  ctx.fillStyle = '#fff8ed';
-  ctx.fillText(name, MARGIN, H - MARGIN);
-  ctx.shadowBlur = 0;
 }
 
 /** The file name, with the name of the jury: flaky-jury-austria.png. */
 function fileName() {
-  const slug = juryName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = photoName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return `flaky-jury${slug ? `-${slug}` : ''}.png`;
 }
 
@@ -191,9 +238,8 @@ function draw() {
   if (still) photo(still, still.width, still.height, stillEyes);
   else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight, monsterInView() ? eyes : null);
   else photo(null);
-  shade();
-  sign();
-  caption();
+  liveTag();
+  lowerThird();
 }
 
 /** Finds the faces in a new camera frame and paints the monster's eyes and tongue on them. */
@@ -326,29 +372,19 @@ export function downloadPhoto() {
   }, 'image/png');
 }
 
-/** The name on the photo and the name on the vote are the same field twice: typing in one fills the other. */
-function syncJury(from, to) {
-  from.addEventListener('input', () => {
-    if (to.value !== from.value) {
-      to.value = from.value;
-      to.dispatchEvent(new Event('input'));
-    }
-    if (!stream) {
-      draw();
-      refreshFile();
-    }
-  });
+/** Draws the picture again after a change of name or douze points, and remakes its file. */
+function redraw() {
+  if (stream) return;
+  draw();
+  refreshFile();
 }
 
-syncJury($('photo-jury'), $('vote-jury'));
-syncJury($('vote-jury'), $('photo-jury'));
-$('vote-form').addEventListener('reset', () => setTimeout(() => {
-  $('photo-jury').value = $('vote-jury').value;
-  if (!stream) {
-    draw();
-    refreshFile();
-  }
-}));
+$('photo-name').addEventListener('input', redraw);
+// The douze points are chosen next to the songs; music-vote.js marks the song before this runs.
+document.addEventListener('change', (event) => {
+  if (event.target.closest?.('.song-vote')) redraw();
+});
+$('vote-form').addEventListener('reset', () => setTimeout(redraw));
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);
@@ -356,12 +392,7 @@ $('photo-download').addEventListener('click', downloadPhoto);
 // Leaving the page turns the camera off.
 addEventListener('pagehide', stopCamera);
 // Fonts may arrive after the first drawing.
-document.fonts?.ready.then(() => {
-  if (!stream) {
-    draw();
-    refreshFile();
-  }
-});
+document.fonts?.ready.then(redraw);
 
 draw();
 render();

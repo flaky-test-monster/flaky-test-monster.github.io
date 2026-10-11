@@ -141,22 +141,22 @@
 
         <section class="photo" aria-labelledby="photo-title">
           <h2 id="photo-title">Jury photo</h2>
-          <p class="photo-intro">Every jury gets its moment on the big screen. Take a picture with the webcam, with the Flaky sign and your jury’s name on it, and download it. Whoever looks into the camera turns into the monster. It goes with your votes too. The photo stays on your device until you send it.</p>
-          <!-- music-photo.js draws the live camera, the Flaky sign and the name on the canvas.
-               The name here and the name on the vote below fill each other in. -->
+          <p class="photo-intro">Your moment on the big screen. Whoever looks into the camera turns into the monster, with your name and your douze points on the picture. Download it, and it goes with your votes too. The photo stays on your device until you send it.</p>
+          <!-- music-photo.js draws the live camera, the overlay, the name and the song with the
+               douze points (from the points next to the songs) on the canvas. -->
           <label class="vote-field">
-            <span>Jury of</span>
-            <input id="photo-jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
+            <span>Your name</span>
+            <input id="photo-name" type="text" maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name">
           </label>
           <div class="photo-body">
             <div class="photo-stage">
-              <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with the Flaky sign and the name of your jury"></canvas>
+              <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
               <video id="photo-video" class="visually-hidden" playsinline muted></video>
               <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
+              <button type="button" id="photo-start" class="photo-start">Start the camera</button>
             </div>
             <div class="photo-controls">
               <p id="photo-status" class="helper photo-status" role="status"></p>
-              <button type="button" id="photo-start" class="primary">Start the camera</button>
               <button type="button" id="photo-take" class="primary" hidden>Take the picture</button>
               <div id="photo-actions" class="photo-actions" hidden>
                 <button type="button" id="photo-download" class="primary">Download the photo</button>

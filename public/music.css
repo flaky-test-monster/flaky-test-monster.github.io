@@ -236,6 +236,11 @@ footer p { margin: 8px 0 0; }
 .photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
 .photo-stage { position: relative; width: min(100%, 420px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgb(23 19 14 / .18); }
 .photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); }
+/* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
+.photo-start { position: absolute; left: 50%; top: 45%; translate: -50% -50%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 24px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: rgb(146 31 26 / .85); color: #fff8ed; font-size: 0.9375rem; white-space: nowrap; box-shadow: 0 8px 24px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
+.photo-start::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 0 4px rgb(255 90 122 / .3); }
+.photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
+.photo-start:focus-visible { outline-color: #fff8ed; }
 .photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 9rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
 .photo-controls { width: min(100%, 420px); }
 .photo-status { min-height: 1.6em; margin: 8px 0 0; color: var(--muted); }
