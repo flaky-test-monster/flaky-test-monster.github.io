@@ -103,7 +103,8 @@ export function nameError() {
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
     : name.length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
-  showNameError(error);
+  // Next to the field the whole story, as the vote button that sends here is out of view.
+  showNameError(error && `${error} Or clear it to go by ${MONSTER_NAME}.`);
   return error;
 }
 
@@ -244,8 +245,11 @@ function lowerThird(withName) {
 
   ctx.textAlign = 'left';
   const name = juryName();
-  const size = fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
-  const fontSize = `${(size / W) * 100}cqw`;
+  const nameFont = `italic 700 {size}px ${DISPLAY}`;
+  // The field shows the placeholder, with its pencil, until a name is typed; it fits as the name does.
+  const shown = $('jury-name').value ? name : $('jury-name').placeholder;
+  const fontSize = `${(fit(shown, textWidth, 76, nameFont) / W) * 100}cqw`;
+  fit(name, textWidth, 76, nameFont);
   if ($('jury-name').style.fontSize !== fontSize) $('jury-name').style.fontSize = fontSize;
   ctx.fillStyle = '#fff';
   if (withName) ctx.fillText(name, left, y + 92);
@@ -512,6 +516,13 @@ $('jury-name').addEventListener('input', () => {
   if ($('jury-name').getAttribute('aria-invalid') === 'true') nameError();
   redraw();
 });
+// Done typing: the field keeps the name as the photo and the votes have it, so a name of only
+// spaces turns back into the monster name.
+$('jury-name').addEventListener('change', () => {
+  if ($('jury-name').value === typedName()) return;
+  $('jury-name').value = typedName();
+  redraw();
+});
 // Enter, or Done on a phone, is the end of typing the name.
 $('jury-name').addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !event.isComposing) $('jury-name').blur();
@@ -520,6 +531,9 @@ $('jury-name').addEventListener('keydown', (event) => {
 document.addEventListener('change', (event) => {
   if (event.target.closest?.('.song-vote')) redraw();
 });
+// The picture on screen leaves the name to the field, so it is saved with the buttons only,
+// not with the browser's Save image or Copy image.
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
 $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);
@@ -533,6 +547,6 @@ addEventListener('pagehide', () => {
 document.fonts?.ready.then(redraw);
 
 // The empty field shows the monster name its jury member will go by.
-$('jury-name').placeholder = MONSTER_NAME;
+$('jury-name').placeholder = `${MONSTER_NAME} ✎`;
 draw();
 render();

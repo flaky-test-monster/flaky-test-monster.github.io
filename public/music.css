@@ -80,7 +80,9 @@ h1 .line { display: block; }
 /* The player's controls, over the bottom of the video on a dark fade: round see-through buttons
  * like the songs' play button, which they share the play and pause icon with. */
 .stage { --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
-.video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: #fff8ed; transition: opacity .25s; }
+.video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: #fff8ed; transition: opacity .25s; pointer-events: none; }
+/* Only the buttons take clicks: the rest of the strip passes them to the video, which plays on a click. */
+.video-controls > button { pointer-events: auto; }
 .video-button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--glass-edge); border-radius: 50%; background: var(--scrim); color: #fff8ed; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .15s, border-color .15s; }
 .video-button:not(:disabled):hover { border-color: var(--red); background: var(--red); }
 .video-button:disabled { opacity: .5; cursor: default; }
@@ -88,14 +90,15 @@ h1 .line { display: block; }
 .video-play, .video-repeat[aria-pressed="true"] { border-color: var(--red); background: var(--glass-red); }
 .video-stop::before { content: ''; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
 .video-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
-.video-time { margin-left: auto; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgb(23 19 14 / .8); }
+/* Full screen on the right, apart from the playing buttons. */
+.video-fullscreen { margin-left: auto; }
 /* While the video plays, the controls and the label step out of the way, back on hover or keyboard focus.
  * On touch screens (no hover), a tap on the video pauses it, and they come back. */
 .stage.playing:not(:has(:focus-visible)) :is(.video-controls, .stage-label) { opacity: 0; }
-.stage.playing:not(:has(:focus-visible)) .video-controls { pointer-events: none; }
+.stage.playing:not(:has(:focus-visible)) .video-controls > button { pointer-events: none; }
 @media (hover: hover) {
   .stage.playing:hover :is(.video-controls, .stage-label) { opacity: 1; }
-  .stage.playing:hover .video-controls { pointer-events: auto; }
+  .stage.playing:hover .video-controls > button { pointer-events: auto; }
 }
 
 button { font: bold 1rem var(--utility); cursor: pointer; }
@@ -122,7 +125,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .song p { margin: 2px 0 0; font: 0.75rem/1.5 var(--utility); color: var(--muted); }
 .player audio { display: block; width: 100%; margin-top: 8px; }
 /* With our controls, the play button takes the left column, beside the title and note, and the
- * time sits under the points; the player's boxes step aside so these line up in the song's grid. */
+ * points the right; the player's boxes step aside so these line up in the song's grid. */
 .song:has(.player-controls:not([hidden])) { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
 .song:has(.player-controls:not([hidden])) > :is(h3, p) { grid-column: 2; }
 .player:has(.player-controls:not([hidden])), .player-controls { display: contents; }
@@ -132,7 +135,6 @@ h2::before { content: "// "; content: "// " / ""; }
 .song-play:hover, .song.playing .song-play { background: var(--red); color: #fff8ed; }
 .song.playing .song-play::before, .stage.playing .video-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
 .song-play:disabled { border-color: var(--rule); color: var(--muted); background: transparent; cursor: default; }
-.song-time { grid-column: 3; grid-row: 2; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* Thanks: the people behind it, the GitHub ones as small avatar chips. */
 .thanks { margin-top: 32px; }
@@ -178,12 +180,11 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .vote-form .primary { margin: 0; }
 .vote-status { display: block; margin: 0; color: var(--muted); }
-/* Narrow: the points stay beside the title, the note takes the width under it, then the time. */
+/* Narrow: the points stay beside the title, the note takes the width under it. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
   .song:has(.player-controls:not([hidden])) > p { grid-column: 2 / -1; }
   .song-play { width: 36px; height: 36px; }
-  .song-time { grid-column: 2 / -1; grid-row: 3; text-align: left; }
   .song-vote select { min-height: 32px; padding: 0 6px; font-size: 0.8125rem; }
 }
 
@@ -263,7 +264,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .photo-intro { font-size: 0.875rem; max-width: 580px; }
 .photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; }
 .photo-stage { position: relative; flex: none; width: min(100%, 640px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
-.photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); }
+.photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); -webkit-touch-callout: none; }
 /* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
 .photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: rgb(146 31 26 / .85); color: #fff8ed; font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
 .photo-start::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 0 3px rgb(255 90 122 / .3); }
@@ -276,7 +277,8 @@ h2::before { content: "// "; content: "// " / ""; }
  * as a share of the 1600 × 900 picture; music-photo.js sets the size the name fits at. */
 .photo-stage { container-type: inline-size; }
 .photo-name { position: absolute; left: 5.5%; top: 70.2%; width: 47%; height: 10.9%; margin: 0; padding: 0; border: 0; border-bottom: 1px dashed rgb(255 255 255 / .45); border-radius: 4px 4px 0 0; background: transparent; color: #fff; font: italic 700 4.75cqw/1 var(--display); text-overflow: ellipsis; cursor: text; }
-.photo-name::placeholder { color: #fff; opacity: 1; }
+/* The monster name, until one is typed: a little faded, with a pencil, so it reads as editable. */
+.photo-name::placeholder { color: #fff; opacity: .7; }
 .photo-name:hover, .photo-name:focus { background: rgb(255 255 255 / .1); }
 .photo-name:focus { outline: 2px solid #fff8ed; outline-offset: 0; }
 .photo-name[aria-invalid="true"] { border-bottom: 2px solid #ff5a7a; }

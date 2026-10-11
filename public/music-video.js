@@ -6,13 +6,7 @@
 const $ = (id) => document.getElementById(id);
 const video = $('music-video');
 
-/** "1:05" for 65 seconds; "0:00" while the length is not known yet. */
-function clock(seconds) {
-  const whole = Number.isFinite(seconds) ? Math.floor(seconds) : 0;
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
-
-/** Brings the buttons and the time in line with the video. */
+/** Brings the buttons in line with the video. */
 function render() {
   const playing = !video.paused && !video.ended;
   $('video-stage').classList.toggle('playing', playing);
@@ -21,7 +15,6 @@ function render() {
   $('video-play').setAttribute('aria-label', `${action} the video`);
   $('video-stop').disabled = video.currentTime === 0 && !playing;
   $('video-repeat').setAttribute('aria-pressed', String(video.loop));
-  $('video-time').textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
 }
 
 function togglePlay() {

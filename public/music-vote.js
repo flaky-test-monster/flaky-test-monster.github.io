@@ -81,9 +81,9 @@ form.addEventListener('submit', (event) => {
   event.preventDefault();
   const error = nameError();
   if (error) {
-    // The field is on the jury photo, further down: go there, where its error shows too.
+    // The field is on the jury photo, further down: go there, where its error says what to do.
     $('jury-name').focus();
-    return say(nameMessage(error));
+    return say('The votes were not sent: the name on the jury photo needs fixing.');
   }
   const body = ballot();
   if (!body) return say('Give at least one song some points first: the choice is next to each song.');
