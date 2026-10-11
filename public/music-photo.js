@@ -1,10 +1,11 @@
 /**
  * The jury photo on the music page: a selfie from the webcam with a broadcast-style overlay, a
  * live tag at the top and a semi-transparent panel at the bottom with the name, the song that
- * gets the douze points and the Flaky sign, to download as a PNG. The monster
- * filter of the start page is always on while a face is in view: the green poster look, and the
- * monster's eyes and tongue on every face. Everything is drawn on a canvas in this page; the
- * photo never leaves the device, unless it is shared (music-vote.js).
+ * gets the douze points and the Flaky sign, to download as a PNG. The monster filter of the
+ * start page is always on while a face is in view: the green poster look, and the monster's
+ * eyes and tongue on every face. Everything is drawn on a canvas in this page; the photo never
+ * leaves the device, unless it is shared (music-vote.js). This module also owns the name of
+ * the jury member and its check, which the vote uses too.
  */
 
 import { drawFaces, loadFaceTracker, posterize } from './monster-face.js';
@@ -16,8 +17,8 @@ const video = $('photo-video');
 const W = canvas.width;
 const H = canvas.height;
 const COUNTDOWN_SECONDS = 3;
-/** Longest name, as the field's maxlength in music.html: it has to fit on the picture. */
-const NAME_MAX = 24;
+/** Longest name, from the field's maxlength in music.html: it has to fit on the picture. */
+const NAME_MAX = $('jury-name').maxLength;
 /** The space kept free along the edges of the picture. */
 const MARGIN = 48;
 /** The panel at the bottom, the lower third, and the sign inside it on the right. */
@@ -32,16 +33,21 @@ const MONSTER_GREEN = 'rgb(47 209 47)';
     few frames does not make the picture flicker. */
 const LOOK_HOLD_MS = 500;
 const DISPLAY = "'Bodoni MT', Didot, 'Times New Roman', serif";
+const NO_WINNER = 'the song still to be chosen…';
 
 const monster = new Image();
 monster.src = 'public/monster.jpg';
-monster.addEventListener('load', () => draw());
+// The sign may arrive after the first drawing, or even after the picture is taken.
+monster.addEventListener('load', () => redraw());
 
 /** @type {MediaStream | null} */
 let stream = null;
 /** The picture taken, as the raw camera frame, or null while the camera is live. */
 let still = null;
 let frameRequest = 0;
+/** Whether the camera is being asked for, so a second click cannot open a second stream. */
+let starting = false;
+/** Whether the countdown runs. */
 let busy = false;
 /** The face tracker, once loaded; until then, or when it fails, the camera stays plain. */
 let tracker = null;
@@ -85,13 +91,12 @@ function showNameError(message) {
 /** The song with the douze points, as chosen next to the songs (music-vote.js marks it), or null. */
 const winner = () => document.querySelector('.song-top h3')?.textContent.trim() || null;
 
-/** The largest font, up to size, at which text fits in maxWidth. */
+/** Sets the largest font, up to size, at which text fits in maxWidth. */
 function fit(text, maxWidth, size, font) {
   for (; size > 12; size -= 2) {
-    ctx.font = `${font.replace('{size}', size)}`;
-    if (ctx.measureText(text).width <= maxWidth) break;
+    ctx.font = font.replace('{size}', size);
+    if (ctx.measureText(text).width <= maxWidth) return;
   }
-  return size;
 }
 
 /** Draws the source cropped to fill the box, mirrored like a mirror, as the camera preview is. */
@@ -113,31 +118,30 @@ function cover(source, sourceWidth, sourceHeight, { x, y, w, h }) {
  */
 function photo(source, width, height, faces = null) {
   const all = { x: 0, y: 0, w: W, h: H };
-  if (source && !faces) return cover(source, width, height, all);
-  if (source) {
-    if ('filter' in ctx) {
-      ctx.filter = POSTER_FILTER;
-      cover(source, width, height, all);
-      ctx.filter = 'none';
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = MONSTER_GREEN;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-    } else {
-      // No canvas filters in this browser: the same look, pixel by pixel.
-      cover(source, width, height, all);
-      posterize(ctx, W, H, { strength: 1, green: true });
-    }
-    if (faces.width && faces.height) cover(faces, faces.width, faces.height, all);
-    return;
+  if (!source) {
+    // The start button sits in the middle of this (music.html).
+    const dark = ctx.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, H * .75);
+    dark.addColorStop(0, '#3a2a24');
+    dark.addColorStop(1, '#0d0a08');
+    ctx.fillStyle = dark;
+    ctx.fillRect(0, 0, W, H);
+  } else if (!faces) {
+    cover(source, width, height, all);
+  } else if ('filter' in ctx) {
+    ctx.filter = POSTER_FILTER;
+    cover(source, width, height, all);
+    ctx.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = MONSTER_GREEN;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  } else {
+    // No canvas filters in this browser: the same look, pixel by pixel.
+    cover(source, width, height, all);
+    posterize(ctx, W, H, { strength: 1, green: true });
   }
-  // The start button sits in the middle of this (music.html).
-  const dark = ctx.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, H * .75);
-  dark.addColorStop(0, '#3a2a24');
-  dark.addColorStop(1, '#0d0a08');
-  ctx.fillStyle = dark;
-  ctx.fillRect(0, 0, W, H);
+  if (source && faces?.width && faces.height) cover(faces, faces.width, faces.height, all);
 }
 
 /**
@@ -175,8 +179,6 @@ function liveTag() {
   ctx.beginPath();
   ctx.arc(box.x + 32, box.y + box.h / 2, 10, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = `bold 28px ${SANS}`;
-  ctx.letterSpacing = '3px';
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
@@ -211,9 +213,9 @@ function lowerThird() {
   ctx.fillText('DOUZE POINTS GO TO', left, y + 164);
   ctx.letterSpacing = '0px';
   const song = winner();
-  fit(song ?? 'the song still to be chosen…', textWidth, 42, `600 {size}px ${SANS}`);
+  fit(song ?? NO_WINNER, textWidth, 42, `600 {size}px ${SANS}`);
   ctx.fillStyle = song ? '#fff' : 'rgb(255 255 255 / .6)';
-  ctx.fillText(song ?? 'the song still to be chosen…', left, y + 212);
+  ctx.fillText(song ?? NO_WINNER, left, y + 212);
 
   // The Flaky sign: the monster in a circle, with its name under it.
   const cy = y + 100;
@@ -238,7 +240,7 @@ function lowerThird() {
   ctx.letterSpacing = '0px';
 }
 
-/** The file name, with the name of the jury: flaky-jury-austria.png. */
+/** The file name, with the name of the jury member: flaky-jury-anna-banana.png. */
 function fileName() {
   const slug = juryName().toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return `flaky-jury${slug ? `-${slug}` : ''}.png`;
@@ -295,7 +297,7 @@ function say(message) {
   $('photo-status').textContent = message;
 }
 
-/** Shows the buttons that fit: start, take, or download and take another. */
+/** Shows the buttons that fit: start, take, or download, share and retake. */
 function render() {
   $('photo-start').hidden = Boolean(stream || still);
   $('photo-take').hidden = !stream || Boolean(still);
@@ -305,16 +307,19 @@ function render() {
 
 async function startCamera() {
   // The name first: the picture is made with it.
-  if (!checkName()) return;
+  if (stream || starting || !checkName()) return;
   if (!navigator.mediaDevices?.getUserMedia) {
     say('This browser cannot use the camera here. Try a recent browser, on a page served over HTTPS.');
     return;
   }
+  starting = true;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } }, audio: false });
   } catch {
     say('The camera is blocked or missing. Allow camera access for this page in your browser and try again.');
     return;
+  } finally {
+    starting = false;
   }
   video.srcObject = stream;
   await video.play().catch(() => {});
@@ -386,7 +391,7 @@ async function takePicture() {
 }
 
 /** Saves the jury photo to the device. */
-export function downloadPhoto() {
+function downloadPhoto() {
   if (!checkName()) return;
   canvas.toBlob((blob) => {
     if (!blob) return say('The photo could not be saved in this browser.');
@@ -431,8 +436,11 @@ $('photo-start').addEventListener('click', startCamera);
 $('photo-take').addEventListener('click', takePicture);
 $('photo-retake').addEventListener('click', startCamera);
 $('photo-download').addEventListener('click', downloadPhoto);
-// Leaving the page turns the camera off.
-addEventListener('pagehide', stopCamera);
+// Leaving the page turns the camera off, and the buttons with it, for when Back brings the page back.
+addEventListener('pagehide', () => {
+  stopCamera();
+  render();
+});
 // Fonts may arrive after the first drawing.
 document.fonts?.ready.then(redraw);
 
