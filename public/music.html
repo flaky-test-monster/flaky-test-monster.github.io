@@ -141,13 +141,9 @@
 
         <section class="photo" aria-labelledby="photo-title">
           <h2 id="photo-title">Jury photo</h2>
-          <p class="photo-intro">Your moment on the big screen. Whoever looks into the camera turns into the monster, with your name and your douze points on the picture. Download it, and it goes with your votes too. The photo stays on your device until you send it.</p>
+          <p class="photo-intro">Turn into the monster on the big screen, with your name and your douze points. The photo goes with your votes and stays on your device until then.</p>
           <!-- music-photo.js draws the live camera, the overlay, the name and the song with the
                douze points (from the points next to the songs) on the canvas. -->
-          <label class="vote-field">
-            <span>Your name</span>
-            <input id="photo-name" type="text" maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name">
-          </label>
           <div class="photo-body">
             <div class="photo-stage">
               <canvas id="photo-canvas" class="photo-canvas" width="1080" height="1350" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
@@ -156,12 +152,16 @@
               <button type="button" id="photo-start" class="photo-start">Start the camera</button>
             </div>
             <div class="photo-controls">
-              <p id="photo-status" class="helper photo-status" role="status"></p>
+              <label class="photo-field">
+                <span>Your name</span>
+                <input id="photo-name" type="text" maxlength="40" autocomplete="nickname" placeholder="your name, or your stage name">
+              </label>
               <button type="button" id="photo-take" class="primary" hidden>Take the picture</button>
               <div id="photo-actions" class="photo-actions" hidden>
-                <button type="button" id="photo-download" class="primary">Download the photo</button>
+                <button type="button" id="photo-download" class="primary">Download</button>
                 <button type="button" id="photo-retake" class="secondary">Take another</button>
               </div>
+              <p id="photo-status" class="helper photo-status" role="status"></p>
             </div>
           </div>
         </section>

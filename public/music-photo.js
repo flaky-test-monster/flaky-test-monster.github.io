@@ -19,8 +19,8 @@ const COUNTDOWN_SECONDS = 3;
 /** The space kept free along the edges of the picture. */
 const MARGIN = 48;
 /** The panel at the bottom, the lower third, and the sign inside it on the right. */
-const PANEL = { x: MARGIN, y: H - MARGIN - 210, w: W - MARGIN * 2, h: 210, r: 24 };
-const SIGN_RADIUS = 60;
+const PANEL = { x: MARGIN, y: H - MARGIN - 240, w: W - MARGIN * 2, h: 240, r: 24 };
+const SIGN_RADIUS = 68;
 const GOLD = '#f7c948';
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 /** The start page's monster look at full strength, as in style.css and monster-face.js. */
@@ -142,20 +142,20 @@ function glass({ x, y, w, h, r }, veil = .5) {
 /** A live tag on the top left, as on a broadcast. */
 function liveTag() {
   const label = 'LIVE · FROM FLAKY WITH LOVE';
-  ctx.font = `bold 22px ${SANS}`;
+  ctx.font = `bold 28px ${SANS}`;
   ctx.letterSpacing = '3px';
-  const box = { x: MARGIN, y: MARGIN, w: ctx.measureText(label).width + 76, h: 52, r: 26 };
+  const box = { x: MARGIN, y: MARGIN, w: ctx.measureText(label).width + 84, h: 64, r: 32 };
   glass(box, .45);
   ctx.fillStyle = '#e0245e';
   ctx.beginPath();
-  ctx.arc(box.x + 30, box.y + box.h / 2, 8, 0, Math.PI * 2);
+  ctx.arc(box.x + 32, box.y + box.h / 2, 10, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = `bold 22px ${SANS}`;
+  ctx.font = `bold 28px ${SANS}`;
   ctx.letterSpacing = '3px';
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(label, box.x + 52, box.y + box.h / 2 + 1);
+  ctx.fillText(label, box.x + 56, box.y + box.h / 2 + 1);
   ctx.letterSpacing = '0px';
   ctx.textBaseline = 'alphabetic';
 }
@@ -173,25 +173,25 @@ function lowerThird() {
 
   ctx.textAlign = 'left';
   const name = photoName() || 'The Flaky Jury';
-  fit(name, textWidth, 66, `italic 700 {size}px ${DISPLAY}`);
+  fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
   ctx.fillStyle = '#fff';
-  ctx.fillText(name, left, y + 86);
+  ctx.fillText(name, left, y + 92);
 
   ctx.fillStyle = 'rgb(255 255 255 / .2)';
-  ctx.fillRect(left, y + 112, textWidth, 2);
+  ctx.fillRect(left, y + 120, textWidth, 2);
 
-  ctx.font = `bold 20px ${SANS}`;
-  ctx.letterSpacing = '4px';
+  ctx.font = `bold 28px ${SANS}`;
+  ctx.letterSpacing = '3px';
   ctx.fillStyle = GOLD;
-  ctx.fillText('DOUZE POINTS GO TO', left, y + 148);
+  ctx.fillText('DOUZE POINTS GO TO', left, y + 164);
   ctx.letterSpacing = '0px';
   const song = winner();
-  fit(song ?? 'the song still to be chosen…', textWidth, 32, `600 {size}px ${SANS}`);
+  fit(song ?? 'the song still to be chosen…', textWidth, 42, `600 {size}px ${SANS}`);
   ctx.fillStyle = song ? '#fff' : 'rgb(255 255 255 / .6)';
-  ctx.fillText(song ?? 'the song still to be chosen…', left, y + 186);
+  ctx.fillText(song ?? 'the song still to be chosen…', left, y + 212);
 
   // The Flaky sign: the monster in a circle, with its name under it.
-  const cy = y + 92;
+  const cy = y + 100;
   ctx.fillStyle = 'rgb(255 255 255 / .9)';
   ctx.beginPath();
   ctx.arc(signX, cy, SIGN_RADIUS + 4, 0, Math.PI * 2);
@@ -206,10 +206,10 @@ function lowerThird() {
     ctx.restore();
   }
   ctx.textAlign = 'center';
-  ctx.font = `bold 18px ${SANS}`;
+  ctx.font = `bold 24px ${SANS}`;
   ctx.letterSpacing = '5px';
   ctx.fillStyle = '#fff';
-  ctx.fillText('FLAKY', signX + 3, y + h - 22);
+  ctx.fillText('FLAKY', signX + 3, y + h - 20);
   ctx.letterSpacing = '0px';
 }
 
@@ -354,7 +354,7 @@ async function takePicture() {
   draw();
   refreshFile();
   render();
-  say('Douze points! Download your jury photo, or take another. It also goes with your votes.');
+  say('Douze points! It goes with your votes too.');
   $('photo-download').focus();
 }
 
