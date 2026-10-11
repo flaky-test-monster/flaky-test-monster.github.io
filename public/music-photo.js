@@ -108,7 +108,7 @@ export function nameError() {
 }
 
 /** What to say next to a button when the name is wrong: the reason, and where to fix it. */
-export const nameMessage = (error) => `${error} Fix it at the top, or clear it to go by ${MONSTER_NAME}.`;
+export const nameMessage = (error) => `${error} Fix it on the picture, or clear it to go by ${MONSTER_NAME}.`;
 
 /** Marks the name field as wrong with the message, or clears it with an empty one. */
 function showNameError(message) {
@@ -122,12 +122,13 @@ function showNameError(message) {
 const winner = () => [...document.querySelectorAll('.song-vote select')]
   .find((select) => select.value === '12')?.closest('.song').querySelector('h3').textContent.trim() ?? null;
 
-/** Sets the largest font, up to size, at which text fits in maxWidth. */
+/** Sets the largest font, up to size, at which text fits in maxWidth, and returns that size. */
 function fit(text, maxWidth, size, font) {
   for (; size > 12; size -= 2) {
     ctx.font = font.replace('{size}', size);
-    if (ctx.measureText(text).width <= maxWidth) return;
+    if (ctx.measureText(text).width <= maxWidth) return size;
   }
+  return size;
 }
 
 /** Sets the resolution of the canvas, as a share of the picture's full size. */
@@ -230,9 +231,11 @@ function liveTag() {
 
 /**
  * The lower third: the name, the song that gets the douze points, and the Flaky sign on the
- * right, on a semi-transparent panel.
+ * right, on a semi-transparent panel. On screen the name is the field over the picture, at the
+ * size it fits at; only the photo file has it drawn in.
+ * @param {boolean} withName whether to draw the name, or leave its place to the field
  */
-function lowerThird() {
+function lowerThird(withName) {
   const { x, y, w, h } = PANEL;
   glass(PANEL);
   const left = x + 40;
@@ -241,9 +244,11 @@ function lowerThird() {
 
   ctx.textAlign = 'left';
   const name = juryName();
-  fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
+  const size = fit(name, textWidth, 76, `italic 700 {size}px ${DISPLAY}`);
+  const fontSize = `${(size / W) * 100}cqw`;
+  if ($('jury-name').style.fontSize !== fontSize) $('jury-name').style.fontSize = fontSize;
   ctx.fillStyle = '#fff';
-  ctx.fillText(name, left, y + 92);
+  if (withName) ctx.fillText(name, left, y + 92);
 
   ctx.fillStyle = 'rgb(255 255 255 / .2)';
   ctx.fillRect(left, y + 120, textWidth, 2);
@@ -293,23 +298,38 @@ function refreshFile() {
   const request = ++fileRequest;
   if (!still) return;
   const name = fileName();
-  canvas.toBlob((blob) => {
+  withNameDrawn((blob) => {
     if (blob && request === fileRequest) photoFile = new File([blob], name, { type: 'image/png' });
-  }, 'image/png');
+  });
+}
+
+/**
+ * Makes a PNG of the picture with the name drawn in, then draws it back without, for the screen,
+ * where the field shows the name. toBlob copies the canvas the moment it is called, so the name
+ * is never on screen twice, and calls that overlap each get their own copy.
+ * @param {(blob: Blob | null) => void} callback
+ */
+function withNameDrawn(callback) {
+  draw(true);
+  canvas.toBlob(callback, 'image/png');
+  draw();
 }
 
 /** The jury photo as a PNG file, or null when no picture has been taken. */
 export const juryPhoto = () => photoFile;
 
-/** Draws the whole picture: the live camera, the picture taken, or an empty frame. */
-function draw() {
+/**
+ * Draws the whole picture: the live camera, the picture taken, or an empty frame.
+ * @param {boolean} [withName] draw the name too, for the photo file
+ */
+function draw(withName = false) {
   setScale(still || !stream ? 1 : LIVE_SCALE);
   ctx.clearRect(0, 0, W, H);
   if (still) photo(still, still.width, still.height, stillEyes);
   else if (stream && video.videoWidth) photo(video, video.videoWidth, video.videoHeight, monsterInView() ? eyes : null);
   else photo(null);
   liveTag();
-  lowerThird();
+  lowerThird(withName);
 }
 
 /** Finds the faces in a new camera frame and paints the monster's eyes and tongue on them. */
@@ -459,7 +479,7 @@ async function takePicture() {
 function downloadPhoto() {
   const error = nameError();
   if (error) return say(nameMessage(error));
-  canvas.toBlob((blob) => {
+  withNameDrawn((blob) => {
     if (!blob) return say('The photo could not be saved in this browser.');
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -468,19 +488,15 @@ function downloadPhoto() {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-  }, 'image/png');
+  });
 }
 
 /** Draws the picture again after a change of name or douze points, and remakes its file. */
 function redraw() {
   if (stream) return;
-  draw();
-  refreshFile();
-}
-
-/** How many of the characters the name may have are used, counted as maxlength counts them. */
-function renderCount() {
-  $('jury-name-count').textContent = `${$('jury-name').value.length}/${NAME_MAX}`;
+  // With a picture taken, making its file draws it too.
+  if (still) refreshFile();
+  else draw();
 }
 
 /** Cancels a countdown under way and turns the camera off. */
@@ -492,10 +508,13 @@ function cancelCamera() {
 }
 
 $('jury-name').addEventListener('input', () => {
-  renderCount();
   // Once marked wrong, the field says as soon as it is fine again.
   if ($('jury-name').getAttribute('aria-invalid') === 'true') nameError();
   redraw();
+});
+// Enter, or Done on a phone, is the end of typing the name.
+$('jury-name').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.isComposing) $('jury-name').blur();
 });
 // The douze points are chosen next to the songs; music-vote.js marks the song before this runs.
 document.addEventListener('change', (event) => {
@@ -514,7 +533,6 @@ addEventListener('pagehide', () => {
 document.fonts?.ready.then(redraw);
 
 // The empty field shows the monster name its jury member will go by.
-$('jury-name').placeholder = `${MONSTER_NAME}, or type your name`;
-renderCount();
+$('jury-name').placeholder = MONSTER_NAME;
 draw();
 render();
