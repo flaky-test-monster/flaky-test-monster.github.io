@@ -142,9 +142,10 @@ h2::before { content: "// "; content: "// " / ""; }
 .thanks-list a { display: flex; align-items: center; gap: 5px; padding: 2px 8px 2px 2px; font-size: 0.6875rem; }
 .thanks-list img { border-radius: 50%; background: var(--rule); }
 
-/* Too narrow for text and singer side by side: the singer fades behind the text. */
+/* Too narrow for text and singer side by side: the singer fades behind the text, from the top
+ * and across the whole width (at least 680px wide, so it never shrinks too small on phones). */
 @media (max-width: 960px) {
-  .page::before, .page::after { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; }
+  .page::before, .page::after { width: 100%; mask-image: none; background-size: max(100%, 680px) auto; background-position: 38% 0; }
   .page::before { opacity: .28; }
 }
 @media (max-width: 640px) {
