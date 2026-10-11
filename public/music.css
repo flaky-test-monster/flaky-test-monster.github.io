@@ -73,7 +73,28 @@ h1 .line { display: block; }
 .stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
 .stage-video:fullscreen { cursor: auto; }
-.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: rgb(23 19 14 / .55); pointer-events: none; }
+.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: rgb(23 19 14 / .55); pointer-events: none; transition: opacity .25s; }
+/* The player's controls, over the bottom of the video on a dark fade, each on a see-through chip. */
+.video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: #fff8ed; transition: opacity .25s; }
+.video-button { min-height: 36px; padding: 0 12px; border: 1px solid rgb(255 248 237 / .35); border-radius: 6px; background: rgb(23 19 14 / .55); color: #fff8ed; font-size: 0.8125rem; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.video-button:hover { border-color: #fff8ed; background: rgb(23 19 14 / .75); }
+.video-button:disabled { opacity: .5; cursor: default; border-color: rgb(255 248 237 / .35); background: rgb(23 19 14 / .55); }
+.video-play { border-color: transparent; background: rgb(146 31 26 / .85); }
+.video-play:hover { border-color: transparent; background: rgb(146 31 26); }
+.video-repeat[aria-pressed="true"] { border-color: rgb(255 248 237 / .8); background: rgb(146 31 26 / .55); }
+.video-repeat::before { content: "↻ "; content: "↻ " / ""; }
+.video-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
+.video-time { margin-left: auto; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgb(23 19 14 / .8); }
+/* While the video plays, the controls and the label step out of the way, back on hover or keyboard focus.
+ * On touch screens (no hover), a tap on the video pauses it, and they come back. */
+.stage.playing:not(:has(:focus-visible)) :is(.video-controls, .stage-label) { opacity: 0; pointer-events: none; }
+@media (hover: hover) {
+  .stage.playing:hover :is(.video-controls, .stage-label) { opacity: 1; pointer-events: auto; }
+  .stage.playing:hover .stage-label { pointer-events: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-controls, .stage-label { transition: none; }
+}
 
 button { font: bold 1rem var(--utility); cursor: pointer; }
 .primary { display: block; width: 100%; min-height: 48px; margin: 12px 0; border: 1px solid var(--red); border-radius: 6px; background: var(--red); color: #fff8ed; }
@@ -81,12 +102,8 @@ button { font: bold 1rem var(--utility); cursor: pointer; }
 .secondary { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
 .secondary:hover { border-color: var(--red); color: var(--red); }
 .secondary:disabled { opacity: .5; cursor: default; border-color: var(--border); color: var(--ink); }
-.video-repeat[aria-pressed="true"] { border-color: var(--red); color: var(--red); }
-.video-repeat::before { content: "↻ "; content: "↻ " / ""; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
-.video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .helper { font: 0.75rem/1.6 var(--utility); }
-.video-time { margin-left: auto; font-variant-numeric: tabular-nums; }
 
 .songs { margin-top: 32px; }
 .video { margin-top: 32px; }
@@ -132,7 +149,10 @@ footer p { margin: 8px 0 0; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
   .intro { max-width: 100%; }
-  .video-time { margin-left: 0; width: 100%; }
+  /* Too narrow for one row: the time goes on its own line, above the buttons. */
+  .video-controls { flex-wrap: wrap; gap: 6px; padding: 40px 8px 8px; }
+  .video-time { order: -1; width: 100%; margin-left: 0; }
+  .video-button { min-height: 32px; padding: 0 10px; }
   .song-list { padding: 0 16px; }
   .song:has(.player-controls:not([hidden])) { column-gap: 10px; }
   .song h3 { font-size: 1.0625rem; }

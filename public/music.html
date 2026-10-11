@@ -194,16 +194,17 @@
         <section class="video" aria-labelledby="video-title">
           <h2 id="video-title">Music video</h2>
           <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
-          <div class="stage">
+          <!-- The controls sit over the video and fade out while it plays; hover or keyboard focus brings them back (music.css). -->
+          <div class="stage" id="video-stage">
             <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
             <span class="pill stage-label">Preview</span>
-          </div>
-          <button type="button" id="video-play" class="primary">Play</button>
-          <div class="video-controls">
-            <button type="button" id="video-stop" class="secondary" aria-label="Stop the video">Stop</button>
-            <button type="button" id="video-repeat" class="secondary video-repeat" aria-pressed="true">Repeat</button>
-            <button type="button" id="video-fullscreen" class="secondary">Full screen</button>
-            <span id="video-time" class="helper video-time">0:00 / 0:00</span>
+            <div class="video-controls">
+              <button type="button" id="video-play" class="video-button video-play">Play</button>
+              <button type="button" id="video-stop" class="video-button" aria-label="Stop the video">Stop</button>
+              <button type="button" id="video-repeat" class="video-button video-repeat" aria-pressed="true">Repeat</button>
+              <span id="video-time" class="helper video-time">0:00 / 0:00</span>
+              <button type="button" id="video-fullscreen" class="video-button">Full screen</button>
+            </div>
           </div>
         </section>
 
