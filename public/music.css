@@ -127,7 +127,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .song:has(.player-controls:not([hidden])) > :is(h3, p) { grid-column: 2; }
 .player:has(.player-controls:not([hidden])), .player-controls { display: contents; }
 /* Round play button; the icon is drawn here, so it can switch to pause while the song plays. */
-.song-play { display: grid; grid-column: 1; grid-row: 1 / span 2; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--red); border-radius: 50%; background: transparent; color: var(--red); transition: background .15s, color .15s; }
+.song-play { display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: start; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--red); border-radius: 50%; background: transparent; color: var(--red); transition: background .15s, color .15s; }
 .song-play::before, .video-play::before { content: ''; width: 12px; height: 14px; margin-left: 3px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 .song-play:hover, .song.playing .song-play { background: var(--red); color: #fff8ed; }
 .song.playing .song-play::before, .stage.playing .video-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
@@ -136,9 +136,10 @@ h2::before { content: "// "; content: "// " / ""; }
 
 /* Thanks: the people behind it, the GitHub ones as small avatar chips. */
 .thanks { margin-top: 32px; }
-.thanks p { font-size: 0.875rem; max-width: 580px; }
-.thanks-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.thanks-list a { display: flex; align-items: center; gap: 6px; padding-block: 3px; padding-left: 3px; }
+.thanks p { font-size: 0.875rem; }
+/* Small chips, so the whole list fits in a few lines: a 16px avatar and the GitHub name. */
+.thanks-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.thanks-list a { display: flex; align-items: center; gap: 5px; padding: 2px 8px 2px 2px; font-size: 0.6875rem; }
 .thanks-list img { border-radius: 50%; background: var(--rule); }
 
 
@@ -151,8 +152,7 @@ h2::before { content: "// "; content: "// " / ""; }
   .site-bar, .masthead { gap: 10px; }
   .mascot { width: 44px; height: 44px; }
   .site-nav { gap: 6px; }
-  .site-nav a, .thanks-list a { padding: 4px 10px; }
-  .thanks-list a { padding-block: 2px; padding-left: 2px; }
+  .site-nav a { padding: 4px 10px; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
   .intro { max-width: 100%; }
@@ -284,14 +284,18 @@ h2::before { content: "// "; content: "// " / ""; }
 .photo-take:not(:disabled):hover { border-color: #fff8ed; background: var(--scrim); }
 .photo-take:not(:disabled):hover::before { background: var(--red-hover); }
 .photo-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
-/* The name comes first, right under "You are the jury", across the full width. */
-.photo-name { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; padding: 12px 24px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-.photo-field { display: flex; justify-content: space-between; font: bold 0.75rem var(--utility); }
-.photo-count { color: var(--muted); font-weight: normal; font-variant-numeric: tabular-nums; }
-.photo-name input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 1rem var(--body); }
-.photo-name input[aria-invalid="true"] { border: 2px solid var(--red); }
+/* The name, typed right on the picture: over the name's place in the lower third, in its white
+ * italic, so it reads as the picture itself. Its place is the panel's in music-photo.js (PANEL),
+ * as a share of the 1600 × 900 picture; music-photo.js sets the size the name fits at. */
+.photo-stage { container-type: inline-size; }
+.photo-name { position: absolute; left: 5.5%; top: 70.2%; width: 47%; height: 10.9%; margin: 0; padding: 0; border: 0; border-bottom: 1px dashed rgb(255 255 255 / .45); border-radius: 4px 4px 0 0; background: transparent; color: #fff; font: italic 700 4.75cqw/1 var(--display); text-overflow: ellipsis; cursor: text; }
+.photo-name::placeholder { color: #fff; opacity: 1; }
+.photo-name:hover, .photo-name:focus { background: rgb(255 255 255 / .1); }
+.photo-name:focus { outline: 2px solid #fff8ed; outline-offset: 0; }
+.photo-name[aria-invalid="true"] { border-bottom: 2px solid #ff5a7a; }
 .field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
 .field-error::before { content: "! "; content: "! " / ""; }
+.photo .field-error { margin-top: 8px; }
 .photo-status { margin: 8px 0 0; color: var(--muted); }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
 .photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
@@ -302,5 +306,4 @@ h2::before { content: "// "; content: "// " / ""; }
   .photo-actions .video-button { width: 36px; height: 36px; }
   .photo-take { width: 44px; height: 44px; }
   .photo-take::before { width: 28px; height: 28px; }
-  .photo-name { padding: 10px 16px 12px; }
 }

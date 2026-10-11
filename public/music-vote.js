@@ -77,15 +77,14 @@ function say(message) {
   status.textContent = message;
 }
 
-// Enter in a text field, such as the name, should not send the votes by email: only the button does.
-form.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.isComposing && event.target.matches('input')) event.preventDefault();
-});
-
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const error = nameError();
-  if (error) return say(nameMessage(error));
+  if (error) {
+    // The field is on the jury photo, further down: go there, where its error shows too.
+    $('jury-name').focus();
+    return say(nameMessage(error));
+  }
   const body = ballot();
   if (!body) return say('Give at least one song some points first: the choice is next to each song.');
   // mailto: wants CRLF line breaks (RFC 6068) and %20, not +, for spaces.
