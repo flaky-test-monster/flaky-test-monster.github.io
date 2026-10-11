@@ -337,7 +337,13 @@ How it stays safe, with only a static page and the public anon key in the browse
 Setup:
 
 1. Create a Supabase project. In **Authentication → Sign In / Providers**, turn on
-   **Allow anonymous sign-ins**.
+   **Allow anonymous sign-ins**. Use a project of its own for the vote: anonymous sign-ins
+   are for the whole project, and anonymous users get the `authenticated` role, so any
+   existing policy written `to authenticated` would let any visitor in. If you share a
+   project, check those policies for `(auth.jwt() ->> 'is_anonymous')::boolean`.
+   Supabase limits new anonymous users to 30 an hour per IP address by default. If many
+   juries vote from one network, such as a party's Wi-Fi, raise it under
+   **Authentication → Rate Limits**.
 2. Run `supabase/migrations/20261011000000_music_votes.sql` in the SQL editor (or
    `supabase db push`). It can be run again; it upserts the songs. A song's id is the
    `data-song` attribute of its list item on the music page, so add new songs to both.

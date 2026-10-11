@@ -73,7 +73,7 @@ set search_path = ''
 as $$
 declare
   me uuid := auth.uid();
-  clean_jury text := btrim(regexp_replace(coalesce(jury, ''), '[[:cntrl:][:space:]]+', ' ', 'g'));
+  clean_jury text;
   last_cast timestamptz;
 begin
   if me is null then
@@ -85,6 +85,14 @@ begin
   if votes is null or jsonb_typeof(votes) <> 'object' or votes = '{}'::jsonb then
     raise exception 'Give at least one song some points.';
   end if;
+  -- Oversized input is turned away before any work is done on it.
+  if (select count(*) from jsonb_object_keys(votes)) > 10 then
+    raise exception 'Points are 12, 10, 8, 7, 6, 5, 4, 3, 2 or 1, each to one song only.';
+  end if;
+  if char_length(jury) > 200 then
+    raise exception 'The jury name is too long: 60 characters at most.';
+  end if;
+  clean_jury := btrim(regexp_replace(coalesce(jury, ''), '[[:cntrl:][:space:]]+', ' ', 'g'));
   if char_length(clean_jury) > 60 then
     raise exception 'The jury name is too long: 60 characters at most.';
   end if;
