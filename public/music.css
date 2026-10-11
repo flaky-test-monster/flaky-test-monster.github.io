@@ -13,6 +13,8 @@
   --rule: rgb(86 71 53 / .22);
   /* Pills and fields over the singer. */
   --veil: rgb(245 234 213 / .85);
+  /* Lettering on red and on the dark glass over pictures, the same in the Klingon version. */
+  --cream: #fff8ed;
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
@@ -34,8 +36,8 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
 .page { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; }
 /* Decorative: the parchment, the red disk and the singer on the right; the left stays free for text.
  * Capped and kept at the right edge on wide screens, so the singer does not outgrow the page;
- * its left edge fades into the plain paper. */
-.page::before {
+ * its left edge fades into the plain paper. The Klingon singer (::after) lies over it, framed the same. */
+.page::before, .page::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -43,10 +45,11 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
   right: 0;
   bottom: 0;
   width: min(100%, 1400px);
-  background: url('media/music-background.jpg') top right / 100% auto no-repeat;
+  background: top right / 100% auto no-repeat;
   mask-image: linear-gradient(to right, transparent, #000 20%);
   pointer-events: none;
 }
+.page::before { background-image: url('media/music-background.jpg'); }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 56px 0 40px; }
 /* Header: one compact row, shaped like the start page's: the monster in a circle and the
  * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
@@ -55,7 +58,7 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
 /* Pill links: the pages here, and the people under Thanks. */
 .site-nav a, .thanks-list a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
 .site-nav a:hover, .thanks-list a:hover { border-color: var(--red); color: var(--red); }
-.site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: #fff8ed; }
+.site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: var(--cream); }
 .masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
 .mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
 .masthead:hover .mascot { border-color: var(--ink); }
@@ -64,32 +67,32 @@ em { color: var(--red); }
 /* Links in the text, visited or not, in the oxblood of the lettering. */
 a { color: var(--red); }
 .pill { border: 1px solid currentColor; border-radius: 999px; padding: 5px 12px; font: 0.75rem var(--utility); }
-/* Under the title, in the hero, which already keeps to the left half. */
-.intro { margin-top: 16px; font-size: 0.875rem; max-width: 580px; }
+/* The text under the title and under each section's heading, across the width of its column. */
+.intro, .thanks p { font-size: 0.875rem; }
 .hero { width: 52%; padding: 36px 0 22px; }
 h1 { font: italic 900 clamp(3.375rem, 8.8vw, 6.625rem)/.88 var(--display); letter-spacing: -.06em; margin: 0 0 20px; }
 /* One word per line, without <br>, so screen readers still hear the spaces. */
 h1 .line { display: block; }
 .subtitle { font-size: clamp(1.0625rem, 2vw, 1.4375rem); font-weight: bold; line-height: 1.25; }
 
-/* The video sits in the frame the design kit draws around the camera. */
-.stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+/* The video and the jury photo sit in the frame the design kit draws around the camera,
+ * with dark glass for what lies over the picture. */
+.stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
+.stage :focus-visible { outline-color: var(--cream); outline-offset: 2px; }
 .stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
 .stage-video:fullscreen { cursor: auto; }
-.stage-label { position: absolute; left: 12px; top: 12px; color: #fff8ed; background: var(--scrim); pointer-events: none; transition: opacity .25s; }
+.stage-label { position: absolute; left: 12px; top: 12px; color: var(--cream); background: var(--scrim); pointer-events: none; transition: opacity .25s; }
 /* The player's controls, over the bottom of the video on a dark fade: round see-through buttons
  * like the songs' play button, which they share the play and pause icon with. */
-.stage { --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
-.video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: #fff8ed; transition: opacity .25s; pointer-events: none; }
+.video-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 32px 12px 12px; background: linear-gradient(transparent, rgb(23 19 14 / .75)); color: var(--cream); transition: opacity .25s; pointer-events: none; }
 /* Only the buttons take clicks: the rest of the strip passes them to the video, which plays on a click. */
 .video-controls > button { pointer-events: auto; }
-.video-button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--glass-edge); border-radius: 50%; background: var(--scrim); color: #fff8ed; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .15s, border-color .15s; }
+.video-button { display: grid; flex: none; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--glass-edge); border-radius: 50%; background: var(--scrim); color: var(--cream); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .15s, border-color .15s; }
 .video-button:not(:disabled):hover { border-color: var(--red); background: var(--red); }
 .video-button:disabled { opacity: .5; cursor: default; }
 .video-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .video-play, .video-repeat[aria-pressed="true"] { border-color: var(--red); background: var(--glass-red); }
 .video-stop::before { content: ''; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
-.video-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
 /* Full screen on the right, apart from the playing buttons. */
 .video-fullscreen { margin-left: auto; }
 /* While the video plays, the controls and the label step out of the way, back on hover or keyboard focus.
@@ -102,17 +105,14 @@ h1 .line { display: block; }
 }
 
 button { font: bold 1rem var(--utility); cursor: pointer; }
-.primary { display: block; width: 100%; min-height: 48px; margin: 12px 0; border: 1px solid var(--red); border-radius: 6px; background: var(--red); color: #fff8ed; }
+.primary { display: block; width: 100%; min-height: 48px; border: 1px solid var(--red); border-radius: 6px; background: var(--red); color: var(--cream); }
 .primary:hover { background: var(--red-hover); }
-.secondary { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
-.secondary:hover { border-color: var(--red); color: var(--red); }
-.secondary:disabled { opacity: .5; cursor: default; border-color: var(--border); color: var(--ink); }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
-.helper { font: 0.75rem/1.6 var(--utility); }
+/* Notes and live status lines, small and muted. */
+.helper { color: var(--muted); font: 0.75rem/1.6 var(--utility); }
 
-.songs { margin-top: 32px; }
-.video { margin-top: 32px; }
-.video-note { margin: -4px 0 12px; color: var(--muted); }
+.songs, .photo, .video, .thanks { margin-top: 32px; }
+.video-note { margin: -4px 0 12px; }
 h2 { font: bold 0.875rem var(--utility); letter-spacing: .12em; text-transform: uppercase; }
 /* Decoration: the empty alt text keeps screen readers from reading out the slashes. */
 h2::before { content: "// "; content: "// " / ""; }
@@ -132,22 +132,20 @@ h2::before { content: "// "; content: "// " / ""; }
 /* Round play button; the icon is drawn here, so it can switch to pause while the song plays. */
 .song-play { display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: start; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--red); border-radius: 50%; background: transparent; color: var(--red); transition: background .15s, color .15s; }
 .song-play::before, .video-play::before { content: ''; width: 12px; height: 14px; margin-left: 3px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
-.song-play:hover, .song.playing .song-play { background: var(--red); color: #fff8ed; }
+.song-play:hover, .song.playing .song-play { background: var(--red); color: var(--cream); }
 .song.playing .song-play::before, .stage.playing .video-play::before { margin: 0; clip-path: none; background: linear-gradient(to right, currentColor 0 4px, transparent 4px 8px, currentColor 8px); }
 .song-play:disabled { border-color: var(--rule); color: var(--muted); background: transparent; cursor: default; }
 
 /* Thanks: the people behind it, the GitHub ones as small avatar chips. */
-.thanks { margin-top: 32px; }
-.thanks p { font-size: 0.875rem; }
 /* Small chips, so the whole list fits in a few lines: a 16px avatar and the GitHub name. */
 .thanks-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .thanks-list a { display: flex; align-items: center; gap: 5px; padding: 2px 8px 2px 2px; font-size: 0.6875rem; }
 .thanks-list img { border-radius: 50%; background: var(--rule); }
 
-
 /* Too narrow for text and singer side by side: the singer fades behind the text. */
 @media (max-width: 960px) {
-  .page::before { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; opacity: .28; }
+  .page::before, .page::after { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; }
+  .page::before { opacity: .28; }
 }
 @media (max-width: 640px) {
   .container { width: calc(100% - 32px); padding-top: 32px; }
@@ -157,7 +155,6 @@ h2::before { content: "// "; content: "// " / ""; }
   .site-nav a { padding: 4px 10px; }
   .hero { width: 100%; padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
-  .intro { max-width: 100%; }
   .video-controls { gap: 6px; padding: 24px 8px 8px; }
   .song-list { padding: 0 16px; }
   .song:has(.player-controls:not([hidden])) { column-gap: 10px; }
@@ -168,18 +165,15 @@ h2::before { content: "// "; content: "// " / ""; }
  * The points take the song row's third column, level with the title, in the red of the links;
  * a song that has points is filled red, and the 12 points stand out a little more. */
 .song-vote { grid-column: 3; grid-row: 1; justify-self: end; font: bold 0.75rem var(--utility); }
-.song-vote label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .song-vote select { min-height: 36px; padding: 0 10px; border: 2px solid var(--red); border-radius: 999px; background: var(--paper); color: var(--red); font: bold 0.875rem var(--utility); cursor: pointer; }
 .song-vote select:hover { border-color: var(--red-hover); color: var(--red-hover); }
-.song-voted .song-vote select { background: var(--red); color: #fff8ed; }
-.song-voted .song-vote select:hover { border-color: var(--red-hover); background: var(--red-hover); color: #fff8ed; }
+.song-voted .song-vote select { background: var(--red); color: var(--cream); }
+.song-voted .song-vote select:hover { background: var(--red-hover); color: var(--cream); }
 .song-top .song-vote select { box-shadow: 0 0 0 3px rgb(146 31 26 / .25); font-size: 1rem; }
 .song-vote select option { background: var(--paper); color: var(--ink); }
-.songs-intro { font-size: 0.875rem; max-width: 580px; }
 /* The vote, under the songs: send, and what happened. */
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.vote-form .primary { margin: 0; }
-.vote-status { display: block; margin: 0; color: var(--muted); }
+.vote-status { display: block; margin: 0; }
 /* Narrow: the points stay beside the title, the note takes the width under it. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
@@ -216,21 +210,8 @@ h2::before { content: "// "; content: "// " / ""; }
   --rule: rgb(241 230 210 / .18);
   --veil: rgb(16 12 10 / .7);
 }
-/* The Klingon singer lies over the parchment one, framed the same, and fades in with the colours. */
-.page::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(100%, 1400px);
-  background: url('media/music-background-klingon.jpg') top right / 100% auto no-repeat;
-  mask-image: linear-gradient(to right, transparent, #000 20%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--fade);
-}
+/* The Klingon singer fades in with the colours. */
+.page::after { background-image: url('media/music-background-klingon.jpg'); opacity: 0; transition: opacity var(--fade); }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: 1; }
 /* The title and subtitle fade to their Klingon twins. Both share one grid cell, so the
  * longer of the two sets the height and nothing below jumps. */
@@ -240,7 +221,6 @@ h2::before { content: "// "; content: "// " / ""; }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-usual { opacity: 0; }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-klingon { opacity: 1; }
 @media (max-width: 960px) {
-  .page::after { width: 100%; mask-image: none; background-size: auto 850px; background-position: 38% 130px; }
   /* Faint behind the text, like the parchment singer, which gives way to it. */
   .page::before { transition: opacity var(--fade); }
   :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::before { opacity: 0; }
@@ -258,47 +238,38 @@ h2::before { content: "// "; content: "// " / ""; }
   .video-controls, .stage-label, .video-button, .song-play, .photo-take::before { transition: none; }
 }
 
-/* The jury photo, compact: drawn on a canvas, wide like a webcam picture, with its buttons in
- * a narrow column beside it, under it on narrow screens. */
-.photo { margin-top: 32px; }
-.photo-intro { font-size: 0.875rem; max-width: 580px; }
-/* The frame and the glass of the video's stage, at the video's width, with its round buttons. */
-.photo-stage { box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
+/* The jury photo: drawn on a canvas, wide like a webcam picture, in the video's frame and glass,
+ * with its round buttons over the picture. */
+.photo-stage { container-type: inline-size; box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
 .photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); -webkit-touch-callout: none; }
 /* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
-.photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: rgb(146 31 26 / .85); color: #fff8ed; font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
+.photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: var(--glass-red); color: var(--cream); font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
 .photo-start::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 0 3px rgb(255 90 122 / .3); }
 .photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
-.photo-start:focus-visible { outline-color: #fff8ed; }
-.photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
+.photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: var(--cream); background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
 /* Bottom right, beside the name panel the canvas draws on the left (music-photo.js). */
 .photo-controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; }
 .photo-actions { display: flex; gap: 8px; }
-/* The round buttons are grids, which would otherwise show through hidden. */
-.photo-controls [hidden] { display: none; }
 .photo-download { border-color: var(--red); background: var(--glass-red); }
 /* The shutter: a bigger round button with a red dot, which shrinks while the countdown runs. */
-.photo-take { width: 56px; height: 56px; border-width: 3px; border-color: #fff8ed; }
+.photo-take { width: 56px; height: 56px; border-width: 3px; border-color: var(--cream); }
 .photo-take::before { content: ''; width: 38px; height: 38px; border-radius: 50%; background: var(--red); transition: scale .15s; }
 .photo-take:disabled { opacity: 1; }
 .photo-take:disabled::before { scale: .6; }
-.photo-take:not(:disabled):hover { border-color: #fff8ed; background: var(--scrim); }
+.photo-take:not(:disabled):hover { border-color: var(--cream); background: var(--scrim); }
 .photo-take:not(:disabled):hover::before { background: var(--red-hover); }
-.photo-controls :focus-visible { outline-color: #fff8ed; outline-offset: 2px; }
 /* The name, typed right on the picture: over the name's place in the lower third, in its white
  * italic, so it reads as the picture itself. Its place is the panel's in music-photo.js (PANEL),
  * as a share of the 1600 × 900 picture; music-photo.js sets the size the name fits at. */
-.photo-stage { container-type: inline-size; }
 .photo-name { position: absolute; left: 5.5%; top: 70.2%; width: 47%; height: 10.9%; margin: 0; padding: 0; border: 0; border-bottom: 1px dashed rgb(255 255 255 / .45); border-radius: 4px 4px 0 0; background: transparent; color: #fff; font: italic 700 4.75cqw/1 var(--display); text-overflow: ellipsis; cursor: text; }
 /* The monster name, until one is typed: a little faded, with a pencil, so it reads as editable. */
 .photo-name::placeholder { color: #fff; opacity: .7; }
 .photo-name:hover, .photo-name:focus { background: rgb(255 255 255 / .1); }
-.photo-name:focus { outline: 2px solid #fff8ed; outline-offset: 0; }
+.photo-name:focus { outline: 2px solid var(--cream); outline-offset: 0; }
 .photo-name[aria-invalid="true"] { border-bottom: 2px solid #ff5a7a; }
-.field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
+.field-error { margin: 8px 0 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
 .field-error::before { content: "! "; content: "! " / ""; }
-.photo .field-error { margin-top: 8px; }
-.photo-status { margin: 8px 0 0; color: var(--muted); }
+.photo-status { margin: 8px 0 0; }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
 .photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
 @media (max-width: 640px) {

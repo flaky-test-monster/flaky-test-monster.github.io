@@ -24,10 +24,8 @@ function buildVotes() {
     vote.className = 'song-vote';
     const label = document.createElement('label');
     label.htmlFor = `vote-song-${index}`;
-    const hidden = document.createElement('span');
-    hidden.className = 'visually-hidden';
-    hidden.textContent = ` for ${songs[index]}`;
-    label.append('Points', hidden);
+    label.className = 'visually-hidden';
+    label.textContent = `Points for ${songs[index]}`;
     const select = document.createElement('select');
     select.id = `vote-song-${index}`;
     select.name = `song-${index}`;
