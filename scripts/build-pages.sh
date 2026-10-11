@@ -28,4 +28,7 @@ grep -q 'data-backend="none"' _site/index.html
 # The music page needs no backend.
 npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
   --minify-css true public/music.html > _site/music.html
+# Nor does the about page.
+npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+  --minify-css true public/about.html > _site/about.html
 touch _site/.nojekyll

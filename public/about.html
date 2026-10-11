@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About the Flaky Test Monster · flakifier</title>
+  <meta name="description" content="Where the Flaky Test Monster comes from: a joke in the Slack channel of the Kibana Discover team, which became a 3D-printed monster and an exhibit at the Happylab 20th anniversary in Vienna.">
+  <meta name="theme-color" content="#f5ead5">
+  <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/about.css">
+</head>
+<body>
+  <div class="container">
+    <header class="site-bar">
+      <a class="masthead" href="./" aria-label="flakifier: back to the start">
+        <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
+        <span class="wordmark">The <em>Flaky</em> Test Monster</span>
+      </a>
+      <nav class="site-nav" aria-label="Pages">
+        <a href="./">flakifier</a>
+        <a href="music.html">music</a>
+        <a href="about.html" aria-current="page">about</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div class="hero-text">
+          <h1 id="title">Where the <em>monster</em> comes from</h1>
+          <p class="subtitle">Born as a joke in a Slack channel, now 3D printed and on exhibition in Vienna.</p>
+        </div>
+        <img class="hero-photo" src="public/media/about/monster-chef.jpg" width="1594" height="1600" alt="The green 3D-printed Flaky Test Monster, with spiky black hair and big teeth, sits in the blue bowl of a little robot chef with a red hat.">
+      </section>
+
+      <section class="tldr" aria-labelledby="tldr-title">
+        <h2 id="tldr-title">TL;DR</h2>
+        <p>The Flaky Test Monster started as a joke in the Slack channel of the team that works on <strong>Discover</strong>, the part of Kibana where you explore your data, around the Kibana 8.11 and 8.12 releases. Somebody had to be making all those flaky tests, so the team gave the culprit a face. It never left. Around Kibana 9.5 it was 3D printed, and in October 2026 it moved into the physical world for good: as an exhibit at the <strong>Happylab</strong> makerspace’s 20th anniversary in Vienna. This app, flakifier, turns you into one, too.</p>
+      </section>
+
+      <section class="explainer" aria-labelledby="flaky-title">
+        <h2 id="flaky-title">What is a flaky test?</h2>
+        <p>Software teams check every change with automated tests, run on a <strong>CI</strong> (continuous integration) system: the quality control of software engineering. A test is <strong>flaky</strong> when it sometimes passes and sometimes fails <em>on the same code</em>. Nothing changed, yet the result did. Typical causes are timing (the test clicks a button before the page has finished loading), tests that depend on each other’s leftovers, a slow network or a busy CI machine.</p>
+        <p>A flaky test rarely says why it failed. Rerun it and it passes. At a certain scale every CI setup has some; scale up a bit further and they are part of daily life: failures to investigate, tests to skip and unskip, releases held up by a red build that turns green on retry. Eventually you start wondering whether your CI pipeline is haunted… or whether a little goblin somewhere is handcrafting flaky tests with love.</p>
+        <p class="aside">Passed locally, failed on CI.</p>
+      </section>
+
+      <section class="timeline-section" aria-labelledby="timeline-title">
+        <h2 id="timeline-title">Timeline</h2>
+        <ol class="timeline">
+          <li class="event">
+            <p class="when">27 October 2023 · Kibana 8.11 / 8.12</p>
+            <h3>A suspect in the Slack channel</h3>
+            <p>A teammate notices that while a colleague was on holiday, no new flaky tests came in, and now that they are back… <q>starting to think <em>you</em> might be the flaky test monster.</q> Less than an hour later, an AI-generated picture of the culprit lands in the channel: <q>Caught in the act!</q> The monster has a face.</p>
+            <figure class="photos photos-1">
+              <img src="public/media/about/slack-caught-in-the-act.jpg" width="1020" height="1017" loading="lazy" alt="Slack messages from 27 October 2023: “hmm I notice when you were on holiday we got no new flaky tests, and now that you’re back starting to think you might be the flaky test monster”, then “Caught in the act!” with a picture of a furry green monster with wild black hair, laughing.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">Wanted: 8.12 or 8.11</p>
+            <h3>From pixels to plastic</h3>
+            <p>The joke stays. The monster gets a wanted poster, <q>skipped or unskipped</q>, and then a body: green, square, with spiky black hair, googly eyes and a mouth full of teeth, printed layer by layer.</p>
+            <figure class="photos photos-2">
+              <img src="public/media/about/wanted-poster.jpg" width="720" height="480" loading="lazy" alt="Holding up a wanted poster, “Wanted, skipped or unskipped, Flaky Test Monster, 8.12 or 8.11”, next to the green 3D-printed monster.">
+              <img src="public/media/about/first-print.jpg" width="1596" height="1600" loading="lazy" alt="The 3D-printed Flaky Test Monster from the front: a green box body with arms, white eyes, black spiky hair and white teeth around a red mouth.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">On tour</p>
+            <h3>The monster finds friends and travels</h3>
+            <p>Together with a little robot chef and a crocheted red ball, the monster sees the sea, the mountains and a sunset. Flaky tests travel well.</p>
+            <figure class="photos photos-wide">
+              <img src="public/media/about/seaside-trio.jpg" width="1600" height="800" loading="lazy" alt="The monster, painted and weathered, a crocheted red ball and the robot chef sit on rocks by the sea.">
+              <img src="public/media/about/mountains.jpg" width="1600" height="800" loading="lazy" alt="The three friends, out of focus, look out at grey limestone mountains under clouds.">
+              <img src="public/media/about/sunset.jpg" width="1600" height="800" loading="lazy" alt="The three friends, seen from behind, watch the sunset from a rock.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">More figures</p>
+            <h3>The team, in resin</h3>
+            <p>The monster gets company from the people it keeps busy. GitHub avatars turn into resin figures, and teammates turn into garden gnomes.</p>
+            <figure class="photos photos-2">
+              <img src="public/media/about/github-avatar.jpg" width="1039" height="1034" loading="lazy" alt="A GitHub profile whose avatar is a penguin with a tiara and a bow tie.">
+              <img src="public/media/about/resin-figures.jpg" width="1593" height="1600" loading="lazy" alt="Grey resin figures on a table; in front, the penguin in armour on a base named after its owner.">
+            </figure>
+            <figure class="photos photos-wide">
+              <img src="public/media/about/gnome-selfie.jpg" width="1600" height="800" loading="lazy" alt="A selfie with a grey resin garden gnome with sunglasses and a walking stick, modelled on the person holding it.">
+              <img src="public/media/about/gnomes.jpg" width="1600" height="800" loading="lazy" alt="Four resin garden gnomes with sunglasses, each modelled on a teammate, next to a bottle opener.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">Vienna</p>
+            <h3>Hasta la vista, flaky test</h3>
+            <p>Some tests are hard to kill. The monster gets a leather jacket, a red eye and a minigun, and a Terminator turns up at a Vienna U3 station.</p>
+            <figure class="photos photos-2">
+              <img src="public/media/about/terminator-u3.jpg" width="1057" height="1054" loading="lazy" alt="Vintage-style photo at the entrance of a Vienna U3 underground station, with a Terminator lookalike in a leather jacket in the background.">
+              <img src="public/media/about/terminator-monster.jpg" width="1595" height="1600" loading="lazy" alt="The monster as the Terminator, with leather jacket, sunglasses, a red eye and a minigun, next to a grey figure in a cap and glasses.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">The team</p>
+            <h3>Everybody gets the eyes</h3>
+            <p>By now the monster is part of the team, and the team is a little bit monster.</p>
+            <figure class="photos photos-1 photos-wide">
+              <img src="public/media/about/team-googly-eyes.jpg" width="1600" height="800" loading="lazy" alt="Black and white group photo of a team with conference lanyards, everyone wearing the monster’s big googly eyes.">
+            </figure>
+          </li>
+          <li class="event event-now">
+            <p class="when">October 2026 · Kibana 9.5</p>
+            <h3>The monster moves into Happylab</h3>
+            <p>On 9 October the goblin from the CI pipeline entered the physical world, as one of the makers’ exhibits at the 20th anniversary of the <strong>Happylab</strong> makerspace in Vienna. Last Saturday was the party. Maybe the monster stays at Happylab, and that solves the flaky test problem?</p>
+            <figure class="photos photos-3">
+              <img src="public/media/about/happylab-maker-2.jpg" width="582" height="582" loading="lazy" alt="Portrait of a Happylab maker in a yellow shirt.">
+              <img src="public/media/about/happylab-maker-1.jpg" width="582" height="582" loading="lazy" alt="Portrait of a Happylab maker with glasses.">
+              <img src="public/media/about/happylab-maker-3.jpg" width="345" height="704" loading="lazy" alt="Portrait of a Happylab maker holding a small device in front of a circuit-board mural.">
+            </figure>
+            <figure class="photos photos-1">
+              <img src="public/media/about/monster-and-makers.jpg" width="1596" height="1600" loading="lazy" alt="The green monster with grey resin figures of the makers: two stand beside it, one lies at its feet.">
+            </figure>
+          </li>
+          <li class="event event-next">
+            <p class="when">Kibana 9.6+</p>
+            <h3>Next</h3>
+            <p>Still very much alive, and looking forward to all the exciting new opportunities to make tests flaky. Meanwhile, <a href="./">turn yourself into a monster</a> or <a href="music.html">help it find a country for the Eurovision Song Contest</a>.</p>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <footer>
+      <a class="back" href="./"><span aria-hidden="true">← </span>Back to flakifier</a>
+      <p>Born in Happylab</p>
+    </footer>
+  </div>
+</body>
+</html>

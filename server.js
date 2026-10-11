@@ -284,6 +284,11 @@ async function serveMusic(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'music.html'), STATIC_TYPES['.html']);
 }
 
+/** GET /about.html */
+async function serveAbout(req, res) {
+  await sendFile(res, path.join(PUBLIC_DIR, 'about.html'), STATIC_TYPES['.html']);
+}
+
 /** GET /public/* */
 async function serveStatic(req, res, url, [, relative]) {
   const filePath = path.resolve(PUBLIC_DIR, relative);
@@ -374,6 +379,7 @@ async function jobFileRoute(req, res, url, [, id, name]) {
 const ROUTES = [
   { pattern: /^\/$/, handlers: { GET: serveIndex } },
   { pattern: /^\/music\.html$/, handlers: { GET: serveMusic } },
+  { pattern: /^\/about\.html$/, handlers: { GET: serveAbout } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },
   { pattern: /^\/api\/figures$/, handlers: { GET: listFiguresRoute } },
   { pattern: /^\/api\/pipelines$/, handlers: { GET: listPipelinesRoute } },
