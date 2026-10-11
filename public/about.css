@@ -1,5 +1,5 @@
 /* The about page: black and white, like a newspaper. The photos are black and white too,
- * except for green, which belongs to the monster: the only colour on the page. */
+ * except for the monster's green and red: the only colours on the page. */
 :root {
   color-scheme: light dark;
   --paper: #fff;
