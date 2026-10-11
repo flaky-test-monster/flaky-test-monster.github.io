@@ -16,7 +16,7 @@ function clock(seconds) {
 function render() {
   const playing = !video.paused && !video.ended;
   $('video-stage').classList.toggle('playing', playing);
-  $('video-play').textContent = playing ? 'Pause' : 'Play';
+  $('video-play').title = playing ? 'Pause' : 'Play';
   $('video-play').setAttribute('aria-label', playing ? 'Pause the video' : 'Play the video');
   $('video-stop').disabled = video.currentTime === 0 && !playing;
   $('video-repeat').setAttribute('aria-pressed', String(video.loop));
