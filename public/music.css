@@ -148,15 +148,10 @@ footer p { margin: 8px 0 0; }
 .song-top .song-vote select { box-shadow: 0 0 0 3px rgb(146 31 26 / .25); font-size: 1rem; }
 .song-vote select option { background: var(--paper); color: var(--ink); }
 .songs-intro { font-size: 0.875rem; max-width: 580px; }
-.vote { margin-top: 32px; }
-.vote-intro { font-size: 0.875rem; max-width: 580px; }
-.vote-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 12px; font: bold 0.8125rem var(--utility); }
-.vote-field input { flex: 1 1 220px; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 0.875rem var(--body); }
-.vote-status { min-height: 1.6em; margin: 8px 0 0; color: var(--muted); }
-.vote-copy-field { display: block; margin-top: 8px; font: bold 0.75rem var(--utility); }
-.vote-copy-field[hidden] { display: none; }
-.vote-text { display: block; width: 100%; margin-top: 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: 0.8125rem/1.5 var(--utility); resize: vertical; }
-.vote-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The vote, under the songs: send, and what happened. */
+.vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.vote-form .primary { margin: 0; }
+.vote-status { margin: 0; color: var(--muted); }
 /* Narrow: the points stay beside the title, the note takes the width under it, then the time. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
@@ -226,4 +221,38 @@ footer p { margin: 8px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
+}
+
+/* The jury photo, compact: drawn on a canvas, wide like a webcam picture, with its buttons in
+ * a narrow column beside it, under it on narrow screens. */
+.photo { margin-top: 32px; }
+.photo-intro { font-size: 0.875rem; max-width: 580px; }
+.photo-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; }
+.photo-stage { position: relative; flex: none; width: min(100%, 640px); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgb(23 19 14 / .16); }
+.photo-canvas { display: block; width: 100%; height: auto; background: var(--ink); }
+/* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
+.photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: rgb(146 31 26 / .85); color: #fff8ed; font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
+.photo-start::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 0 3px rgb(255 90 122 / .3); }
+.photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
+.photo-start:focus-visible { outline-color: #fff8ed; }
+.photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: #fff8ed; background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
+.photo-controls { display: flex; flex: 1 1 220px; flex-direction: column; gap: 8px; max-width: 320px; }
+/* The name comes first, right under "You are the jury", across the full width. */
+.photo-name { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; padding: 12px 24px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.photo-field { display: flex; justify-content: space-between; font: bold 0.75rem var(--utility); }
+.photo-count { color: var(--muted); font-weight: normal; font-variant-numeric: tabular-nums; }
+.photo-name input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 1rem var(--body); }
+.photo-name input[aria-invalid="true"] { border: 2px solid var(--red); }
+.field-error { margin: 0; color: var(--red); font: bold 0.75rem/1.5 var(--utility); }
+.field-error::before { content: "! "; content: "! " / ""; }
+.photo-controls .secondary { min-height: 36px; }
+.photo-actions { display: flex; gap: 8px; }
+.photo-actions > * { flex: 1; padding: 0 8px; }
+.photo-status { margin: 0; color: var(--muted); }
+/* Live regions stay in the page, but take no room while they have nothing to say. */
+.photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
+@media (max-width: 640px) {
+  .photo-stage { width: 100%; }
+  .photo-controls { max-width: none; }
+  .photo-name { padding: 10px 16px 12px; }
 }
