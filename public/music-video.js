@@ -15,8 +15,10 @@ function clock(seconds) {
 /** Brings the buttons and the time in line with the video. */
 function render() {
   const playing = !video.paused && !video.ended;
-  $('video-play').textContent = playing ? 'Pause' : 'Play';
-  $('video-play').setAttribute('aria-label', playing ? 'Pause the video' : 'Play the video');
+  $('video-stage').classList.toggle('playing', playing);
+  const action = playing ? 'Pause' : 'Play';
+  $('video-play').title = action;
+  $('video-play').setAttribute('aria-label', `${action} the video`);
   $('video-stop').disabled = video.currentTime === 0 && !playing;
   $('video-repeat').setAttribute('aria-pressed', String(video.loop));
   $('video-time').textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
