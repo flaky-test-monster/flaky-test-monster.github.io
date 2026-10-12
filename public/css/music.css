@@ -49,7 +49,7 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
   mask-image: linear-gradient(to right, transparent, #000 20%);
   pointer-events: none;
 }
-.page::before { background-image: url('media/music-background.jpg'); }
+.page::before { background-image: url('../media/music-background.jpg'); }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 56px 0 40px; }
 /* Header: one compact row, shaped like the start page's: the monster in a circle and the
  * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
@@ -212,7 +212,7 @@ h2::before { content: "// "; content: "// " / ""; }
   --veil: rgb(16 12 10 / .7);
 }
 /* The Klingon singer fades in with the colours. */
-.page::after { background-image: url('media/music-background-klingon.jpg'); opacity: 0; transition: opacity var(--fade); }
+.page::after { background-image: url('../media/music-background-klingon.jpg'); opacity: 0; transition: opacity var(--fade); }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::after { opacity: 1; }
 /* The title and subtitle fade to their Klingon twins. Both share one grid cell, so the
  * longer of the two sets the height and nothing below jumps. */

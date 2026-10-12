@@ -10,7 +10,7 @@ function announce(title) {
     title,
     artist: 'The Flaky Test Monster',
     album: 'From Flaky With Love',
-    artwork: [{ src: new URL('monster.jpg', import.meta.url).href, type: 'image/jpeg' }],
+    artwork: [{ src: new URL('../monster.jpg', import.meta.url).href, type: 'image/jpeg' }],
   });
 }
 
