@@ -111,7 +111,7 @@ button { font: bold 1rem var(--utility); cursor: pointer; }
 /* Notes and live status lines, small and muted. */
 .helper { color: var(--muted); font: 0.75rem/1.6 var(--utility); }
 
-.songs, .photo, .video, .thanks { margin-top: 32px; }
+.about, .songs, .photo, .video, .thanks { margin-top: 32px; }
 .video-note { margin: -4px 0 12px; }
 h2 { font: bold 0.875rem var(--utility); letter-spacing: .12em; text-transform: uppercase; }
 /* Decoration: the empty alt text keeps screen readers from reading out the slashes. */
