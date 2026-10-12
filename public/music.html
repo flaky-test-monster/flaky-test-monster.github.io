@@ -16,7 +16,7 @@
         <div class="site-bar">
           <a class="masthead" href="./" aria-label="From Flaky With Love: back to flakifier">
             <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
-            <span class="wordmark">From <em>Flaky</em> With <em>Love</em></span>
+            <span class="wordmark">The <em>Flaky</em> Test <em>Monster</em></span>
           </a>
           <nav class="site-nav" aria-label="Pages">
             <a href="./">flakifier</a>
@@ -42,10 +42,10 @@
 
         <section class="about" aria-labelledby="about-title">
           <h2 id="about-title">About the song</h2>
-          <p class="intro">From Flaky With Love is about the flakiness of life. A bit of flaky is fine: nobody passes every run, and a little wobble keeps things human. Too much ain’t: when everything fails one run in three, it’s time to face the monster. Love your flaky bits, fight the rest.</p>
+          <p class="intro">A bit of flaky is leiwand: nobody passes every run, and a little wobble keeps things human. Too much ain’t: Let's give the monster of your pipeline a voice. </p>
           <!-- The English lyrics, folded away; the same text is in the international MP3's tags. -->
           <details class="lyrics">
-            <summary>Lyrics: the international version</summary>
+            <summary>Lyrics for Monster Karaoke</summary>
             <div class="lyrics-text">
               <p>You eat cookies all the day,<br>
                 Usually they taste okay.<br>
@@ -90,7 +90,7 @@
               <ul class="song-list">
               <li class="song">
                 <h3>From Flaky With Love: the international version</h3>
-                <p>In English. No risk, less fun. Suitable for the UK, Ireland, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
+                <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
                 <div class="player">
                   <audio src="public/media/songs/the-flaky-test-monster-with-love-international.mp3" preload="metadata" controls></audio>
                   <div class="player-controls" hidden>
@@ -151,7 +151,7 @@
               </li>
               <li class="song">
                 <h3>The Polish version</h3>
-                <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes!</p>
+                <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes! And Poland never won so far. Wat?? Let the monster take care of it.</p>
                 <div class="player">
                   <audio src="public/media/songs/the-flaky-test-monster-with-love-polish.mp3" preload="metadata" controls></audio>
                   <div class="player-controls" hidden>
@@ -190,10 +190,6 @@
         <section class="photo" aria-labelledby="photo-title">
           <h2 id="photo-title">Jury photo</h2>
           <p class="intro">Turn into the monster, with your name and your <span lang="fr">douze points</span> on the picture. Click the name on the picture to change it: it goes on your votes too. Download it, or share it with your votes. The photo stays on your device until you share it.</p>
-          <!-- music-photo.js draws the camera, the overlay, the name and the song with the douze
-               points on the canvas; music-vote.js shares the photo with the votes. -->
-          <!-- The buttons sit over the picture on the right, like the video's controls, clear of the
-               name panel on the left; the shutter is drawn in CSS. -->
           <div class="stage photo-stage">
             <canvas id="photo-canvas" class="photo-canvas" width="1600" height="900" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
             <video id="photo-video" class="visually-hidden" aria-hidden="true" playsinline muted></video>
@@ -201,7 +197,7 @@
             <button type="button" id="photo-start" class="photo-start">Start the camera</button>
             <!-- The name of the jury member, typed right where it sits on the picture; music-photo.js
                  keeps it level with the panel and draws it into the photo file. It goes on the votes too. -->
-            <label for="jury-name" class="visually-hidden">Your name, on the photo and the votes</label>
+            <label for="jury-name" class="visually-hidden">Your jury name, on the photo and the votes</label>
             <input id="jury-name" class="photo-name" name="name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="jury-name-hint jury-name-error">
             <div class="photo-controls">
               <button type="button" id="photo-take" class="video-button photo-take" aria-label="Take the picture" title="Take the picture" hidden></button>
@@ -267,7 +263,7 @@
             <li><a href="https://github.com/stratoula"><img src="public/media/thanks/stratoula.png" width="16" height="16" alt="" loading="lazy">stratoula</a></li>
             <li><a href="https://github.com/streamich"><img src="public/media/thanks/streamich.png" width="16" height="16" alt="" loading="lazy">streamich</a></li>
           </ul>
-          <p>And many, many more.</p>
+          <p>And many, many more at Elastic</p>
            <h2 id="thanks-title">Credits</h2>
           <p>Built and maintained, lyrics and lead melody by <a href="https://github.com/kertal">@kertal</a>, with an orchestra of insane genies out of several bottles.</p>
         </section>
