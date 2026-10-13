@@ -19,20 +19,36 @@ const captchaSiteKey = meta('flaky-captcha-sitekey');
 /** Whether the page has a Supabase project to vote in. */
 export const online = Boolean(url && key);
 
+/** How often the library was asked for, so a retry can ask for a fresh copy. */
+let loads = 0;
+
 /**
  * A Supabase client for this page's project. The admin page passes its own storage key, so an
  * admin signed in there and a voter's anonymous session in the same browser stay apart.
  * @param {string} [storageKey]
  * @returns {Promise<import('@supabase/supabase-js').SupabaseClient>}
  */
-export function connect(storageKey) {
-  return import(SUPABASE_JS).then(({ createClient }) => createClient(url, key, storageKey ? { auth: { storageKey } } : undefined));
+export async function connect(storageKey) {
+  let module;
+  try {
+    // A retry asks for a fresh copy: browsers may keep a failed module import and fail again.
+    module = await import(loads === 0 ? SUPABASE_JS : `${SUPABASE_JS}?retry=${loads}`);
+  } catch {
+    throw new Error('The vote server could not be reached. Check your connection and try again.');
+  } finally {
+    loads += 1;
+  }
+  return module.createClient(url, key, storageKey ? { auth: { storageKey } } : undefined);
 }
 
 /** @type {Promise<import('@supabase/supabase-js').SupabaseClient> | undefined} */
 let client;
+/** The voter's client, made once; a failed attempt is not kept, so the next call tries again. */
 function supabase() {
-  client ??= connect();
+  client ??= connect().catch((error) => {
+    client = undefined;
+    throw error;
+  });
   return client;
 }
 

@@ -20,9 +20,10 @@ let songs = [];
 
 const pointsLabel = (points) => (points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`);
 
-/** Shows one of the three states of the page. */
+/** Shows one of the states of the page: off, error, signin or panel. */
 function show(state) {
   $('admin-off').hidden = state !== 'off';
+  $('admin-error').hidden = state !== 'error';
   $('admin-signin').hidden = state !== 'signin';
   $('admin-panel').hidden = state !== 'panel';
 }
@@ -243,12 +244,22 @@ $('signin-form').addEventListener('submit', async (event) => {
   await enter(data.user.email);
 });
 
-if (!online) {
-  show('off');
-} else {
-  db = await connect(STORAGE_KEY);
-  const { data } = await db.auth.getSession();
-  const user = data.session?.user;
-  if (user && !user.is_anonymous) await enter(user.email);
-  else signedOut();
+/** Connects to the vote's Supabase project and opens the panel, or the sign-in. */
+async function start() {
+  try {
+    db ??= await connect(STORAGE_KEY);
+    const { data } = await db.auth.getSession();
+    const user = data.session?.user;
+    if (user && !user.is_anonymous) await enter(user.email);
+    else signedOut();
+  } catch (error) {
+    // Out of reach, say offline or the library's CDN down: say so, rather than a blank page.
+    $('admin-error-text').textContent = error.message;
+    show('error');
+  }
 }
+
+$('admin-retry').addEventListener('click', start);
+
+if (online) start();
+else show('off');

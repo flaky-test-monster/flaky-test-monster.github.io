@@ -31,7 +31,14 @@
       </header>
 
       <main class="admin">
-        <!-- music-admin.js shows one of these: no project set up, the sign-in, or the admin tools. -->
+        <!-- The header already reads "Jury admin": this heading is for screen readers. -->
+        <h1 class="visually-hidden">Jury admin</h1>
+        <!-- music-admin.js shows one of these: no project set up, the vote server out of reach,
+             the sign-in, or the admin tools. -->
+        <div id="admin-error" class="admin-section" role="alert" hidden>
+          <p id="admin-error-text" class="intro"></p>
+          <button type="button" id="admin-retry" class="admin-button">Try again</button>
+        </div>
         <p id="admin-off" class="intro" hidden>The online vote is not set up for this page, so there is nothing to manage here. See “Music page vote and scoreboard” in the README.</p>
 
         <section id="admin-signin" class="admin-section" aria-labelledby="signin-title" hidden>
