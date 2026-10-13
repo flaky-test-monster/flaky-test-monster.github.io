@@ -8,10 +8,6 @@
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/css/music.css">
-  <!-- The online jury vote and scoreboard (public/js/music-online.js, supabase/migrations/): the
-       Supabase project URL and its public anon key. Both empty: votes go by email, no scoreboard.
-       The captcha site key is the project's Cloudflare Turnstile widget, public by design; it only
-       matters once captcha protection is on in Supabase, which then checks every token. -->
   <meta name="flaky-supabase-url" content="">
   <meta name="flaky-supabase-key" content="">
   <meta name="flaky-captcha-sitekey" content="0x4AAAAAAFVVpwHBbX25Yj1k">
@@ -41,63 +37,21 @@
             <span class="swap-klingon" aria-hidden="true"><span class="line">From</span> <em class="line" lang="tlh">Qo’noS</em> <span class="line">With <em>Honour</em></span></span>
           </h1>
           <p class="subtitle swap">
-            <span class="swap-usual">The Eurovision Monster Contest.</span>
+            <span class="swap-usual">The Eurovision <s>Slop</s> <s>Song</s> Slong Contest.</span>
             <span class="swap-klingon" aria-hidden="true">Today is a good day for your ears to die.</span>
           </p>
-          <p class="intro">3D printed at <a href="https://www.happylab.at">Happylab</a>, flaky on CI, flaky on stage. <strong>Let’s make the Eurovision Song Contest flaky.</strong> First the monster needs a country that’s honoured to nominate it, so here is a song for every candidate. Who will send a monster?</p>
+          <p class="intro">3D printed at <a href="https://www.happylab.at">Happylab</a>, flaky on CI, flaky on stage. <strong>Let’s make the Eurovision <s>Slop</s> <s>Song</s> Slong Contest flaky.</strong> First the monster needs a country that’s honoured to nominate it, so here is a song for every candidate. Who will send a monster?</p>
         </section>
 
-        <section class="about" aria-labelledby="about-title">
-          <h2 id="about-title">About the song</h2>
-          <p class="intro">A bit of flaky is leiwand: nobody passes every run, and a little wobble keeps things human. Too much ain’t: Let's give the monster of your pipeline a voice. </p>
-          <!-- The English lyrics, folded away; the same text is in the international MP3's tags. -->
-          <details class="lyrics">
-            <summary>Lyrics for Monster Karaoke</summary>
-            <div class="lyrics-text">
-              <p>You eat cookies all the day,<br>
-                Usually they taste okay.<br>
-                After cookie ninety-nine,<br>
-                The next one tastes like nasty slime.</p>
-              <p>There’s no change in recipe,<br>
-                No cook ran off to urgently pee.<br>
-                “Flakiness” is what we say<br>
-                When sometimes things just go astray.</p>
-              <p>That’s a monster’s daily job:<br>
-                Spice up life with every sob.<br>
-                If things always work okay,<br>
-                Life gets boring day by day.</p>
-              <p class="lyrics-chorus">Here you are, your flaky test,<br>
-                Made with love, like all the rest.<br>
-                Here you are, your flaky test,<br>
-                Made with love, like all the rest.</p>
-              <p>If I wake—the pipeline’s green!<br>
-                Time for me to intervene.<br>
-                In the night, ten tests were new,<br>
-                Let’s make one of those flaky too!</p>
-              <p>Let’s speed things up, then make them slow,<br>
-                Timing troubles—off we go!<br>
-                Let’s not clean up the previous test,<br>
-                Leave some garbage for the rest!</p>
-              <p>Somehow devs don’t quite like me,<br>
-                Especially those busy bees.<br>
-                But I try hard to entertain—<br>
-                A little chaos keeps them sane!</p>
-              <p class="lyrics-chorus">Here you are, your flaky test,<br>
-                Made with love, like all the rest.<br>
-                Here you are, your flaky test,<br>
-                Made with love, like all the rest.</p>
-            </div>
-          </details>
-        </section>
-
+       
         <section class="songs" aria-labelledby="songs-title">
           <h2 id="songs-title">Songs</h2>
-          <p class="intro">You're the jury. Distribute the points. The winner might get a enhanced deslopification procedure.</p>
+          <p class="intro">You're the jury. Distribute the points. The winner might get an enhanced deslopification procedure.</p>
             <form id="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
               <ul class="song-list">
               <li class="song" data-song="international">
                 <h3>From Flaky With Love: the international version</h3>
-                <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
+                <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Utah, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
                 <div class="player">
                   <audio src="public/media/songs/the-flaky-test-monster-with-love-international.mp3" preload="metadata" controls></audio>
                   <div class="player-controls" hidden>
@@ -245,8 +199,6 @@
             <video id="photo-video" class="visually-hidden" aria-hidden="true" playsinline muted></video>
             <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
             <button type="button" id="photo-start" class="photo-start">Start the camera</button>
-            <!-- The name of the jury member, typed right where it sits on the picture; music-photo.js
-                 keeps it level with the panel and draws it into the photo file. It goes on the votes too. -->
             <label for="jury-name" class="visually-hidden">Your jury name, on the photo and the votes</label>
             <input id="jury-name" class="photo-name" name="name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="jury-name-hint jury-name-error">
             <div class="photo-controls">
@@ -270,8 +222,49 @@
         </section>
 
         <section class="video" aria-labelledby="video-title">
-          <h2 id="video-title">Music video</h2>
-          <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
+          <h2 id="video-title">Karaoke</h2>
+          <p class="helper video-note" id="video-note" role="status">
+            Here is a very flaky karaoke video. You need to learn the lyrics, since currently they are not in the video.
+            The young video editor demanded more pocket money for adding subtitles "for such a slop".
+            Negotiations are ongoing.
+          </p>
+          <details class="lyrics">
+            <summary>Lyrics</summary>
+            <div class="lyrics-text">
+              <p>You eat cookies all the day,<br>
+                Usually they taste okay.<br>
+                After cookie ninety-nine,<br>
+                The next one tastes like nasty slime.</p>
+              <p>There’s no change in recipe,<br>
+                No cook ran off to urgently pee.<br>
+                “Flakiness” is what we say<br>
+                When sometimes things just go astray.</p>
+              <p>That’s a monster’s daily job:<br>
+                Spice up life with every sob.<br>
+                If things always work okay,<br>
+                Life gets boring day by day.</p>
+              <p class="lyrics-chorus">Here you are, your flaky test,<br>
+                Made with love, like all the rest.<br>
+                Here you are, your flaky test,<br>
+                Made with love, like all the rest.</p>
+              <p>If I wake—the pipeline’s green!<br>
+                Time for me to intervene.<br>
+                In the night, ten tests were new,<br>
+                Let’s make one of those flaky too!</p>
+              <p>Let’s speed things up, then make them slow,<br>
+                Timing troubles—off we go!<br>
+                Let’s not clean up the previous test,<br>
+                Leave some garbage for the rest!</p>
+              <p>Somehow devs don’t quite like me,<br>
+                Especially those busy bees.<br>
+                But I try hard to entertain—<br>
+                A little chaos keeps them sane!</p>
+              <p class="lyrics-chorus">Here you are, your flaky test,<br>
+                Made with love, like all the rest.<br>
+                Here you are, your flaky test,<br>
+                Made with love, like all the rest.</p>
+            </div>
+          </details>
           <!-- The controls sit over the video and fade out while it plays; hover or keyboard focus brings them back (music.css). -->
           <div class="stage" id="video-stage">
             <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
