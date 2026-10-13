@@ -10,10 +10,11 @@
   <link rel="stylesheet" href="public/css/music.css">
   <!-- The online jury vote and scoreboard (public/js/music-online.js, supabase/migrations/): the
        Supabase project URL and its public anon key. Both empty: votes go by email, no scoreboard.
-       The captcha site key is for Cloudflare Turnstile, when the project asks for a captcha. -->
+       The captcha site key is the project's Cloudflare Turnstile widget, public by design; it only
+       matters once captcha protection is on in Supabase, which then checks every token. -->
   <meta name="flaky-supabase-url" content="">
   <meta name="flaky-supabase-key" content="">
-  <meta name="flaky-captcha-sitekey" content="">
+  <meta name="flaky-captcha-sitekey" content="0x4AAAAAAFVVpwHBbX25Yj1k">
 </head>
 <body>
   <div class="page">

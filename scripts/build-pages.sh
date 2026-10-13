@@ -27,15 +27,17 @@ sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html
 grep -q 'data-backend="none"' _site/index.html
 # The music page needs no backend. Its online vote does need a Supabase project: the workflows
 # pass the repository variables SUPABASE_URL, SUPABASE_ANON_KEY and, optionally,
-# TURNSTILE_SITE_KEY, which go into the page's meta tags. All three are public by design.
-# Without them the votes go by email.
+# TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
+# Without the first two the votes go by email; the Turnstile site key is in the pages already,
+# and the variable only replaces it.
 for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
   if [[ ! ${!name:-} =~ ^[A-Za-z0-9._:/-]*$ ]]; then
     echo "build-pages.sh: unexpected characters in $name" >&2
     exit 1
   fi
 done
-meta() { printf 's#<meta name="%s" content="">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
+# A value given replaces what the page has; none leaves the page as it is.
+meta() { [[ -n $2 ]] && printf 's#<meta name="%s" content="[^"]*">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
 # The admin page of the vote (music-admin.html) gets the same project.
 for page in music music-admin; do
   sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
