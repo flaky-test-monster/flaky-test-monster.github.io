@@ -36,10 +36,13 @@ for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
   fi
 done
 meta() { printf 's#<meta name="%s" content="">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
-sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
-  public/music.html \
-  | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-    --minify-css true > _site/music.html
+# The admin page of the vote (music-admin.html) gets the same project.
+for page in music music-admin; do
+  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
+    "public/$page.html" \
+    | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+      --minify-css true > "_site/$page.html"
+done
 # Every link to a script or stylesheet, in the pages and in the modules' imports, carries the
 # commit, so a new deploy never runs next to files the browser cached from the last one: Pages
 # lets browsers keep them for ten minutes, and an old module against a new page breaks it.
@@ -49,5 +52,6 @@ sed -E -i.bak "s#\"((\./|public/(js|css)/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VE
 rm -f _site/*.bak _site/public/js/*.bak
 grep -q "music-photo.js?v=$VERSION" _site/public/js/music-vote.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
+grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
 grep -q "app.js?v=$VERSION" _site/index.html
 touch _site/.nojekyll

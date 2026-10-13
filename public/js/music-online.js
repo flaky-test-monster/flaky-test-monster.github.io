@@ -19,10 +19,20 @@ const captchaSiteKey = meta('flaky-captcha-sitekey');
 /** Whether the page has a Supabase project to vote in. */
 export const online = Boolean(url && key);
 
+/**
+ * A Supabase client for this page's project. The admin page passes its own storage key, so an
+ * admin signed in there and a voter's anonymous session in the same browser stay apart.
+ * @param {string} [storageKey]
+ * @returns {Promise<import('@supabase/supabase-js').SupabaseClient>}
+ */
+export function connect(storageKey) {
+  return import(SUPABASE_JS).then(({ createClient }) => createClient(url, key, storageKey ? { auth: { storageKey } } : undefined));
+}
+
 /** @type {Promise<import('@supabase/supabase-js').SupabaseClient> | undefined} */
 let client;
 function supabase() {
-  client ??= import(SUPABASE_JS).then(({ createClient }) => createClient(url, key));
+  client ??= connect();
   return client;
 }
 

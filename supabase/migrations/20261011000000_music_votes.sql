@@ -8,9 +8,14 @@
 --     it cannot be changed, so nobody can move their points after peeking at the scoreboard.
 --   * The tables have row level security on and no policies, and anon and authenticated
 --     have no rights on them: the page cannot read or write a row directly.
---   * All access goes through three functions: cast_ballot checks every vote before it is
---     stored, my_ballot returns the caller's own ballot only, and scoreboard returns the
---     totals only, never who gave what, nor the jury names people typed in.
+--   * All access goes through functions: cast_ballot checks every vote before it is stored,
+--     my_ballot returns the caller's own ballot only, and scoreboard returns the totals only,
+--     never who gave what, nor the jury names people typed in.
+--   * The admin page (public/music-admin.html) lists, adds and deletes ballots through the
+--     admin_* functions. Each one first checks that the caller is an admin: a signed-in,
+--     non-anonymous user listed in public.admins. Signing in is not enough, as every voter
+--     is signed in too; only someone with the SQL editor can add an admin:
+--       insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
 --   * The country a ballot comes from is taken from the request, never from the browser's
 --     data: Supabase sits behind Cloudflare, which names the caller's country in the
 --     CF-IPCountry header. Only the two-letter code is kept, not the IP address. Without the
@@ -35,14 +40,26 @@ create table if not exists public.contest (
 insert into public.contest (id) values (true) on conflict (id) do nothing;
 
 create table if not exists public.ballots (
-  voter uuid primary key references auth.users (id) on delete cascade,
+  -- The voter's user id for a ballot cast online; a new id for one an admin added.
+  voter uuid primary key,
   jury text not null default '' check (char_length(jury) <= 60),
   created_at timestamptz not null default now(),
   -- ISO 3166 code from CF-IPCountry, such as AT; null when unknown.
-  country text check (country ~ '^[A-Z]{2}$')
+  country text check (country ~ '^[A-Z]{2}$'),
+  -- online: cast on the music page; admin: added on the admin page, say from an email.
+  source text not null default 'online' check (source in ('online', 'admin'))
 );
--- For projects that ran this file before the country was kept.
+-- For projects that ran this file before the country was kept, and before admins could add
+-- ballots: those have no user of their own, so the voter no longer has to be one.
 alter table public.ballots add column if not exists country text check (country ~ '^[A-Z]{2}$');
+alter table public.ballots add column if not exists source text not null default 'online' check (source in ('online', 'admin'));
+alter table public.ballots drop constraint if exists ballots_voter_fkey;
+
+-- The admins: users who may use the admin page. Only added from the SQL editor (see above).
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
 
 create table if not exists public.votes (
   voter uuid not null references public.ballots (voter) on delete cascade,
@@ -58,7 +75,8 @@ alter table public.songs enable row level security;
 alter table public.contest enable row level security;
 alter table public.ballots enable row level security;
 alter table public.votes enable row level security;
-revoke all on table public.songs, public.contest, public.ballots, public.votes from public, anon, authenticated;
+alter table public.admins enable row level security;
+revoke all on table public.songs, public.contest, public.ballots, public.votes, public.admins from public, anon, authenticated;
 
 -- The songs, in the order of the music page. Keep the ids in step with its data-song attributes.
 insert into public.songs (id, title, position) values
@@ -73,27 +91,18 @@ insert into public.songs (id, title, position) values
   ('cat', 'The cat version', 9)
 on conflict (id) do update set title = excluded.title, position = excluded.position;
 
--- Casts the caller's ballot, once: a second one is turned away. votes is an object of song id to
--- points, such as {"klingon": 12, "greek": 10}. Errors raised here (SQLSTATE P0001) are meant
--- for the voter; the one for a second ballot carries the hint already_voted.
-create or replace function public.cast_ballot(jury text, votes jsonb)
-returns void
+-- Checks a ballot, for voters and admins alike, and returns the jury name tidied up. votes is
+-- an object of song id to points, such as {"klingon": 12, "greek": 10}. Errors raised here
+-- (SQLSTATE P0001) are meant for the voter. Not for the browser: only the functions below use it.
+create or replace function public.checked_jury(jury text, votes jsonb)
+returns text
 language plpgsql
-security definer
+stable
 set search_path = ''
 as $$
 declare
-  me uuid := auth.uid();
   clean_jury text;
-  -- PostgREST hands the request headers over as JSON, with lower-case names.
-  country text := upper(nullif(current_setting('request.headers', true), '')::json ->> 'cf-ipcountry');
 begin
-  if me is null then
-    raise exception 'Sign in to vote.' using errcode = '28000';
-  end if;
-  if not (select c.open from public.contest c) then
-    raise exception 'Voting is closed.';
-  end if;
   if votes is null or jsonb_typeof(votes) <> 'object' or votes = '{}'::jsonb then
     raise exception 'Give at least one song some points.';
   end if;
@@ -121,6 +130,31 @@ begin
   if (select count(distinct v.value) <> count(*) from jsonb_each(votes) v) then
     raise exception 'Each score goes to one song only.';
   end if;
+  return clean_jury;
+end;
+$$;
+
+-- Casts the caller's ballot, once: a second one is turned away. The one error for a second
+-- ballot carries the hint already_voted.
+create or replace function public.cast_ballot(jury text, votes jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := auth.uid();
+  clean_jury text;
+  -- PostgREST hands the request headers over as JSON, with lower-case names.
+  country text := upper(nullif(current_setting('request.headers', true), '')::json ->> 'cf-ipcountry');
+begin
+  if me is null then
+    raise exception 'Sign in to vote.' using errcode = '28000';
+  end if;
+  if not (select c.open from public.contest c) then
+    raise exception 'Voting is closed.';
+  end if;
+  clean_jury := public.checked_jury(jury, votes);
 
   -- XX is Cloudflare's "unknown" and T1 is Tor: neither is a country.
   if country !~ '^[A-Z]{2}$' or country in ('XX', 'T1') then
@@ -184,7 +218,117 @@ as $$
   ) t;
 $$;
 
-revoke all on function public.cast_ballot(text, jsonb), public.my_ballot(), public.scoreboard() from public, anon, authenticated;
+-- Whether the caller is an admin: signed in with an account of their own, not anonymously,
+-- and listed in public.admins.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select auth.uid() is not null
+    and coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) = false
+    and exists (select 1 from public.admins a where a.user_id = auth.uid());
+$$;
+
+-- Stops any admin function called by someone who is not an admin.
+create or replace function public.require_admin()
+returns void
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Admins only.' using errcode = '42501';
+  end if;
+end;
+$$;
+
+-- For the admin page: whether voting is open, the songs, and every ballot with its points,
+-- newest first. The jury names are the ones people typed: the page shows them as text only.
+create or replace function public.admin_overview()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.require_admin();
+  return jsonb_build_object(
+    'open', (select c.open from public.contest c),
+    'songs', (select coalesce(jsonb_agg(jsonb_build_object('id', s.id, 'title', s.title) order by s.position), '[]'::jsonb) from public.songs s),
+    'ballots', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'id', b.voter, 'jury', b.jury, 'country', b.country, 'source', b.source, 'created_at', b.created_at,
+        'votes', coalesce((select jsonb_object_agg(v.song, v.points) from public.votes v where v.voter = b.voter), '{}'::jsonb)
+      ) order by b.created_at desc), '[]'::jsonb)
+      from public.ballots b
+    )
+  );
+end;
+$$;
+
+-- Adds a ballot, checked like a cast one, say for votes that came by email. It counts even
+-- while voting is closed. Returns the new ballot's id.
+create or replace function public.admin_add_ballot(jury text, votes jsonb)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  id uuid := gen_random_uuid();
+begin
+  perform public.require_admin();
+  insert into public.ballots (voter, jury, source) values (id, public.checked_jury(jury, votes), 'admin');
+  insert into public.votes (voter, song, points)
+  select id, v.key, (v.value #>> '{}')::smallint from jsonb_each(votes) v;
+  return id;
+end;
+$$;
+
+-- Deletes a ballot and its points. A voter whose ballot is deleted can vote again.
+create or replace function public.admin_delete_ballot(ballot uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.require_admin();
+  delete from public.ballots b where b.voter = ballot;
+  if not found then
+    raise exception 'That ballot is gone already.';
+  end if;
+end;
+$$;
+
+-- Opens or closes voting.
+create or replace function public.admin_set_open(open boolean)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.require_admin();
+  update public.contest c set open = admin_set_open.open;
+end;
+$$;
+
+revoke all on function
+  public.checked_jury(text, jsonb), public.cast_ballot(text, jsonb), public.my_ballot(), public.scoreboard(),
+  public.is_admin(), public.require_admin(), public.admin_overview(), public.admin_add_ballot(text, jsonb),
+  public.admin_delete_ballot(uuid), public.admin_set_open(boolean)
+from public, anon, authenticated;
+grant execute on function
+  public.is_admin(), public.admin_overview(), public.admin_add_ballot(text, jsonb),
+  public.admin_delete_ballot(uuid), public.admin_set_open(boolean)
+to authenticated;
 -- Anonymous users sign in with the authenticated role, like everyone else who signed in.
 grant execute on function public.cast_ballot(text, jsonb), public.my_ballot() to authenticated;
 grant execute on function public.scoreboard() to anon, authenticated;

@@ -52,6 +52,7 @@ lib/
 public/
   index.html            main app page (import map for Three.js lives here)
   music.html            music page; optional Supabase vote (meta tags)
+  music-admin.html      admin page of the vote: sign in, list, add and delete ballots
   css/                  style.css (app), music.css (music page)
   js/                   ES modules, imported with relative './x.js' paths
     app.js              main UI controller
@@ -62,7 +63,8 @@ public/
     music-*.js          music page modules
     viewer.js, zip.js   3D viewer, tiny zip writer
   media/                videos, songs, photos (copied as is into the Pages build)
-supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard
+supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard,
+                        and the admin_* functions, open to the users in public.admins only
 figures/                reference images for figure presets (see figures/README.md)
 scripts/
   install.sh            macOS installer (Node, plus local pipeline unless --cloud-only)

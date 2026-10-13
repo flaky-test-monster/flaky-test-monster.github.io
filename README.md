@@ -341,6 +341,12 @@ How it stays safe, with only a static page and the public anon key in the browse
   the header on to the database is not documented, so check after the first votes:
   `select country, count(*) from public.ballots group by country;` If every row is
   empty, the header does not arrive and the count stays hidden.
+- **An admin page, for admins only.** `music-admin.html` lists every ballot, adds ballots
+  (say for votes that came by email, checked like online ones) and deletes them, and opens
+  or closes voting. Admins sign in with an email and password. Being signed in is not
+  enough, since every voter is signed in too: each admin function checks that the account
+  is not anonymous and is listed in `public.admins`, which only the SQL editor can change.
+  The admin's session is kept apart from a voter's in the same browser.
 - **Limits on new voters.** Supabase rate-limits anonymous sign-ins per IP address, and a
   Cloudflare Turnstile captcha can be required on top. Someone who clears their browser
   can still vote again; that is the trade-off of voting without an account.
@@ -367,8 +373,20 @@ Setup:
    in Supabase under **Authentication → Attack Protection**, and set its site key as the
    variable `TURNSTILE_SITE_KEY` (or the `flaky-captcha-sitekey` meta tag).
 
-To close voting: `update public.contest set open = false;` (and `true` to open it again).
-The scoreboard keeps showing the final totals.
+5. For the admin page: in **Authentication → Users**, choose **Add user → Create new user**,
+   with your email and a strong password, and tick **Auto Confirm User**. Then make that
+   account an admin in the SQL editor:
+
+   ```sql
+   insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
+   ```
+
+   Open `music-admin.html` and sign in. To remove an admin, delete their row from
+   `public.admins`. Anyone else who signs in there, or signs up, gets no admin rights.
+
+To close voting: the admin page's **Close voting**, or
+`update public.contest set open = false;` (and `true` to open it again). The scoreboard
+keeps showing the final totals.
 
 To try it locally without touching `public/music.html`, build the site the way Pages does,
 with the values in the environment, and serve the build:

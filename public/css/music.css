@@ -236,6 +236,37 @@ h2::before { content: "// "; content: "// " / ""; }
 .scoreboard-details > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
 .scoreboard-details > summary:hover { border-color: var(--red); color: var(--red); }
 .scoreboard-details[open] > summary { margin-bottom: 12px; }
+/* The admin page (music-admin.html): sections of plain forms and a list of ballots, on the
+ * music page's parchment, in its type and its red. A working page: no singer behind the text. */
+.admin-page::before, .admin-page::after { content: none; }
+.admin-section { margin-top: 32px; }
+.admin-form { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+.admin-field { display: flex; flex-direction: column; gap: 4px; font: bold 0.8125rem var(--utility); }
+.admin-field input, .admin-song select { min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 1rem var(--body); }
+.admin-field input:hover, .admin-song select:hover { border-color: var(--red); }
+.admin-points { margin: 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.admin-points legend { padding: 0 6px; font: bold 0.8125rem var(--utility); }
+.admin-songs { display: grid; gap: 8px; }
+.admin-song { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; font: italic 700 1rem/1.3 var(--display); }
+.admin-song select { min-height: 36px; font: bold 0.8125rem var(--utility); }
+.admin-status { display: block; min-height: 1.6em; }
+.admin-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.admin-state { flex: 1 1 240px; margin: 0; font-weight: bold; }
+.admin-button { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
+.admin-button:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.admin-button:disabled { opacity: .5; cursor: default; }
+.admin-ballots { list-style: none; margin: 12px 0 0; padding: 4px 24px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.admin-ballots:empty { display: none; }
+.admin-ballot { padding: 12px 0; }
+.admin-ballot + .admin-ballot { border-top: 1px solid var(--rule); }
+.admin-ballot-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.admin-ballot-head strong { font: italic 700 1.125rem var(--display); }
+.admin-ballot-head .helper { color: var(--muted); }
+.admin-delete { margin-left: auto; min-height: 32px; }
+.admin-ballot-points { margin: 4px 0 0; font: 0.8125rem/1.5 var(--utility); }
+@media (max-width: 640px) {
+  .admin-ballots { padding: 0 16px; }
+}
 /* Narrow: the points stay beside the title, the note takes the width under it. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
