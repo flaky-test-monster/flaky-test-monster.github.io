@@ -367,8 +367,10 @@ Setup:
 3. Give the page the project URL and the anon (publishable) key from **Project Settings →
    API**. For GitHub Pages, set them as repository variables (**Settings → Secrets and
    variables → Actions → Variables**) named `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the
-   build writes them into the page's meta tags. For `npm start`, fill in the
-   `flaky-supabase-*` meta tags in `public/music.html`. Both values are public by design.
+   build writes them into the pages' meta tags. For `npm start`, which serves the pages
+   unbuilt, fill in the `flaky-supabase-*` meta tags in both `public/music.html` and
+   `public/music-admin.html`, or try it as in "To try it locally" below. Both values are
+   public by design.
 4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for `kertal.github.io`
    (and `localhost`, to test), enter its secret key in Supabase under **Authentication →
    Attack Protection**. The site key of the project's widget is already in the
@@ -393,7 +395,7 @@ To close voting: the admin page's **Close voting**, or
 `update public.contest set open = false;` (and `true` to open it again). The scoreboard
 keeps showing the final totals.
 
-To try it locally without touching `public/music.html`, build the site the way Pages does,
+To try it locally without touching the pages, build the site the way Pages does,
 with the values in the environment, and serve the build:
 
 ```sh

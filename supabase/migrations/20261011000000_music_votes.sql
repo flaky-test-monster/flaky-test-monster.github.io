@@ -151,7 +151,10 @@ begin
   if me is null then
     raise exception 'Sign in to vote.' using errcode = '28000';
   end if;
-  if not (select c.open from public.contest c) then
+  -- Locked until this ballot is stored, so closing voting is a clean cut: a ballot that checked
+  -- before the close is in when the close returns, and one that checks while it runs waits for
+  -- it, then sees it closed.
+  if not (select c.open from public.contest c for share) then
     raise exception 'Voting is closed.';
   end if;
   clean_jury := public.checked_jury(jury, votes);
