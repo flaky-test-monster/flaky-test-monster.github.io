@@ -114,13 +114,10 @@ button { font: bold 1rem var(--utility); cursor: pointer; }
 .about, .songs, .photo, .video, .thanks { margin-top: 32px; }
 /* The About text keeps to the hero's column, clear of the singer. */
 .about { width: 52%; }
-/* The lyrics, folded under the About text; parchment like the tracklist, the chorus in italics. */
-.lyrics { margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
-.lyrics summary { padding: 8px 14px; font: 0.8125rem/1.4 var(--utility); cursor: pointer; }
-.lyrics summary:hover { color: var(--red); }
-.lyrics-text { padding: 0 14px 4px; border-top: 1px solid var(--rule); font-size: 0.875rem; line-height: 1.5; }
+/* The lyrics, folded under the karaoke note; opened like the scoreboard, the chorus in italics. */
+.lyrics { margin-bottom: 16px; }
+.lyrics-text { padding: 4px 24px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 12px 32px rgb(23 19 14 / .12); font-size: 0.875rem; line-height: 1.5; }
 .lyrics-chorus { font-style: italic; color: var(--red); }
-.video-note { margin: -4px 0 12px; }
 h2 { font: bold 0.875rem var(--utility); letter-spacing: .12em; text-transform: uppercase; }
 /* Decoration: the empty alt text keeps screen readers from reading out the slashes. */
 h2::before { content: "// "; content: "// " / ""; }
@@ -166,7 +163,7 @@ h2::before { content: "// "; content: "// " / ""; }
   .hero { padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
   .video-controls { gap: 6px; padding: 24px 8px 8px; }
-  .song-list, .scoreboard-list { padding: 0 16px; }
+  .song-list, .scoreboard-list, .lyrics-text { padding: 0 16px; }
   .score { column-gap: 10px; }
   .song:has(.player-controls:not([hidden])) { column-gap: 10px; }
   .song h3 { font-size: 1.0625rem; }
@@ -233,10 +230,10 @@ h2::before { content: "// "; content: "// " / ""; }
 .scoreboard-status { flex: 1 1 240px; margin: 0; color: var(--muted); }
 .scoreboard-refresh { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
 .scoreboard-refresh:hover { border-color: var(--red); color: var(--red); }
-/* Closed, the scoreboard is a single bar to open, on the same parchment as the list. */
-.scoreboard-details > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
-.scoreboard-details > summary:hover { border-color: var(--red); color: var(--red); }
-.scoreboard-details[open] > summary { margin-bottom: 12px; }
+/* Closed, the scoreboard and the lyrics are a single bar to open, on the same parchment as their content. */
+:is(.scoreboard-details, .lyrics) > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
+:is(.scoreboard-details, .lyrics) > summary:hover { border-color: var(--red); color: var(--red); }
+:is(.scoreboard-details, .lyrics)[open] > summary { margin-bottom: 12px; }
 /* The admin page (music-admin.html): sections of plain forms and a list of ballots, on the
  * music page's parchment, in its type and its red. A working page: no singer behind the text. */
 .admin-page::before, .admin-page::after { content: none; }
