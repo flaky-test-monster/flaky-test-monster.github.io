@@ -318,8 +318,8 @@ The music page (`public/music.html`) lets visitors give the songs Eurovision poi
 project the votes are cast online and a scoreboard shows the totals. The scoreboard starts
 closed, so the points so far do not sway a jury before it votes; it loads only once opened,
 then updates every 30 seconds and right after a vote. The votes can also be sent by email or
-copied to paste into webmail, online or not. Without a project, email is the main button and
-the scoreboard stays hidden.
+copied to paste into webmail, online or not; those reach you by email and are not counted on
+the scoreboard. Without a project, email is the main button and the scoreboard stays hidden.
 
 How it stays safe, with only a static page and the public anon key in the browser:
 
@@ -369,6 +369,14 @@ Setup:
 
 To close voting: `update public.contest set open = false;` (and `true` to open it again).
 The scoreboard keeps showing the final totals.
+
+To try it locally without touching `public/music.html`, build the site the way Pages does,
+with the values in the environment, and serve the build:
+
+```sh
+SUPABASE_URL=https://YOUR-PROJECT.supabase.co SUPABASE_ANON_KEY=YOUR-ANON-KEY scripts/build-pages.sh
+npx --yes serve _site   # then open /music.html
+```
 
 ## Notes
 

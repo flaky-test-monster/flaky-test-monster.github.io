@@ -221,9 +221,8 @@
           </form>
         </section>
 
-        <!-- Filled in by music-scoreboard.js, with the online vote only. -->
-        <!-- Closed at first, so the points so far do not sway a jury before it votes: the totals
-             only load once it is opened. -->
+        <!-- Filled in by music-scoreboard.js, with the online vote only. Closed at first, so the
+             points so far do not sway a jury before it votes: the totals load once it is opened. -->
         <section id="scoreboard" class="scoreboard" aria-labelledby="scoreboard-title" hidden>
           <h2 id="scoreboard-title">Scoreboard</h2>
           <p class="intro">Vote first, then peek: the points so far might sway you. Only the totals are shown; who gave what stays secret.</p>
@@ -232,7 +231,7 @@
             <ol id="scoreboard-list" class="scoreboard-list"></ol>
             <div class="scoreboard-actions">
               <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
-              <button type="button" id="scoreboard-refresh" class="vote-action">Refresh</button>
+              <button type="button" id="scoreboard-refresh" class="scoreboard-refresh">Refresh</button>
             </div>
           </details>
         </section>

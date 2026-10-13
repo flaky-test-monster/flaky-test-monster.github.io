@@ -195,25 +195,23 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-name input:hover { border-color: var(--red); }
 .vote-name input[aria-invalid="true"] { border-color: var(--red); }
 .vote-name .helper, .vote-name .field-error { margin: 0; }
+/* Cast, the name is final: a dashed frame, no longer looking editable. */
+.vote-name input:disabled { border-style: dashed; cursor: default; }
+.vote-name input:disabled:hover { border-color: var(--border); }
 /* The split button: the red main button, and an arrow joined to it that opens the other ways to
  * send the votes, in a menu under its right edge. */
 .vote-split { position: relative; display: flex; }
 .vote-main { flex: 1; border-radius: 6px 0 0 6px; }
 .vote-more { display: grid; flex: none; place-items: center; width: 52px; min-height: 48px; padding: 0; border: 1px solid var(--red); border-left-color: rgb(255 248 237 / .45); border-radius: 0 6px 6px 0; background: var(--red); color: var(--cream); }
 .vote-more:hover, .vote-more[aria-expanded="true"] { background: var(--red-hover); }
-/* Cast, and final: the main button stays in place, faded, and no longer looks clickable. */
-.vote-main:disabled { opacity: .65; cursor: default; }
-.vote-main:disabled:hover { background: var(--red); }
-.vote-name input:disabled { border-style: dashed; cursor: default; }
-.vote-name input:disabled:hover { border-color: var(--border); }
 .vote-more svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
 .vote-more[aria-expanded="true"] svg { transform: rotate(180deg); }
 .vote-menu { position: absolute; z-index: 2; top: calc(100% + 4px); right: 0; display: flex; flex-direction: column; min-width: 240px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 32px rgb(23 19 14 / .2); }
 .vote-menu button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font-size: 0.875rem; text-align: left; }
 .vote-menu button:is(:hover, :focus-visible) { background: var(--red); color: var(--cream); outline-offset: -3px; }
-/* The scoreboard's refresh: a quiet button beside the status line. */
-.vote-action { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
-.vote-action:hover { border-color: var(--red); color: var(--red); }
+/* Cast, the votes are final: the main button stays in place, faded, and no longer looks clickable. */
+.vote-main:disabled { opacity: .65; cursor: default; }
+.vote-main:disabled:hover { background: var(--red); }
 .vote-copy-field { display: block; font: bold 0.75rem var(--utility); }
 .vote-text { display: block; width: 100%; margin-top: 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: 0.8125rem/1.5 var(--utility); resize: vertical; }
 .vote-captcha { margin: 8px 0; }
@@ -232,6 +230,8 @@ h2::before { content: "// "; content: "// " / ""; }
 .score-leader :is(.score-rank, .score-title, .score-points) { color: var(--red); }
 .scoreboard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
 .scoreboard-status { flex: 1 1 240px; margin: 0; color: var(--muted); }
+.scoreboard-refresh { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
+.scoreboard-refresh:hover { border-color: var(--red); color: var(--red); }
 /* Closed, the scoreboard is a single bar to open, on the same parchment as the list. */
 .scoreboard-details > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
 .scoreboard-details > summary:hover { border-color: var(--red); color: var(--red); }

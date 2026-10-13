@@ -13,6 +13,7 @@ import { juryName, juryPhoto, nameError, nameMessage, sayPhoto } from './music-p
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
 const status = $('vote-status');
+const submit = form.querySelector('[type="submit"]');
 const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
 const SUBJECT = 'From Flaky With Love: my votes';
 
@@ -191,12 +192,13 @@ function hideCopy() {
 
 /** Casts the votes online, once; the scoreboard hears about it and updates. */
 async function cast() {
-  const submit = form.querySelector('[type="submit"]');
+  // Read before sending: the points could still be changed while the vote is on its way.
+  const ballot = { jury: juryName(), votes: votes() };
   submit.disabled = true;
   say('Casting your votes…');
   try {
-    await castBallot(juryName(), votes(), $('vote-captcha'));
-    lock({ jury: juryName(), votes: votes() });
+    await castBallot(ballot.jury, ballot.votes, $('vote-captcha'));
+    lock(ballot);
     say('Your votes are in, thank you! Votes are final, so these are the ones that count.');
     document.dispatchEvent(new CustomEvent('flaky:voted'));
   } catch (error) {
@@ -225,7 +227,6 @@ function lock(ballot) {
   $('vote-name').disabled = true;
   $('jury-name').disabled = true;
   $('vote-name-hint').hidden = true;
-  const submit = form.querySelector('[type="submit"]');
   submit.textContent = 'Votes cast';
   submit.disabled = true;
 }
@@ -282,7 +283,7 @@ $('photo-share').addEventListener('click', share);
 
 /** Online, the button says so, and a jury that voted before from this browser sees its votes. */
 async function goOnline() {
-  form.querySelector('[type="submit"]').textContent = 'Cast my votes';
+  submit.textContent = 'Cast my votes';
   $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {

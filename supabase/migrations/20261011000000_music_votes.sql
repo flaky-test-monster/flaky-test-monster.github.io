@@ -38,7 +38,6 @@ create table if not exists public.ballots (
   voter uuid primary key references auth.users (id) on delete cascade,
   jury text not null default '' check (char_length(jury) <= 60),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
   -- ISO 3166 code from CF-IPCountry, such as AT; null when unknown.
   country text check (country ~ '^[A-Z]{2}$')
 );
