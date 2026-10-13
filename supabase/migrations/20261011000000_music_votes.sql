@@ -53,14 +53,15 @@ revoke all on table public.songs, public.contest, public.ballots, public.votes f
 
 -- The songs, in the order of the music page. Keep the ids in step with its data-song attributes.
 insert into public.songs (id, title, position) values
-  ('international', 'From Flaky with love: the international version', 1),
+  ('international', 'From Flaky With Love: the international version', 1),
   ('greek', 'The Greek version', 2),
   ('austrian', 'The Austrian version', 3),
   ('klingon', 'The Klingon version', 4),
   ('spanish', 'The Spanish version', 5),
   ('italian', 'The Italian version', 6),
   ('polish', 'The Polish version', 7),
-  ('french', 'The French version', 8)
+  ('french', 'The French version', 8),
+  ('cat', 'The cat version', 9)
 on conflict (id) do update set title = excluded.title, position = excluded.position;
 
 -- Casts or replaces the caller's ballot. votes is an object of song id to points, such as

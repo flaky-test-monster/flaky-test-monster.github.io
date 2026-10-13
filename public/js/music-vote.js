@@ -1,11 +1,13 @@
 /**
  * The jury vote on the music page: points for the songs as at the Eurovision Song Contest
  * (12, 10, 8 and down to 1, each score to one song only). With a Supabase project set up in the
- * page's meta tags the votes are cast online (music-online.js), and the scoreboard shows the
- * totals; without one, they go out as a mailto: link, or are copied for pasting into webmail.
+ * page's meta tags the votes are cast online (music-online.js) and the scoreboard shows the
+ * totals; without one, they go out as a mailto: link. The jury photo and the votes can also be
+ * shared, through the share sheet of browsers that can share images.
  */
 
 import { castBallot, myBallot, online } from './music-online.js';
+import { juryName, juryPhoto, nameError, nameMessage, sayPhoto } from './music-photo.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('vote-form');
@@ -18,27 +20,23 @@ const songItems = [...document.querySelectorAll('.song')];
 const songs = songItems.map((song) => song.querySelector('h3').textContent.trim());
 const songIds = songItems.map((song) => song.dataset.song);
 
-/** Puts a choice of points right next to each song's player. The choices sit outside the form,
- * so they join it with the form attribute: then reset clears them too. */
+/** Puts a choice of points right next to each song's player. */
 function buildVotes() {
   songItems.forEach((song, index) => {
     const vote = document.createElement('div');
     vote.className = 'song-vote';
     const label = document.createElement('label');
     label.htmlFor = `vote-song-${index}`;
-    const hidden = document.createElement('span');
-    hidden.className = 'visually-hidden';
-    hidden.textContent = ` for ${songs[index]}`;
-    label.append('Points', hidden);
+    label.className = 'visually-hidden';
+    label.textContent = `Points for ${songs[index]}`;
     const select = document.createElement('select');
     select.id = `vote-song-${index}`;
     select.name = `song-${index}`;
-    select.setAttribute('form', form.id);
     select.add(new Option('No points', ''));
     for (const points of POINTS) select.add(new Option(points === 1 ? '1 point' : `${points} points`, String(points)));
     select.addEventListener('change', () => {
       render();
-      hideCopy();
+      say('');
     });
     vote.append(label, select);
     song.querySelector('.player').after(vote);
@@ -66,23 +64,20 @@ function votes() {
     .filter(([, points]) => points > 0));
 }
 
-/** The votes, highest score first, as the lines of the email. */
-function ballot() {
-  const votes = selects()
+/** The votes, highest score first, one line each: "Douze points: The Greek version". */
+function voteLines() {
+  return selects()
     .map((select, index) => ({ points: Number(select.value), title: songs[index] }))
     .filter((vote) => vote.points > 0)
-    .sort((a, b) => b.points - a.points);
-  if (votes.length === 0) return null;
-  const jury = $('vote-jury').value.replace(/\s+/g, ' ').trim();
-  const lines = votes.map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
-  return [`Good evening Flaky Test Monster, this is the jury of ${jury || 'an undisclosed country'}.`, '', ...lines, ''].join('\n');
+    .sort((a, b) => b.points - a.points)
+    .map(({ points, title }) => `${points === 12 ? 'Douze points' : `${points} ${points === 1 ? 'point' : 'points'}`}: ${title}`);
 }
 
-/** Hides the votes shown for copying by hand, and the message that goes with them. */
-function hideCopy() {
-  if ($('vote-copy-field').hidden) return;
-  $('vote-copy-field').hidden = true;
-  say('');
+/** The votes as the email, or null when no song has points yet. */
+function ballot() {
+  const lines = voteLines();
+  if (lines.length === 0) return null;
+  return [`Good evening Flaky Test Monster, this is ${juryName()} from the jury.`, '', ...lines, ''].join('\n');
 }
 
 /** Shows a message under the votes. */
@@ -92,12 +87,14 @@ function say(message) {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  const body = ballot();
-  if (!body) {
-    say('Give at least one song some points first: the choice is next to each song.');
-    selects()[0]?.focus();
-    return;
+  const error = nameError();
+  if (error) {
+    // The field is on the jury photo, further down: go there, where its error says what to do.
+    $('jury-name').focus();
+    return say('The votes were not sent: the name on the jury photo needs fixing.');
   }
+  const body = ballot();
+  if (!body) return say('Give at least one song some points first: the choice is next to each song.');
   if (online) cast();
   else email(body);
 });
@@ -108,7 +105,7 @@ async function cast() {
   submit.disabled = true;
   say('Casting your votes…');
   try {
-    await castBallot($('vote-jury').value, votes(), $('vote-captcha'));
+    await castBallot(juryName(), votes(), $('vote-captcha'));
     say('Your votes are in, thank you! Changed your mind? Change the points and cast them again.');
     document.dispatchEvent(new CustomEvent('flaky:voted'));
   } catch (error) {
@@ -125,45 +122,49 @@ function email(body) {
   // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
   const to = encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@').replace(/%2B/g, '+');
   location.href = `mailto:${to}?${params}`;
-  say('Your email app should open with your votes. No email app? Copy your votes and send them from your webmail.');
+  say(form.dataset.email ? `Your email app should open with your votes. No email app? Send them to ${form.dataset.email} from your webmail.` : 'Your email app should open with your votes.');
 }
 
-$('vote-copy').addEventListener('click', async () => {
-  const body = ballot();
-  if (!body) return say('Give at least one song some points first.');
+/** Whether this browser can share an image, through the share sheet of the phone or computer. */
+const canShareImages = () => {
   try {
-    await navigator.clipboard.writeText(`${SUBJECT}\n\n${body}`);
-    say(form.dataset.email ? `Copied. Paste your votes into an email to ${form.dataset.email}.` : 'Copied. Paste your votes into an email.');
+    return Boolean(navigator.canShare?.({ files: [new File([''], 'test.png', { type: 'image/png' })] }));
   } catch {
-    // No clipboard here (an old browser, or a page not served over HTTPS): show the votes to copy by hand.
-    $('vote-text').value = `${SUBJECT}\n\n${body}`;
-    $('vote-copy-field').hidden = false;
-    $('vote-text').focus();
-    $('vote-text').select();
-    say('Copying did not work in this browser. Your votes are selected below: copy them with Ctrl+C or ⌘C.');
+    return false;
   }
-});
+};
 
-// Reset puts the values back only after this event, so render once it is done.
-form.addEventListener('reset', () => setTimeout(() => {
-  render();
-  say('');
-  hideCopy();
-}));
+/**
+ * Shares the jury photo and the votes, to any app the share sheet offers, with a link to this
+ * page so whoever gets them can vote too. It starts right on the click: the photo file is made
+ * ahead of time, since browsers only allow sharing straight after a click.
+ */
+function share() {
+  const error = nameError();
+  if (error) return sayPhoto(nameMessage(error));
+  const photo = juryPhoto();
+  if (!photo) return sayPhoto('The photo is still being made. Try again in a moment.');
+  const lines = voteLines();
+  const text = [`${juryName()}, live from the Flaky jury.`, ...(lines.length ? ['', ...lines] : []), '', 'Vote too:'].join('\n');
+  sayPhoto('');
+  navigator.share({ title: 'From Flaky With Love', text, url: location.origin + location.pathname, files: [photo] }).then(
+    () => sayPhoto('Shared. Douze points for you!'),
+    (error) => {
+      if (error.name !== 'AbortError') sayPhoto('Sharing did not work in this browser. Download the photo instead.');
+    },
+  );
+}
 
-// The votes to copy by hand are a snapshot: once the points or the jury change, they are out of date.
-$('vote-jury').addEventListener('input', hideCopy);
+$('photo-share').hidden = !canShareImages();
+$('photo-share').addEventListener('click', share);
 
-/** Online, the form says so, and a jury that voted before from this browser gets its votes back. */
+/** Online, the button says so, and a jury that voted before from this browser gets its points back. */
 async function goOnline() {
-  $('vote-intro').textContent = 'Given your points next to the songs? Tell us who is voting and cast your votes. You can change them until voting closes.';
   form.querySelector('[type="submit"]').textContent = 'Cast my votes';
   try {
     const mine = await myBallot();
-    if (!mine) return;
     // Only if nothing was picked while the ballot loaded.
-    if (selects().some((select) => select.value) || $('vote-jury').value) return;
-    $('vote-jury').value = mine.jury;
+    if (!mine || selects().some((select) => select.value)) return;
     selects().forEach((select, index) => { select.value = String(mine.votes[songIds[index]] ?? ''); });
     render();
     say('Welcome back, jury. These are the votes you cast: change them and cast them again, if you like.');

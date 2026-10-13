@@ -44,7 +44,7 @@ const MODELS = [
     description: 'Free models run right here on your device and turn the photo into a 3D picture that stands out from a flat back, like a medal, rather than a full figure: a monster bobblehead with googly eyes, or a plain relief. The photo never leaves this device. The first run downloads about 130 MB; after that it takes a minute or two.',
   },
 ];
-/** What the in-browser pipeline can make: the shapes public/relief.js builds. */
+/** What the in-browser pipeline can make: the shapes public/js/relief.js builds. */
 const BROWSER_FIGURES = [
   { id: 'monster', label: 'Monster bobblehead: big head, googly eyes, tongue' },
   { id: 'relief', label: 'Relief with a flat back' },

@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0e100d" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
-  <link rel="stylesheet" href="public/style.css">
+  <link rel="stylesheet" href="public/css/style.css">
   <script type="importmap">
     {
       "imports": {
@@ -83,13 +83,20 @@
         <ul id="recent-list" class="recent-list"></ul>
         <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
       </div>
-      <section class="music" aria-labelledby="music-title">
-        <h2 class="section-title" id="music-title">Music</h2>
-        <a class="music-link" href="music.html">
-          <span class="music-link-title">From <em>Flaky</em> With <em>Love</em></span>
-          <span class="music-link-text">Next plan of the monster: <strong>find a country that would nominate it for the Eurovision Song Contest.</strong> Listen to a song for every candidate and watch the music video.</span>
-          <span class="music-link-cta">Go to the music <span aria-hidden="true">→</span></span>
-        </a>
+      <section class="made-for" aria-labelledby="made-for-title">
+        <h2 class="section-title" id="made-for-title">At Happylab</h2>
+        <p class="made-for-text">Built for the makers' exhibition at the <a href="https://www.happylab.at/en/20jahre">20th anniversary</a> of <a href="https://www.happylab.at">Happylab</a>, Austria's first makerspace. The exhibit turned a 2D photo into a 3D-printable file in three ways: a pipeline of frontier models in the cloud, open models running locally on a Mac, and transformer models running right in the browser. In the end the simplest trick was the most popular: the webcam tracks your mouth, and the wider you open it, the harsher the picture gets, until it turns green, monster eyes appear and the camera takes your photo.</p>
+        <p class="made-for-text">A nice side effect: a new large-format printer in the lab, for prints up to A0, and a demo of an LLM translating a song into Mandarin, started the monster's next goal: <a href="music.html">music for a European Monster Song Contest</a>.</p>
+        <ul class="made-for-photos">
+          <li class="made-for-tall"><img src="public/media/happylab/happylab-booth.jpg" width="768" height="1024" loading="lazy" alt="The flakifier booth at Happylab: a laptop running the monster scan under two signs, The Flaky Test Monster and Human to Monster Converter, with 3D-printed monster figures lined up on top of the wall."></li>
+          <li><img src="public/media/happylab/happylab-1.jpg" width="1148" height="720" loading="lazy" alt="Three visitors turned into flaky test monsters by the monster scan: green faces, googly eyes and wide open red mouths."></li>
+          <li><img src="public/media/happylab/happylab-2.jpg" width="1148" height="720" loading="lazy" alt="Two visitors as flaky test monsters, one with glasses and a cap, the other grinning with mismatched googly eyes."></li>
+          <li><img src="public/media/happylab/happylab-3.jpg" width="1148" height="720" loading="lazy" alt="Four visitors as flaky test monsters, among them a child in a helmet and a dinosaur jumper, all with googly eyes and their mouths wide open."></li>
+          <li class="made-for-tall"><img src="public/media/happylab/happylab-monster.jpg" width="768" height="1024" loading="lazy" alt="The big 3D-printed Flaky Test Monster on top of the booth wall: green body, black spiky hair, googly eyes and a wide mouth full of square teeth, next to a small wizard monster figure."></li>
+          <li><img src="public/media/happylab/happylab-4.jpg" width="1148" height="720" loading="lazy" alt="Four visitors as flaky test monsters, two adults behind and two children up close to the camera, all with googly eyes and screaming mouths."></li>
+          <li><img src="public/media/happylab/happylab-5.jpg" width="1148" height="720" loading="lazy" alt="Two young visitors as flaky test monsters, one screaming and one pouting, with a hand reaching for the camera between them."></li>
+          <li><img src="public/media/happylab/happylab-poster.jpg" width="1024" height="768" loading="lazy" alt="A poster on the booth wall, printed on the lab's new large-format printer: Eurovision Song Contest winner 2028, The Flaky Test Monster, From Flaky With Love, with the monster in a white suit singing into a microphone. Visitors walk past in the lab behind it."></li>
+        </ul>
       </section>
     </section>
 
@@ -171,6 +178,6 @@
       <span>retries: 3</span>
     </footer>
   </div>
-  <script type="module" src="public/app.js"></script>
+  <script type="module" src="public/js/app.js"></script>
 </body>
 </html>

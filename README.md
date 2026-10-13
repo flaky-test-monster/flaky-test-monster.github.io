@@ -140,7 +140,7 @@ uploaded and no API key is needed.
 The score is all in the mouth: closed is 0, wide open is 100. Up to four faces are
 tracked at once, each with its own score; the preview shows the highest. Openness is the gap between the lips
 over the width of the mouth, so it does not matter how close you sit to the camera (see
-`public/monster-score.js`). Below 40 is human, 60 and up is a monster, in between is
+`public/js/monster-score.js`). Below 40 is human, 60 and up is a monster, in between is
 suspicious. Each frame is blended with the previous score so the score does not jitter.
 The score sits over the camera preview, as a compact badge in the page and larger in full
 screen (with how many faces in view are monsters). A checkbox next to the verdict stays
@@ -164,7 +164,7 @@ as a "Monster photo" run that holds only the photo and costs nothing; open that 
 flakify the photo. New photos keep coming in as thumbnails without taking over the view. Saving goes through `POST /api/photos`.
 
 Faces are tracked by [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
-(`public/monster-face.js`), loaded from jsDelivr with its model from Google's storage when
+(`public/js/monster-face.js`), loaded from jsDelivr with its model from Google's storage when
 the camera first starts (a few MB, then cached by the browser). The shutter click plays
 from the first click or tap on the page on, since browsers keep pages silent until then.
 
@@ -233,7 +233,7 @@ Flakifier.
 ## In-browser pipeline
 
 Pick **Free and private, in this browser** on the form. Everything runs in a Web Worker in
-the page (`public/browser-worker.js`); the server only hands out the files, so this method
+the page (`public/js/browser-worker.js`); the server only hands out the files, so this method
 also works on the [GitHub Pages build](#github-pages-and-pr-previews), which has no server.
 The progress steps read Models, Cut-out, Depth and STL, and the result shows the cut-out in
 place of the figure image, with the depth map as an extra download.
@@ -243,8 +243,8 @@ place of the figure image, with the depth map as an extra download.
 | Background removal | [MODNet](https://huggingface.co/Xenova/modnet) (ONNX) | Apache-2.0 | about 25 MB |
 | Depth estimation | [Depth Anything V2 Small](https://huggingface.co/onnx-community/depth-anything-v2-small) (ONNX) | Apache-2.0 | about 100 MB |
 | Face landmarks | [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker), the monster scan's | Apache-2.0 | about 4 MB |
-| Face depth, caricature, monster parts | `public/caricature.js`, no model | MIT (this repo) | none |
-| Relief mesh and STL | `public/relief.js`, no model | MIT (this repo) | none |
+| Face depth, caricature, monster parts | `public/js/caricature.js`, no model | MIT (this repo) | none |
+| Relief mesh and STL | `public/js/relief.js`, no model | MIT (this repo) | none |
 
 The face landmarks are found on the page, since MediaPipe needs WebGL, and sent to the worker
 with the photo. They are optional: without a face, or if the tracker cannot load, the figure
@@ -271,7 +271,7 @@ and chin. The model is 100 mm tall, stands upright (Z up) and faces the front.
   Then the monster parts are added as separate solids sunk into the front: googly eyes
   with pupils looking two different ways, a tongue hanging over the chin (longer the wider
   the mouth is open), two fangs and two horns on the hair. The warp and the parts come
-  from `public/caricature.js`. Without a face in the photo it is a plain relief.
+  from `public/js/caricature.js`. Without a face in the photo it is a plain relief.
 - **Relief with a flat back:** about 3 to 17 mm thick. Lay it on its back in the slicer
   and it prints without supports.
 - **Rounded on both sides:** also domed at the back, for a free-standing piece. A photo
