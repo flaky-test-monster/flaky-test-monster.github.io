@@ -44,7 +44,9 @@ sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${
 # commit, so a new deploy never runs next to files the browser cached from the last one: Pages
 # lets browsers keep them for ten minutes, and an old module against a new page breaks it.
 VERSION=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
-sed -E -i "s#\"((\./|public/(js|css)/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VERSION\"#g" _site/*.html _site/public/js/*.js
+# -i with an attached suffix is the one form both GNU sed and macOS sed read the same way.
+sed -E -i.bak "s#\"((\./|public/(js|css)/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VERSION\"#g" _site/*.html _site/public/js/*.js
+rm -f _site/*.bak _site/public/js/*.bak
 grep -q "music-photo.js?v=$VERSION" _site/public/js/music-vote.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
 grep -q "app.js?v=$VERSION" _site/index.html
