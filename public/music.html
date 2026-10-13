@@ -189,11 +189,17 @@
             <div class="vote-form">
               <!-- The captcha, when the Supabase project asks for one at sign in. -->
               <div id="vote-captcha" class="vote-captcha" hidden></div>
-              <button type="submit" class="primary">Send my votes by email</button>
-              <!-- With the online vote the main button casts the votes, and email is a choice here. -->
-              <div class="vote-actions">
-                <button type="button" id="vote-email" class="vote-action" hidden>Send by email instead</button>
-                <button type="button" id="vote-copy" class="vote-action">Copy my votes</button>
+              <!-- A split button: the main way to send the votes, and an arrow with the other ways.
+                   With the online vote the main button casts them, and email moves into the menu. -->
+              <div class="vote-split">
+                <button type="submit" class="primary vote-main">Send my votes by email</button>
+                <button type="button" id="vote-more" class="vote-more" aria-haspopup="menu" aria-expanded="false" aria-controls="vote-menu" aria-label="More ways to send your votes">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div id="vote-menu" class="vote-menu" role="menu" aria-labelledby="vote-more" hidden>
+                  <button type="button" id="vote-email" role="menuitem" hidden>Send by email</button>
+                  <button type="button" id="vote-copy" role="menuitem">Copy my votes</button>
+                </div>
               </div>
               <output id="vote-status" class="helper vote-status" role="status"></output>
               <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->

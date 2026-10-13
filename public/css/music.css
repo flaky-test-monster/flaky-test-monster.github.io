@@ -186,8 +186,18 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .vote-status { display: block; margin: 0; }
 .vote-privacy { margin: 0; }
-/* The other ways to send the votes, and the scoreboard's refresh: quiet buttons beside the red one. */
-.vote-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The split button: the red main button, and an arrow joined to it that opens the other ways to
+ * send the votes, in a menu under its right edge. */
+.vote-split { position: relative; display: flex; }
+.vote-main { flex: 1; border-radius: 6px 0 0 6px; }
+.vote-more { display: grid; flex: none; place-items: center; width: 52px; min-height: 48px; padding: 0; border: 1px solid var(--red); border-left-color: rgb(255 248 237 / .45); border-radius: 0 6px 6px 0; background: var(--red); color: var(--cream); }
+.vote-more:hover, .vote-more[aria-expanded="true"] { background: var(--red-hover); }
+.vote-more svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.vote-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+.vote-menu { position: absolute; z-index: 2; top: calc(100% + 4px); right: 0; display: flex; flex-direction: column; min-width: 240px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 32px rgb(23 19 14 / .2); }
+.vote-menu button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font-size: 0.875rem; text-align: left; }
+.vote-menu button:is(:hover, :focus-visible) { background: var(--red); color: var(--cream); outline-offset: -3px; }
+/* The scoreboard's refresh: a quiet button beside the status line. */
 .vote-action { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
 .vote-action:hover { border-color: var(--red); color: var(--red); }
 .vote-copy-field { display: block; font: bold 0.75rem var(--utility); }

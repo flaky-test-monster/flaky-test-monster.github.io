@@ -114,6 +114,57 @@ $('vote-email').addEventListener('click', () => {
   if (body) email(body);
 });
 
+/** The menu of the split button: the other ways to send the votes, opened by its arrow. */
+const more = $('vote-more');
+const menu = $('vote-menu');
+const menuItems = () => [...menu.querySelectorAll('[role="menuitem"]')].filter((item) => !item.hidden);
+
+function openMenu() {
+  menu.hidden = false;
+  more.setAttribute('aria-expanded', 'true');
+  menuItems()[0]?.focus();
+}
+
+/** Closes the menu; focus goes back to the arrow unless it has moved on, say to a picked item's result. */
+function closeMenu(refocus = true) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  more.setAttribute('aria-expanded', 'false');
+  if (refocus) more.focus();
+}
+
+more.addEventListener('click', () => (menu.hidden ? openMenu() : closeMenu()));
+more.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    openMenu();
+  }
+});
+menu.addEventListener('keydown', (event) => {
+  const items = menuItems();
+  const at = items.indexOf(document.activeElement);
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeMenu();
+  } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  } else if (event.key === 'Home' || event.key === 'End') {
+    event.preventDefault();
+    items[event.key === 'Home' ? 0 : items.length - 1].focus();
+  } else if (event.key === 'Tab') {
+    closeMenu(false);
+  }
+});
+// A pick closes the menu before it runs, so the pick can move focus where it needs to.
+menu.addEventListener('click', (event) => {
+  if (event.target.closest('[role="menuitem"]')) closeMenu();
+}, true);
+// A click anywhere else closes it too.
+document.addEventListener('pointerdown', (event) => {
+  if (!event.target.closest('.vote-split')) closeMenu(false);
+});
+
 $('vote-copy').addEventListener('click', async () => {
   const body = readyBallot();
   if (!body) return;
