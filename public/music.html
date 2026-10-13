@@ -196,8 +196,6 @@
                 <p id="vote-name-hint" class="helper">On your votes and your jury photo. Up to 24 characters.</p>
                 <p id="vote-name-error" class="field-error" hidden></p>
               </div>
-              <!-- The captcha, when the Supabase project asks for one at sign in. -->
-              <div id="vote-captcha" class="vote-captcha" hidden></div>
               <!-- A split button: the main way to send the votes, and an arrow with the other ways.
                    With the online vote the main button casts them, and email moves into the menu. -->
               <div class="vote-split">
@@ -210,6 +208,8 @@
                   <button type="button" id="vote-copy" role="menuitem">Copy my votes</button>
                 </div>
               </div>
+              <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
+              <div id="vote-captcha" class="vote-captcha" hidden></div>
               <output id="vote-status" class="helper vote-status" role="status"></output>
               <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->
               <label id="vote-copy-field" class="vote-copy-field" hidden>

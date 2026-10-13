@@ -55,7 +55,7 @@ function loadTurnstile() {
     script.onload = () => resolve(window.turnstile);
     script.onerror = () => {
       turnstile = undefined;
-      reject(new Error('The check that you are human did not load. Try again in a moment.'));
+      reject(new Error('The monster check did not load. Try again in a moment.'));
     };
     document.head.append(script);
   });
@@ -68,15 +68,25 @@ function loadTurnstile() {
  */
 async function captchaToken(box) {
   const widgets = await loadTurnstile();
+  // Turnstile's own words, in its frame, cannot be changed: ours go above it, and only show
+  // when it shows, that is when it wants a click.
+  const note = document.createElement('p');
+  note.className = 'helper captcha-note';
+  note.textContent = 'Monster verification: one click to prove you are a jury, not a flaky test.';
+  note.hidden = true;
+  const widget = document.createElement('div');
+  box.replaceChildren(note, widget);
   box.hidden = false;
   try {
     return await new Promise((resolve, reject) => {
-      widgets.render(box, {
+      widgets.render(widget, {
         sitekey: captchaSiteKey,
         appearance: 'interaction-only',
         callback: resolve,
-        'error-callback': () => reject(new Error('The check that you are human failed. Try again.')),
-        'expired-callback': () => reject(new Error('The check that you are human expired. Try again.')),
+        'before-interactive-callback': () => { note.hidden = false; },
+        'after-interactive-callback': () => { note.hidden = true; },
+        'error-callback': () => reject(new Error('The monster check failed. Try again.')),
+        'expired-callback': () => reject(new Error('The monster check expired. Try again.')),
       });
     });
   } finally {

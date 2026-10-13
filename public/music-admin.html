@@ -46,9 +46,9 @@
               <span>Password</span>
               <input id="signin-password" type="password" autocomplete="current-password" required>
             </label>
-            <!-- The captcha, when the Supabase project asks for one at sign in. -->
-            <div id="signin-captcha" class="vote-captcha" hidden></div>
             <button type="submit" class="primary">Sign in</button>
+            <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
+            <div id="signin-captcha" class="vote-captcha" hidden></div>
             <output id="signin-status" class="helper admin-status" role="status"></output>
           </form>
         </section>

@@ -214,7 +214,8 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-main:disabled:hover { background: var(--red); }
 .vote-copy-field { display: block; font: bold 0.75rem var(--utility); }
 .vote-text { display: block; width: 100%; margin-top: 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: 0.8125rem/1.5 var(--utility); resize: vertical; }
-.vote-captcha { margin: 8px 0; }
+.vote-captcha { margin: 4px 0; }
+.captcha-note { margin: 0 0 6px; font-weight: bold; }
 /* The scoreboard: one row per song on the song list's parchment, rank, title and points, with a
  * red bar under each for its share of the leader's points. The leader's row is set in red. */
 .scoreboard { margin-top: 32px; }

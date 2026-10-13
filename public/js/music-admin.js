@@ -235,7 +235,7 @@ $('signin-form').addEventListener('submit', async (event) => {
   if (error) {
     // The same words whether the email or the password is wrong, as Supabase says too.
     $('signin-status').textContent = error.status === 429 ? 'Too many tries. Wait a while, then try again.'
-      : /captcha/i.test(error.message) ? 'The check that you are human failed. Try again.'
+      : /captcha/i.test(error.message) ? 'The monster check failed. Try again.'
       : 'That email and password do not match an account.';
     return;
   }
