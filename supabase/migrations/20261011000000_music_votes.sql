@@ -4,7 +4,8 @@
 -- The page is static and talks to Supabase with the public anon key, so nothing here trusts
 -- the browser:
 --   * Every voter is a Supabase user, an anonymous one by default (Authentication → Sign In /
---     Providers → Allow anonymous sign-ins). A user has one ballot; casting again replaces it.
+--     Providers → Allow anonymous sign-ins). A user has one ballot, and it is final: once cast,
+--     it cannot be changed, so nobody can move their points after peeking at the scoreboard.
 --   * The tables have row level security on and no policies, and anon and authenticated
 --     have no rights on them: the page cannot read or write a row directly.
 --   * All access goes through three functions: cast_ballot checks every vote before it is
@@ -73,8 +74,9 @@ insert into public.songs (id, title, position) values
   ('cat', 'The cat version', 9)
 on conflict (id) do update set title = excluded.title, position = excluded.position;
 
--- Casts or replaces the caller's ballot. votes is an object of song id to points, such as
--- {"klingon": 12, "greek": 10}. Errors raised here (SQLSTATE P0001) are meant for the voter.
+-- Casts the caller's ballot, once: a second one is turned away. votes is an object of song id to
+-- points, such as {"klingon": 12, "greek": 10}. Errors raised here (SQLSTATE P0001) are meant
+-- for the voter; the one for a second ballot carries the hint already_voted.
 create or replace function public.cast_ballot(jury text, votes jsonb)
 returns void
 language plpgsql
@@ -84,7 +86,6 @@ as $$
 declare
   me uuid := auth.uid();
   clean_jury text;
-  last_cast timestamptz;
   -- PostgREST hands the request headers over as JSON, with lower-case names.
   country text := upper(nullif(current_setting('request.headers', true), '')::json ->> 'cf-ipcountry');
 begin
@@ -122,20 +123,18 @@ begin
     raise exception 'Each score goes to one song only.';
   end if;
 
-  -- One ballot per voter, which a voter can change, but not in a tight loop.
-  select b.updated_at into last_cast from public.ballots b where b.voter = me for update;
-  if last_cast > now() - interval '5 seconds' then
-    raise exception 'Easy, jury: wait a few seconds before you vote again.';
-  end if;
-
   -- XX is Cloudflare's "unknown" and T1 is Tor: neither is a country.
   if country !~ '^[A-Z]{2}$' or country in ('XX', 'T1') then
     country := null;
   end if;
 
-  insert into public.ballots as b (voter, jury, country) values (me, clean_jury, country)
-  on conflict (voter) do update set jury = excluded.jury, country = excluded.country, updated_at = now();
-  delete from public.votes v where v.voter = me;
+  -- One ballot per voter, and it is final. The insert itself decides, so two casts at the same
+  -- moment cannot both get in.
+  insert into public.ballots (voter, jury, country) values (me, clean_jury, country)
+  on conflict (voter) do nothing;
+  if not found then
+    raise exception 'You have already voted, and votes are final.' using hint = 'already_voted';
+  end if;
   insert into public.votes (voter, song, points)
   select me, v.key, (v.value #>> '{}')::smallint from jsonb_each(votes) v;
 end;

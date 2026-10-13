@@ -189,20 +189,52 @@ function hideCopy() {
   $('vote-copy-field').hidden = true;
 }
 
-/** Casts the votes online; the scoreboard hears about it and updates. */
+/** Casts the votes online, once; the scoreboard hears about it and updates. */
 async function cast() {
   const submit = form.querySelector('[type="submit"]');
   submit.disabled = true;
   say('Casting your votes…');
   try {
     await castBallot(juryName(), votes(), $('vote-captcha'));
-    say('Your votes are in, thank you! Changed your mind? Change the points and cast them again.');
+    lock({ jury: juryName(), votes: votes() });
+    say('Your votes are in, thank you! Votes are final, so these are the ones that count.');
     document.dispatchEvent(new CustomEvent('flaky:voted'));
   } catch (error) {
-    say(error.message);
-  } finally {
     submit.disabled = false;
+    say(error.message);
+    // Voted already, say in another tab: show the votes that count instead of these.
+    if (error.alreadyVoted) showCast().catch(() => {});
   }
+}
+
+/**
+ * Shows a ballot already cast, which is final: its points and name, which can no longer be
+ * changed, and a button that says the votes are in. Email and copy still work, with these votes.
+ * @param {{ jury: string, votes: Record<string, number> }} ballot
+ */
+function lock(ballot) {
+  selects().forEach((select, index) => {
+    select.value = String(ballot.votes[songIds[index]] ?? '');
+    select.disabled = true;
+  });
+  render();
+  hideCopy();
+  // The name goes into both name fields through the photo's own handling, which redraws it.
+  $('vote-name').value = ballot.jury;
+  $('vote-name').dispatchEvent(new Event('input'));
+  $('vote-name').disabled = true;
+  $('jury-name').disabled = true;
+  $('vote-name-hint').hidden = true;
+  const submit = form.querySelector('[type="submit"]');
+  submit.textContent = 'Votes cast';
+  submit.disabled = true;
+}
+
+/** Shows this browser's ballot, when it has cast one; resolves to whether it has. */
+async function showCast() {
+  const mine = await myBallot();
+  if (mine) lock(mine);
+  return Boolean(mine);
 }
 
 /** Opens the email app with the votes. */
@@ -248,20 +280,15 @@ function share() {
 $('photo-share').hidden = !canShareImages();
 $('photo-share').addEventListener('click', share);
 
-/** Online, the button says so, and a jury that voted before from this browser gets its points back. */
+/** Online, the button says so, and a jury that voted before from this browser sees its votes. */
 async function goOnline() {
   form.querySelector('[type="submit"]').textContent = 'Cast my votes';
   $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {
-    const mine = await myBallot();
-    // Only if nothing was picked while the ballot loaded.
-    if (!mine || selects().some((select) => select.value)) return;
-    selects().forEach((select, index) => { select.value = String(mine.votes[songIds[index]] ?? ''); });
-    render();
-    say('Welcome back, jury. These are the votes you cast: change them and cast them again, if you like.');
+    if (await showCast()) say('Welcome back, jury. These are the votes you cast, and votes are final.');
   } catch {
-    // Not knowing the earlier votes is fine: casting again replaces them.
+    // Not knowing the earlier votes is fine: the database turns a second ballot away anyway.
   }
 }
 

@@ -201,6 +201,11 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-main { flex: 1; border-radius: 6px 0 0 6px; }
 .vote-more { display: grid; flex: none; place-items: center; width: 52px; min-height: 48px; padding: 0; border: 1px solid var(--red); border-left-color: rgb(255 248 237 / .45); border-radius: 0 6px 6px 0; background: var(--red); color: var(--cream); }
 .vote-more:hover, .vote-more[aria-expanded="true"] { background: var(--red-hover); }
+/* Cast, and final: the main button stays in place, faded, and no longer looks clickable. */
+.vote-main:disabled { opacity: .65; cursor: default; }
+.vote-main:disabled:hover { background: var(--red); }
+.vote-name input:disabled { border-style: dashed; cursor: default; }
+.vote-name input:disabled:hover { border-color: var(--border); }
 .vote-more svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
 .vote-more[aria-expanded="true"] svg { transform: rotate(180deg); }
 .vote-menu { position: absolute; z-index: 2; top: calc(100% + 4px); right: 0; display: flex; flex-direction: column; min-width: 240px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 32px rgb(23 19 14 / .2); }

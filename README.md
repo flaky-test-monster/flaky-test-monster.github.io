@@ -324,14 +324,15 @@ the scoreboard stays hidden.
 How it stays safe, with only a static page and the public anon key in the browser:
 
 - **One ballot per voter.** Voters sign in anonymously with Supabase Auth, only when they
-  cast their first votes. Casting again replaces the ballot, and the browser keeps the
-  session, so a returning jury sees its own votes.
+  cast their first votes. A ballot is final: a second one is turned away, so nobody can
+  move their points after peeking at the scoreboard. The browser keeps the session, so a
+  returning jury sees the votes it cast.
 - **No direct table access.** Row level security is on and anon and authenticated have no
   rights on the tables. The page can only call three functions:
   `cast_ballot` checks every vote in the database (known songs, valid points, each score
-  once, a jury name of at most 60 characters, voting open, at most one change every 5
-  seconds), `my_ballot` returns the caller's own ballot only, and `scoreboard` returns the
-  totals only: never who gave what, and never the typed-in jury names.
+  once, a jury name of at most 60 characters, voting open, no ballot cast before),
+  `my_ballot` returns the caller's own ballot only, and `scoreboard` returns the totals
+  only: never who gave what, and never the typed-in jury names.
 - **The voter's country, from the connection.** Each ballot keeps the two-letter country
   Cloudflare, in front of Supabase, names for the caller (the `CF-IPCountry` header),
   never the IP address. The scoreboard shows only how many countries voted. The page says

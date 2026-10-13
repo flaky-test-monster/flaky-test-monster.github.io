@@ -26,10 +26,13 @@ function supabase() {
   return client;
 }
 
-/** The messages the database raises for voters (SQLSTATE P0001) are shown as they are. */
+/**
+ * The messages the database raises for voters (SQLSTATE P0001) are shown as they are. A second
+ * ballot is marked, so the page can show the votes already cast.
+ */
 function failure(error) {
-  if (error?.code === 'P0001' && error.message) return new Error(error.message);
-  return new Error('The vote server did not answer. Try again in a moment.');
+  if (error?.code !== 'P0001' || !error.message) return new Error('The vote server did not answer. Try again in a moment.');
+  return Object.assign(new Error(error.message), { alreadyVoted: error.hint === 'already_voted' });
 }
 
 /** Loads Cloudflare Turnstile once, for the captcha Supabase asks for at sign in when set up. */
@@ -84,7 +87,7 @@ async function signIn(captchaBox) {
 }
 
 /**
- * Casts the jury's votes, replacing any it cast before.
+ * Casts the jury's votes, once: votes are final.
  * @param {string} jury
  * @param {Record<string, number>} votes song id to points
  * @param {HTMLElement} captchaBox where the captcha shows, when one is set up
