@@ -405,6 +405,8 @@ npx --yes serve _site   # then open /music.html
 
 ## Notes
 
+- **The songs on the music page play as a playlist.** When a song ends, the next one in
+  the list starts, skipping any song that cannot be loaded; after the last song it stops.
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied
   or there is no camera, the camera card says so and its buttons are disabled; allow the
