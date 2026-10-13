@@ -311,6 +311,98 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
 the first deploy.
 
+## Music page vote and scoreboard
+
+The music page (`public/music.html`) lets visitors give the songs Eurovision points (12, 10,
+8 and down to 1, each score to one song only). With a [Supabase](https://supabase.com)
+project the votes are cast online and a scoreboard shows the totals. The scoreboard starts
+closed, so the points so far do not sway a jury before it votes; it loads only once opened,
+then updates every 30 seconds and right after a vote. The votes can also be sent by email or
+copied to paste into webmail, online or not; those reach you by email and are not counted on
+the scoreboard. Without a project, email is the main button and the scoreboard stays hidden.
+
+How it stays safe, with only a static page and the public anon key in the browser:
+
+- **One ballot per voter.** Voters sign in anonymously with Supabase Auth, only when they
+  cast their first votes. A ballot is final: a second one is turned away, so nobody can
+  move their points after peeking at the scoreboard. The browser keeps the session, so a
+  returning jury sees the votes it cast.
+- **No direct table access.** Row level security is on and anon and authenticated have no
+  rights on the tables. The page can only call three functions:
+  `cast_ballot` checks every vote in the database (known songs, valid points, each score
+  once, a jury name of at most 60 characters, voting open, no ballot cast before),
+  `my_ballot` returns the caller's own ballot only, and `scoreboard` returns the totals
+  only: never who gave what, and never the typed-in jury names.
+- **The voter's country, from the connection.** Each ballot keeps the two-letter country
+  Cloudflare, in front of Supabase, names for the caller (the `CF-IPCountry` header),
+  never the IP address. The scoreboard shows only how many countries voted. The page says
+  so next to the vote button. It is a best guess: a VPN changes it, and a ballot whose
+  country is unknown (or comes through Tor) is kept without one. Whether Supabase passes
+  the header on to the database is not documented, so check after the first votes:
+  `select country, count(*) from public.ballots group by country;` If every row is
+  empty, the header does not arrive and the count stays hidden.
+- **An admin page, for admins only.** `music-admin.html` lists every ballot, adds ballots
+  (say for votes that came by email, checked like online ones) and deletes them, and opens
+  or closes voting. Admins sign in with an email and password. Being signed in is not
+  enough, since every voter is signed in too: each admin function checks that the account
+  is not anonymous and is listed in `public.admins`, which only the SQL editor can change.
+  The admin's session is kept apart from a voter's in the same browser.
+- **Limits on new voters.** Supabase rate-limits anonymous sign-ins per IP address, and a
+  Cloudflare Turnstile captcha can be required on top. Someone who clears their browser
+  can still vote again; that is the trade-off of voting without an account.
+
+Setup:
+
+1. Create a Supabase project. In **Authentication → Sign In / Providers**, turn on
+   **Allow anonymous sign-ins**. Use a project of its own for the vote: anonymous sign-ins
+   are for the whole project, and anonymous users get the `authenticated` role, so any
+   existing policy written `to authenticated` would let any visitor in. If you share a
+   project, check those policies for `(auth.jwt() ->> 'is_anonymous')::boolean`.
+   Supabase limits new anonymous users to 30 an hour per IP address by default. If many
+   juries vote from one network, such as a party's Wi-Fi, raise it under
+   **Authentication → Rate Limits**.
+2. Run `supabase/migrations/20261011000000_music_votes.sql` in the SQL editor (or
+   `supabase db push`). It can be run again; it upserts the songs. A song's id is the
+   `data-song` attribute of its list item on the music page, so add new songs to both.
+3. Give the page the project URL and the anon (publishable) key from **Project Settings →
+   API**. For GitHub Pages, set them as repository variables (**Settings → Secrets and
+   variables → Actions → Variables**) named `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the
+   build writes them into the pages' meta tags. For `npm start`, which serves the pages
+   unbuilt, fill in the `flaky-supabase-*` meta tags in both `public/music.html` and
+   `public/music-admin.html`, or try it as in "To try it locally" below. Both values are
+   public by design.
+4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for `kertal.github.io`
+   (and `localhost`, to test), enter its secret key in Supabase under **Authentication →
+   Attack Protection**. The site key of the project's widget is already in the
+   `flaky-captcha-sitekey` meta tags of both pages; a repository variable
+   `TURNSTILE_SITE_KEY` replaces it, say for a widget of your own. Supabase then asks for
+   the captcha at every sign-in, the admin page's too, so a page without the site key
+   cannot sign anyone in, admins included. The captcha is checked by Supabase, with the
+   secret key, never in the browser.
+
+5. For the admin page: in **Authentication → Users**, choose **Add user → Create new user**,
+   with your email and a strong password, and tick **Auto Confirm User**. Then make that
+   account an admin in the SQL editor:
+
+   ```sql
+   insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
+   ```
+
+   Open `music-admin.html` and sign in. To remove an admin, delete their row from
+   `public.admins`. Anyone else who signs in there, or signs up, gets no admin rights.
+
+To close voting: the admin page's **Close voting**, or
+`update public.contest set open = false;` (and `true` to open it again). The scoreboard
+keeps showing the final totals.
+
+To try it locally without touching the pages, build the site the way Pages does,
+with the values in the environment, and serve the build:
+
+```sh
+SUPABASE_URL=https://YOUR-PROJECT.supabase.co SUPABASE_ANON_KEY=YOUR-ANON-KEY scripts/build-pages.sh
+npx --yes serve _site   # then open /music.html
+```
+
 ## Notes
 
 - **The songs on the music page play as a playlist.** When a song ends, the next one in

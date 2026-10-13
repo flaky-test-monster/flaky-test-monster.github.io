@@ -4,10 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>From Flaky With Love · The Flaky Test Monster</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, a jury photo to share, and a music video.">
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote, a scoreboard, a jury photo to share, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/css/music.css">
+  <!-- The online jury vote and scoreboard (public/js/music-online.js, supabase/migrations/): the
+       Supabase project URL and its public anon key. Both empty: votes go by email, no scoreboard.
+       The captcha site key is the project's Cloudflare Turnstile widget, public by design; it only
+       matters once captcha protection is on in Supabase, which then checks every token. -->
+  <meta name="flaky-supabase-url" content="">
+  <meta name="flaky-supabase-key" content="">
+  <meta name="flaky-captcha-sitekey" content="0x4AAAAAAFVVpwHBbX25Yj1k">
 </head>
 <body>
   <div class="page">
@@ -88,7 +95,7 @@
           <p class="intro">You're the jury. Distribute the points. The winner might get a enhanced deslopification procedure.</p>
             <form id="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
               <ul class="song-list">
-              <li class="song">
+              <li class="song" data-song="international">
                 <h3>From Flaky With Love: the international version</h3>
                 <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
                 <div class="player">
@@ -98,7 +105,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="greek">
                 <h3>The Greek version</h3>
                 <p>Inspired by Greek heroes battling flaky tests: definitely more risk and more drama than the international version.</p>
                 <div class="player">
@@ -108,7 +115,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="austrian">
                 <h3>The Austrian version</h3>
                 <p>With some “creativity” and <span lang="de">knüppelharte</span> translation work, it could also be Germany’s candidate. Or Switzerland’s. Or Britain’s: Look Mum No Computer’s recent song was partly in German too. 100% German, 100% risk, 100% fun.</p>
                 <div class="player">
@@ -119,7 +126,7 @@
                 </div>
               </li>
               <!-- song-klingon: hovering or playing this song turns the page dark and Klingon (music.css). -->
-              <li class="song song-klingon">
+              <li class="song song-klingon" data-song="klingon">
                 <h3>The Klingon version</h3>
                 <p>First the European Broadcasting Union needs a word with the High Council. Australia got in, so why not <span lang="tlh">Qo’noS</span>? Klingons respect a worthy foe, and no foe is more worthy than a test that fails one run in ten. Klingon is the only language where a failing test is a glorious death, not a bug, so the monster feels at home. <span lang="tlh">Heghlu’meH QaQ jajvam</span>: today is a good day to die. Tomorrow too, if you re-run the pipeline. Press play and the lights go down: Klingons don’t do parchment. <span lang="tlh">Qapla’!</span></p>
                 <div class="player">
@@ -129,7 +136,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="spanish">
                 <h3>The Spanish version</h3>
                 <p><span lang="es">¡Olé!</span> Spain is home to many fighters of flaky tests, and this song honours the monster’s foes with flair and passion.</p>
                 <div class="player">
@@ -139,7 +146,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="italian">
                 <h3>The Italian version</h3>
                 <p>Italy, playing it safe. Italy last won in 2021, so the monster plays copycat. A successful strategy can be repeated with minor tweaks. A test that was flaky once can have a second chance.</p>
                 <div class="player">
@@ -149,7 +156,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="polish">
                 <h3>The Polish version</h3>
                 <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes! And Poland never won so far. Wat?? Let the monster take care of it.</p>
                 <div class="player">
@@ -159,7 +166,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="french">
                 <h3>The French version</h3>
                 <p>France last won in 1977. Time to go back to basics: grand emotion, a <span lang="fr">chanson</span>. After all, flaky tests aren’t funny. They are a hidden tragedy.</p>
                 <div class="player">
@@ -169,7 +176,7 @@
                   </div>
                 </div>
               </li>
-              <li class="song">
+              <li class="song" data-song="cat">
                 <h3>The cat version</h3>
                 <p>In cat, says a language model. Doubtful: ask a cat to sing and it walks off. Cats don’t sing; they order a human, or a monster, to sing for them.</p>
                 <div class="player">
@@ -181,10 +188,53 @@
               </li>
             </ul>
             <div class="vote-form">
-              <button type="submit" class="primary">Send my votes by email</button>
+              <!-- The jury name, the same as the one on the photo (music-photo.js keeps the two
+                   fields in step). Empty, the jury goes by the monster name it shows. -->
+              <div class="vote-name">
+                <label for="vote-name">Your jury name</label>
+                <input id="vote-name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="vote-name-hint vote-name-error">
+                <p id="vote-name-hint" class="helper">On your votes and your jury photo. Up to 24 characters.</p>
+                <p id="vote-name-error" class="field-error" hidden></p>
+              </div>
+              <!-- A split button: the main way to send the votes, and an arrow with the other ways.
+                   With the online vote the main button casts them, and email moves into the menu. -->
+              <div class="vote-split">
+                <button type="submit" class="primary vote-main">Send my votes by email</button>
+                <button type="button" id="vote-more" class="vote-more" aria-haspopup="menu" aria-expanded="false" aria-controls="vote-menu" aria-label="More ways to send your votes">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div id="vote-menu" class="vote-menu" role="menu" aria-labelledby="vote-more" hidden>
+                  <button type="button" id="vote-email" role="menuitem" hidden>Send by email</button>
+                  <button type="button" id="vote-copy" role="menuitem">Copy my votes</button>
+                </div>
+              </div>
+              <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
+              <div id="vote-captcha" class="vote-captcha" hidden></div>
               <output id="vote-status" class="helper vote-status" role="status"></output>
+              <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->
+              <label id="vote-copy-field" class="vote-copy-field" hidden>
+                <span>Your votes, to copy</span>
+                <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
+              </label>
+              <!-- Shown with the online vote only (music-vote.js). -->
+              <p id="vote-privacy" class="helper vote-privacy" hidden>Votes are final once cast. Online votes are kept with the country your internet connection comes from, to count the countries on the scoreboard. Not your IP address, and nothing else about you.</p>
             </div>
           </form>
+        </section>
+
+        <!-- Filled in by music-scoreboard.js, with the online vote only. Closed at first, so the
+             points so far do not sway a jury before it votes: the totals load once it is opened. -->
+        <section id="scoreboard" class="scoreboard" aria-labelledby="scoreboard-title" hidden>
+          <h2 id="scoreboard-title">Scoreboard</h2>
+          <p class="intro">Vote first, then peek: the points so far might sway you. Only the totals are shown; who gave what stays secret.</p>
+          <details id="scoreboard-details" class="scoreboard-details">
+            <summary>Show the scoreboard</summary>
+            <ol id="scoreboard-list" class="scoreboard-list"></ol>
+            <div class="scoreboard-actions">
+              <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
+              <button type="button" id="scoreboard-refresh" class="scoreboard-refresh">Refresh</button>
+            </div>
+          </details>
         </section>
 
         <section class="photo" aria-labelledby="photo-title">
@@ -273,5 +323,6 @@
   <script type="module" src="public/js/music-video.js"></script>
   <script type="module" src="public/js/music-songs.js"></script>
   <script type="module" src="public/js/music-vote.js"></script>
+  <script type="module" src="public/js/music-scoreboard.js"></script>
 </body>
 </html>

@@ -84,6 +84,9 @@ const MONSTER_NAME = (() => {
   return `${start}${end} ${pick(['the Flaky', 'the Retried', 'the Skipped', 'the Red'])}`;
 })();
 
+/** The jury name has two fields, kept the same: on the picture, and above the vote button. */
+const nameFields = [$('jury-name'), $('vote-name')];
+
 /** What was typed in the name field, tidied up; empty when nothing was. */
 const typedName = () => $('jury-name').value.replace(/\s+/g, ' ').trim();
 
@@ -103,19 +106,21 @@ export function nameError() {
     : !/[\p{L}\p{N}]/u.test(name) ? 'Your name needs at least one letter or number.'
     : name.length > NAME_MAX ? `Your name can have up to ${NAME_MAX} characters.`
     : '';
-  // Next to the field the whole story, as the vote button that sends here is out of view.
+  // Next to the fields the whole story, as the button that was pressed may be out of view.
   showNameError(error && `${error} Or clear it to go by ${MONSTER_NAME}.`);
   return error;
 }
 
 /** What to say next to a button when the name is wrong: the reason, and where to fix it. */
-export const nameMessage = (error) => `${error} Fix it on the picture, or clear it to go by ${MONSTER_NAME}.`;
+export const nameMessage = (error) => `${error} Fix the name, or clear it to go by ${MONSTER_NAME}.`;
 
-/** Marks the name field as wrong with the message, or clears it with an empty one. */
+/** Marks the name fields as wrong with the message, or clears them with an empty one. */
 function showNameError(message) {
-  $('jury-name').setAttribute('aria-invalid', String(Boolean(message)));
-  $('jury-name-error').textContent = message;
-  $('jury-name-error').hidden = !message;
+  for (const field of nameFields) field.setAttribute('aria-invalid', String(Boolean(message)));
+  for (const id of ['jury-name-error', 'vote-name-error']) {
+    $(id).textContent = message;
+    $(id).hidden = !message;
+  }
 }
 
 /** The song with the douze points, as chosen next to the songs, or null. Read from the choices
@@ -511,22 +516,27 @@ function cancelCamera() {
   stopCamera();
 }
 
-$('jury-name').addEventListener('input', () => {
-  // Once marked wrong, the field says as soon as it is fine again.
-  if ($('jury-name').getAttribute('aria-invalid') === 'true') nameError();
-  redraw();
-});
-// Done typing: the field keeps the name as the photo and the votes have it, so a name of only
-// spaces turns back into the monster name.
-$('jury-name').addEventListener('change', () => {
-  if ($('jury-name').value === typedName()) return;
-  $('jury-name').value = typedName();
-  redraw();
-});
-// Enter, or Done on a phone, is the end of typing the name.
-$('jury-name').addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.isComposing) $('jury-name').blur();
-});
+for (const field of nameFields) {
+  field.addEventListener('input', () => {
+    for (const other of nameFields) if (other !== field) other.value = field.value;
+    // Once marked wrong, the fields say as soon as the name is fine again.
+    if (field.getAttribute('aria-invalid') === 'true') nameError();
+    redraw();
+  });
+  // Done typing: the fields keep the name as the photo and the votes have it, so a name of only
+  // spaces turns back into the monster name.
+  field.addEventListener('change', () => {
+    if (field.value === typedName()) return;
+    for (const each of nameFields) each.value = typedName();
+    redraw();
+  });
+  // Enter, or Done on a phone, is the end of typing the name; it does not send the votes.
+  field.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    field.blur();
+  });
+}
 // The douze points are chosen next to the songs; music-vote.js marks the song before this runs.
 document.addEventListener('change', (event) => {
   if (event.target.closest?.('.song-vote')) redraw();
@@ -548,5 +558,6 @@ document.fonts?.ready.then(redraw);
 
 // The empty field shows the monster name its jury member will go by.
 $('jury-name').placeholder = `${MONSTER_NAME} ✎`;
+$('vote-name').placeholder = MONSTER_NAME;
 draw();
 render();

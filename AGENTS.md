@@ -8,8 +8,9 @@ and how it is used; this file covers how the code is laid out and how to change 
 Flakifier turns a webcam photo into a 3D-printable STL figure (Flaky Test Monster, marble
 bust, LEGO-style minifigure, ...). A plain Node server (`server.js`) serves a vanilla JS
 frontend (`public/`) and runs the server-side pipelines; an in-browser pipeline and the
-monster scan run entirely client-side. `public/music.html` is a separate, backend-free
-music page.
+monster scan run entirely client-side. `public/music.html` is a separate music page with no
+backend of its own; its jury vote and scoreboard can optionally run on a Supabase project
+(`supabase/migrations/`), called straight from the browser.
 
 ## Hard rules
 
@@ -19,6 +20,11 @@ music page.
   - Browser libraries loaded from jsDelivr by URL with a pinned version (Three.js via the
     import map in `public/index.html`, Transformers.js in `public/js/browser-worker.js`).
   - Build tools pinned in `scripts/build-pages.sh` and fetched by `npx` at build time.
+  - The music page's optional online vote: supabase-js from jsDelivr, pinned, in
+    `public/js/music-online.js`, against a Supabase project. Its schema lives in
+    `supabase/migrations/`; the tables are closed to the browser and reached only through
+    the functions there, which check every input. Keep it that way, and keep the email
+    vote working when no project is configured.
 - **Node 22+, ES modules only** (`"type": "module"`). Use `import.meta.dirname`, top-level
   `await`, `process.loadEnvFile()`; no CommonJS.
 - **API keys stay on the server.** They are read from `.env` and never sent to the browser
@@ -45,7 +51,8 @@ lib/
   jobs.js               jobs/<uuid>/ storage; the only module-level state on the server
 public/
   index.html            main app page (import map for Three.js lives here)
-  music.html            music page, no backend
+  music.html            music page; optional Supabase vote (meta tags)
+  music-admin.html      admin page of the vote: sign in, list, add and delete ballots
   css/                  style.css (app), music.css (music page)
   js/                   ES modules, imported with relative './x.js' paths
     app.js              main UI controller
@@ -56,6 +63,8 @@ public/
     music-*.js          music page modules
     viewer.js, zip.js   3D viewer, tiny zip writer
   media/                videos, songs, photos (copied as is into the Pages build)
+supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard,
+                        and the admin_* functions, open to the users in public.admins only
 figures/                reference images for figure presets (see figures/README.md)
 scripts/
   install.sh            macOS installer (Node, plus local pipeline unless --cloud-only)

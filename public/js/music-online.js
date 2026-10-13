@@ -1,0 +1,174 @@
+/**
+ * The online jury vote on the music page, kept in Supabase (supabase/migrations/). The page
+ * holds the project URL and the public anon key in its meta tags; when they are empty, there is
+ * no online vote and the votes go out by email instead.
+ *
+ * Voters sign in anonymously, and only when they cast their first votes, so a visit alone makes
+ * no user. The browser keeps the session, which is how a jury comes back to its own ballot.
+ * The database checks every vote: nothing here is trusted.
+ */
+
+const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/+esm';
+const TURNSTILE_JS = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+
+const meta = (name) => document.querySelector(`meta[name="${name}"]`)?.content.trim() ?? '';
+const url = meta('flaky-supabase-url');
+const key = meta('flaky-supabase-key');
+const captchaSiteKey = meta('flaky-captcha-sitekey');
+
+/** Whether the page has a Supabase project to vote in. */
+export const online = Boolean(url && key);
+
+/** How often the library was asked for, so a retry can ask for a fresh copy. */
+let loads = 0;
+
+/**
+ * A Supabase client for this page's project. The admin page passes its own storage key, so an
+ * admin signed in there and a voter's anonymous session in the same browser stay apart.
+ * @param {string} [storageKey]
+ * @returns {Promise<import('@supabase/supabase-js').SupabaseClient>}
+ */
+export async function connect(storageKey) {
+  let module;
+  try {
+    // A retry asks for a fresh copy: browsers may keep a failed module import and fail again.
+    module = await import(loads === 0 ? SUPABASE_JS : `${SUPABASE_JS}?retry=${loads}`);
+  } catch {
+    throw new Error('The vote server could not be reached. Check your connection and try again.');
+  } finally {
+    loads += 1;
+  }
+  return module.createClient(url, key, storageKey ? { auth: { storageKey } } : undefined);
+}
+
+/** @type {Promise<import('@supabase/supabase-js').SupabaseClient> | undefined} */
+let client;
+/** The voter's client, made once; a failed attempt is not kept, so the next call tries again. */
+function supabase() {
+  client ??= connect().catch((error) => {
+    client = undefined;
+    throw error;
+  });
+  return client;
+}
+
+/**
+ * The messages the database raises for voters (SQLSTATE P0001) are shown as they are. A second
+ * ballot is marked, so the page can show the votes already cast.
+ */
+function failure(error) {
+  if (error?.code !== 'P0001' || !error.message) return new Error('The vote server did not answer. Try again in a moment.');
+  return Object.assign(new Error(error.message), { alreadyVoted: error.hint === 'already_voted' });
+}
+
+/** Loads Cloudflare Turnstile once, for the captcha Supabase asks for at sign in when set up. */
+let turnstile;
+function loadTurnstile() {
+  turnstile ??= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = TURNSTILE_JS;
+    script.async = true;
+    script.onload = () => resolve(window.turnstile);
+    script.onerror = () => {
+      turnstile = undefined;
+      reject(new Error('The monster check did not load. Try again in a moment.'));
+    };
+    document.head.append(script);
+  });
+  return turnstile;
+}
+
+/**
+ * A captcha token from Turnstile, asked for only when the votes are sent or an admin signs in.
+ * Most people never see it: the box shows only when Turnstile wants a click from someone.
+ */
+async function captchaToken(box) {
+  const widgets = await loadTurnstile();
+  // Turnstile's own words, in its frame, cannot be changed: ours go above it, and only show
+  // when it shows, that is when it wants a click.
+  const note = document.createElement('p');
+  note.className = 'helper captcha-note';
+  note.textContent = 'Monster verification: one click to prove you are a jury, not a flaky test.';
+  note.hidden = true;
+  const widget = document.createElement('div');
+  box.replaceChildren(note, widget);
+  box.hidden = false;
+  try {
+    return await new Promise((resolve, reject) => {
+      widgets.render(widget, {
+        sitekey: captchaSiteKey,
+        appearance: 'interaction-only',
+        callback: resolve,
+        'before-interactive-callback': () => { note.hidden = false; },
+        'after-interactive-callback': () => { note.hidden = true; },
+        'error-callback': () => reject(new Error('The monster check failed. Try again.')),
+        'expired-callback': () => reject(new Error('The monster check expired. Try again.')),
+      });
+    });
+  } finally {
+    box.hidden = true;
+    box.replaceChildren();
+  }
+}
+
+/**
+ * The sign-in options with a solved captcha, when the page has a Turnstile site key. With the
+ * captcha on in Supabase, it asks for one at every sign-in: a voter's and an admin's alike.
+ * @param {HTMLElement} box where the captcha shows until it is solved
+ * @returns {Promise<{ captchaToken: string } | undefined>}
+ */
+export async function captchaOptions(box) {
+  return captchaSiteKey ? { captchaToken: await captchaToken(box) } : undefined;
+}
+
+/** Signs in anonymously, unless this browser already has a session. */
+async function signIn(captchaBox) {
+  const db = await supabase();
+  const { data } = await db.auth.getSession();
+  if (data.session) return db;
+  const options = await captchaOptions(captchaBox);
+  const { error } = await db.auth.signInAnonymously({ options });
+  if (error) {
+    throw new Error(error.status === 429
+      ? 'Too many new juries from here just now. Try again later.'
+      : 'Could not sign you in to vote. Try again in a moment.');
+  }
+  return db;
+}
+
+/**
+ * Casts the jury's votes, once: votes are final.
+ * @param {string} jury
+ * @param {Record<string, number>} votes song id to points
+ * @param {HTMLElement} captchaBox where the captcha shows, when one is set up
+ */
+export async function castBallot(jury, votes, captchaBox) {
+  const db = await signIn(captchaBox);
+  const { error } = await db.rpc('cast_ballot', { jury, votes });
+  if (error) throw failure(error);
+}
+
+/**
+ * The votes this browser cast before, or null; it signs no one in.
+ * @returns {Promise<{ jury: string, votes: Record<string, number> } | null>}
+ */
+export async function myBallot() {
+  const db = await supabase();
+  const { data: session } = await db.auth.getSession();
+  if (!session.session) return null;
+  const { data, error } = await db.rpc('my_ballot');
+  if (error) throw failure(error);
+  return data;
+}
+
+/**
+ * The totals: how many juries voted, from how many countries, whether voting is open, and each
+ * song's points, highest first.
+ * @returns {Promise<{ juries: number, countries: number, open: boolean, songs: { song: string, points: number, juries: number, twelves: number }[] }>}
+ */
+export async function scoreboard() {
+  const db = await supabase();
+  const { data, error } = await db.rpc('scoreboard');
+  if (error) throw failure(error);
+  return data;
+}
