@@ -62,7 +62,10 @@ function loadTurnstile() {
   return turnstile;
 }
 
-/** A captcha token from Turnstile, shown in the given box until it is solved. */
+/**
+ * A captcha token from Turnstile, asked for only when the votes are sent or an admin signs in.
+ * Most people never see it: the box shows only when Turnstile wants a click from someone.
+ */
 async function captchaToken(box) {
   const widgets = await loadTurnstile();
   box.hidden = false;
@@ -70,6 +73,7 @@ async function captchaToken(box) {
     return await new Promise((resolve, reject) => {
       widgets.render(box, {
         sitekey: captchaSiteKey,
+        appearance: 'interaction-only',
         callback: resolve,
         'error-callback': () => reject(new Error('The check that you are human failed. Try again.')),
         'expired-callback': () => reject(new Error('The check that you are human expired. Try again.')),
