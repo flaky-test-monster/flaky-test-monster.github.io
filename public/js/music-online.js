@@ -81,12 +81,22 @@ async function captchaToken(box) {
   }
 }
 
+/**
+ * The sign-in options with a solved captcha, when the page has a Turnstile site key. With the
+ * captcha on in Supabase, it asks for one at every sign-in: a voter's and an admin's alike.
+ * @param {HTMLElement} box where the captcha shows until it is solved
+ * @returns {Promise<{ captchaToken: string } | undefined>}
+ */
+export async function captchaOptions(box) {
+  return captchaSiteKey ? { captchaToken: await captchaToken(box) } : undefined;
+}
+
 /** Signs in anonymously, unless this browser already has a session. */
 async function signIn(captchaBox) {
   const db = await supabase();
   const { data } = await db.auth.getSession();
   if (data.session) return db;
-  const options = captchaSiteKey ? { captchaToken: await captchaToken(captchaBox) } : undefined;
+  const options = await captchaOptions(captchaBox);
   const { error } = await db.auth.signInAnonymously({ options });
   if (error) {
     throw new Error(error.status === 429

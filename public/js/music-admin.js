@@ -6,7 +6,7 @@
  * as text only.
  */
 
-import { connect, online } from './music-online.js';
+import { captchaOptions, connect, online } from './music-online.js';
 
 const $ = (id) => document.getElementById(id);
 const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -220,12 +220,22 @@ $('signin-form').addEventListener('submit', async (event) => {
   const button = event.submitter;
   button.disabled = true;
   $('signin-status').textContent = 'Signing in…';
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
-  button.disabled = false;
+  let result;
+  try {
+    // With the captcha on, Supabase wants one here too; it shows above the button until solved.
+    result = await db.auth.signInWithPassword({ email, password, options: await captchaOptions($('signin-captcha')) });
+  } catch (error) {
+    // The captcha did not load or was not solved.
+    $('signin-status').textContent = error.message;
+    return;
+  } finally {
+    button.disabled = false;
+  }
+  const { data, error } = result;
   if (error) {
     // The same words whether the email or the password is wrong, as Supabase says too.
-    $('signin-status').textContent = error.status === 429
-      ? 'Too many tries. Wait a while, then try again.'
+    $('signin-status').textContent = error.status === 429 ? 'Too many tries. Wait a while, then try again.'
+      : /captcha/i.test(error.message) ? 'The check that you are human failed. Try again.'
       : 'That email and password do not match an account.';
     return;
   }

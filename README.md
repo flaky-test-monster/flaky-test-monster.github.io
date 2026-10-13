@@ -369,9 +369,12 @@ Setup:
    variables → Actions → Variables**) named `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the
    build writes them into the page's meta tags. For `npm start`, fill in the
    `flaky-supabase-*` meta tags in `public/music.html`. Both values are public by design.
-4. Recommended: add a captcha. Create a Cloudflare Turnstile widget, enter its secret key
-   in Supabase under **Authentication → Attack Protection**, and set its site key as the
-   variable `TURNSTILE_SITE_KEY` (or the `flaky-captcha-sitekey` meta tag).
+4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for `kertal.github.io`
+   (and `localhost`, to test), enter its secret key in Supabase under **Authentication →
+   Attack Protection**, and set its site key as the variable `TURNSTILE_SITE_KEY` (or the
+   `flaky-captcha-sitekey` meta tags). Supabase then asks for the captcha at every sign-in,
+   the admin page's too, so set the site key before turning the captcha on: without it,
+   nobody can sign in, admins included.
 
 5. For the admin page: in **Authentication → Users**, choose **Add user → Create new user**,
    with your email and a strong password, and tick **Auto Confirm User**. Then make that
