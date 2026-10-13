@@ -61,7 +61,11 @@ function playNext(song) {
   if (!next) return;
   const audio = next.querySelector('audio');
   audio.currentTime = 0;
-  audio.play().catch(() => {});
+  // A song that only turns out to be unavailable now is skipped; a blocked or interrupted
+  // play leaves the playlist where it is.
+  audio.play().catch(() => {
+    if (audio.error) playNext(next);
+  });
 }
 
 for (const song of songs) {
