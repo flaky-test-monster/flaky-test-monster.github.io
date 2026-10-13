@@ -1,6 +1,7 @@
 /**
  * The song players on the music page: a play and pause button for each song's MP3. Only one
- * song or the music video plays at a time.
+ * song or the music video plays at a time. The songs form a playlist: when one ends, the next
+ * one in the list starts, until the last song has played.
  */
 
 /** Tells the lock screen and headphone controls which song is playing. */
@@ -51,7 +52,25 @@ function setUp(song) {
   }
 }
 
-document.querySelectorAll('.song').forEach(setUp);
+const songs = [...document.querySelectorAll('.song')];
+songs.forEach(setUp);
+
+/** Starts the first playable song after the given one; after the last song the playlist stops. */
+function playNext(song) {
+  const next = songs.slice(songs.indexOf(song) + 1).find((s) => !s.querySelector('.song-play').disabled);
+  if (!next) return;
+  const audio = next.querySelector('audio');
+  audio.currentTime = 0;
+  // A song that only turns out to be unavailable now is skipped; a blocked or interrupted
+  // play leaves the playlist where it is.
+  audio.play().catch(() => {
+    if (audio.error) playNext(next);
+  });
+}
+
+for (const song of songs) {
+  song.querySelector('audio').addEventListener('ended', () => playNext(song));
+}
 
 // One at a time: whatever starts playing, a song or the music video, pauses all the others.
 document.addEventListener('play', (event) => {
