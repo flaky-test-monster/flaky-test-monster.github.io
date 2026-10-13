@@ -90,9 +90,9 @@ function say(message) {
 /** The email for the votes, once the name and the points are ready; otherwise null, and why. */
 function readyBallot() {
   if (nameError()) {
-    // The field is on the jury photo, further down: go there, where its error says what to do.
-    $('jury-name').focus();
-    say('The votes were not sent: the name on the jury photo needs fixing.');
+    // The name field is right above the button, and its error says what to do.
+    $('vote-name').focus();
+    say('The votes were not sent: the jury name needs fixing.');
     return null;
   }
   const body = ballot();

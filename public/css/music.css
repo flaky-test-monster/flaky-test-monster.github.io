@@ -186,6 +186,15 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .vote-status { display: block; margin: 0; }
 .vote-privacy { margin: 0; }
+/* The jury name, large and in the title type, right above the vote button. Until a name is
+ * typed it shows the monster name the jury goes by, muted so a typed name stands out from it. */
+.vote-name { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.vote-name label { font: bold 0.8125rem var(--utility); letter-spacing: .12em; text-transform: uppercase; }
+.vote-name input { width: 100%; min-height: 56px; padding: 0 16px; border: 2px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: italic 700 1.5rem var(--display); }
+.vote-name input::placeholder { color: var(--muted); opacity: 1; }
+.vote-name input:hover { border-color: var(--red); }
+.vote-name input[aria-invalid="true"] { border-color: var(--red); }
+.vote-name .helper, .vote-name .field-error { margin: 0; }
 /* The split button: the red main button, and an arrow joined to it that opens the other ways to
  * send the votes, in a menu under its right edge. */
 .vote-split { position: relative; display: flex; }
