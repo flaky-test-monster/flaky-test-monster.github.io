@@ -315,9 +315,11 @@ the first deploy.
 
 The music page (`public/music.html`) lets visitors give the songs Eurovision points (12, 10,
 8 and down to 1, each score to one song only). With a [Supabase](https://supabase.com)
-project the votes are cast online and a scoreboard shows the totals, updating every 30
-seconds and right after a vote. Without one, the votes go out by email as before and the
-scoreboard stays hidden.
+project the votes are cast online and a scoreboard shows the totals. The scoreboard starts
+closed, so the points so far do not sway a jury before it votes; it loads only once opened,
+then updates every 30 seconds and right after a vote. The votes can also be sent by email or
+copied to paste into webmail, online or not. Without a project, email is the main button and
+the scoreboard stays hidden.
 
 How it stays safe, with only a static page and the public anon key in the browser:
 

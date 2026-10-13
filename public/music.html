@@ -190,7 +190,17 @@
               <!-- The captcha, when the Supabase project asks for one at sign in. -->
               <div id="vote-captcha" class="vote-captcha" hidden></div>
               <button type="submit" class="primary">Send my votes by email</button>
+              <!-- With the online vote the main button casts the votes, and email is a choice here. -->
+              <div class="vote-actions">
+                <button type="button" id="vote-email" class="vote-action" hidden>Send by email instead</button>
+                <button type="button" id="vote-copy" class="vote-action">Copy my votes</button>
+              </div>
               <output id="vote-status" class="helper vote-status" role="status"></output>
+              <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->
+              <label id="vote-copy-field" class="vote-copy-field" hidden>
+                <span>Your votes, to copy</span>
+                <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
+              </label>
               <!-- Shown with the online vote only (music-vote.js). -->
               <p id="vote-privacy" class="helper vote-privacy" hidden>Online votes are kept with the country your internet connection comes from, to count the countries on the scoreboard. Not your IP address, and nothing else about you.</p>
             </div>
@@ -198,14 +208,19 @@
         </section>
 
         <!-- Filled in by music-scoreboard.js, with the online vote only. -->
+        <!-- Closed at first, so the points so far do not sway a jury before it votes: the totals
+             only load once it is opened. -->
         <section id="scoreboard" class="scoreboard" aria-labelledby="scoreboard-title" hidden>
           <h2 id="scoreboard-title">Scoreboard</h2>
-          <p class="intro">The points from every jury so far. Only the totals are shown: who gave what stays secret.</p>
-          <ol id="scoreboard-list" class="scoreboard-list"></ol>
-          <div class="scoreboard-actions">
-            <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
-            <button type="button" id="scoreboard-refresh" class="scoreboard-refresh">Refresh</button>
-          </div>
+          <p class="intro">Vote first, then peek: the points so far might sway you. Only the totals are shown; who gave what stays secret.</p>
+          <details id="scoreboard-details" class="scoreboard-details">
+            <summary>Show the scoreboard</summary>
+            <ol id="scoreboard-list" class="scoreboard-list"></ol>
+            <div class="scoreboard-actions">
+              <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
+              <button type="button" id="scoreboard-refresh" class="vote-action">Refresh</button>
+            </div>
+          </details>
         </section>
 
         <section class="photo" aria-labelledby="photo-title">

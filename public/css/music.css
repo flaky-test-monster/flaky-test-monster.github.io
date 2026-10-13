@@ -186,6 +186,12 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .vote-status { display: block; margin: 0; }
 .vote-privacy { margin: 0; }
+/* The other ways to send the votes, and the scoreboard's refresh: quiet buttons beside the red one. */
+.vote-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.vote-action { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
+.vote-action:hover { border-color: var(--red); color: var(--red); }
+.vote-copy-field { display: block; font: bold 0.75rem var(--utility); }
+.vote-text { display: block; width: 100%; margin-top: 4px; padding: 12px; border: 1px dashed var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: 0.8125rem/1.5 var(--utility); resize: vertical; }
 .vote-captcha { margin: 8px 0; }
 /* The scoreboard: one row per song on the song list's parchment, rank, title and points, with a
  * red bar under each for its share of the leader's points. The leader's row is set in red. */
@@ -202,8 +208,10 @@ h2::before { content: "// "; content: "// " / ""; }
 .score-leader :is(.score-rank, .score-title, .score-points) { color: var(--red); }
 .scoreboard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
 .scoreboard-status { flex: 1 1 240px; margin: 0; color: var(--muted); }
-.scoreboard-refresh { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
-.scoreboard-refresh:hover { border-color: var(--red); color: var(--red); }
+/* Closed, the scoreboard is a single bar to open, on the same parchment as the list. */
+.scoreboard-details > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
+.scoreboard-details > summary:hover { border-color: var(--red); color: var(--red); }
+.scoreboard-details[open] > summary { margin-bottom: 12px; }
 /* Narrow: the points stay beside the title, the note takes the width under it. */
 @media (max-width: 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }

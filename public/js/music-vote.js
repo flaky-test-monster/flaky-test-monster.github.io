@@ -2,8 +2,9 @@
  * The jury vote on the music page: points for the songs as at the Eurovision Song Contest
  * (12, 10, 8 and down to 1, each score to one song only). With a Supabase project set up in the
  * page's meta tags the votes are cast online (music-online.js) and the scoreboard shows the
- * totals; without one, they go out as a mailto: link. The jury photo and the votes can also be
- * shared, through the share sheet of browsers that can share images.
+ * totals; without one, they go out as a mailto: link. Either way they can also go by email or be
+ * copied, for pasting into webmail. The jury photo and the votes can also be shared, through the
+ * share sheet of browsers that can share images.
  */
 
 import { castBallot, myBallot, online } from './music-online.js';
@@ -37,6 +38,7 @@ function buildVotes() {
     select.addEventListener('change', () => {
       render();
       say('');
+      hideCopy();
     });
     vote.append(label, select);
     song.querySelector('.player').after(vote);
@@ -85,19 +87,56 @@ function say(message) {
   status.textContent = message;
 }
 
-form.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const error = nameError();
-  if (error) {
+/** The email for the votes, once the name and the points are ready; otherwise null, and why. */
+function readyBallot() {
+  if (nameError()) {
     // The field is on the jury photo, further down: go there, where its error says what to do.
     $('jury-name').focus();
-    return say('The votes were not sent: the name on the jury photo needs fixing.');
+    say('The votes were not sent: the name on the jury photo needs fixing.');
+    return null;
   }
   const body = ballot();
-  if (!body) return say('Give at least one song some points first: the choice is next to each song.');
+  if (!body) say('Give at least one song some points first: the choice is next to each song.');
+  return body;
+}
+
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const body = readyBallot();
+  if (!body) return;
   if (online) cast();
   else email(body);
 });
+
+// Online, email stays a choice next to the online vote; offline, it is the main button.
+$('vote-email').addEventListener('click', () => {
+  const body = readyBallot();
+  if (body) email(body);
+});
+
+$('vote-copy').addEventListener('click', async () => {
+  const body = readyBallot();
+  if (!body) return;
+  const text = `${SUBJECT}\n\n${body}`;
+  const to = form.dataset.email;
+  try {
+    await navigator.clipboard.writeText(text);
+    hideCopy();
+    say(to ? `Copied. Paste your votes into an email to ${to}.` : 'Copied. Paste your votes into an email.');
+  } catch {
+    // No clipboard here (an older browser, or a page not served over HTTPS): show the votes to copy by hand.
+    $('vote-text').value = text;
+    $('vote-copy-field').hidden = false;
+    $('vote-text').focus();
+    $('vote-text').select();
+    say('Copying did not work in this browser. Your votes are selected below: copy them with Ctrl+C or ⌘C.');
+  }
+});
+
+/** Hides the votes shown for copying by hand: once the points change, they are out of date. */
+function hideCopy() {
+  $('vote-copy-field').hidden = true;
+}
 
 /** Casts the votes online; the scoreboard hears about it and updates. */
 async function cast() {
@@ -161,6 +200,7 @@ $('photo-share').addEventListener('click', share);
 /** Online, the button says so, and a jury that voted before from this browser gets its points back. */
 async function goOnline() {
   form.querySelector('[type="submit"]').textContent = 'Cast my votes';
+  $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {
     const mine = await myBallot();

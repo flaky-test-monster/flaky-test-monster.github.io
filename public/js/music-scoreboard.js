@@ -1,8 +1,9 @@
 /**
  * The scoreboard on the music page: the songs' points from the online jury vote, highest first,
  * as at the end of the Eurovision Song Contest. It shows only with a Supabase project set up
- * (music-online.js), updates every half minute while the page is in view, and right after a
- * jury on this page casts its votes.
+ * (music-online.js), and starts closed, so the points so far do not sway a jury before it votes.
+ * Once opened it loads, then updates every half minute while it is open and the page is in view,
+ * and right after a jury on this page casts its votes.
  */
 
 import { online, scoreboard } from './music-online.js';
@@ -11,6 +12,7 @@ const $ = (id) => document.getElementById(id);
 const section = $('scoreboard');
 const list = $('scoreboard-list');
 const status = $('scoreboard-status');
+const details = $('scoreboard-details');
 const REFRESH_MS = 30_000;
 
 /** The song titles, by song id, from the song list. */
@@ -77,15 +79,20 @@ async function refresh() {
   }
 }
 
+/** Only an open scoreboard in a page in view is kept up to date. */
+const watched = () => details.open && document.visibilityState === 'visible';
+const refreshIfWatched = () => {
+  if (watched()) refresh();
+};
+
 if (online) {
   section.hidden = false;
-  refresh();
-  setInterval(() => {
-    if (document.visibilityState === 'visible') refresh();
-  }, REFRESH_MS);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refresh();
+  details.addEventListener('toggle', () => {
+    details.querySelector('summary').textContent = details.open ? 'Hide the scoreboard' : 'Show the scoreboard';
+    refreshIfWatched();
   });
-  document.addEventListener('flaky:voted', refresh);
+  setInterval(refreshIfWatched, REFRESH_MS);
+  document.addEventListener('visibilitychange', refreshIfWatched);
+  document.addEventListener('flaky:voted', refreshIfWatched);
   $('scoreboard-refresh').addEventListener('click', refresh);
 }
