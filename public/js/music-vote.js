@@ -161,6 +161,7 @@ $('photo-share').addEventListener('click', share);
 /** Online, the button says so, and a jury that voted before from this browser gets its points back. */
 async function goOnline() {
   form.querySelector('[type="submit"]').textContent = 'Cast my votes';
+  $('vote-privacy').hidden = false;
   try {
     const mine = await myBallot();
     // Only if nothing was picked while the ballot loaded.

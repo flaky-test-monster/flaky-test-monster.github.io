@@ -10,6 +10,11 @@
 --   * All access goes through three functions: cast_ballot checks every vote before it is
 --     stored, my_ballot returns the caller's own ballot only, and scoreboard returns the
 --     totals only, never who gave what, nor the jury names people typed in.
+--   * The country a ballot comes from is taken from the request, never from the browser's
+--     data: Supabase sits behind Cloudflare, which names the caller's country in the
+--     CF-IPCountry header. Only the two-letter code is kept, not the IP address. Without the
+--     header, the country is null. To check that it arrives once people vote:
+--       select country, count(*) from public.ballots group by country;
 --
 -- Run it once in the SQL editor of your Supabase project, or with `supabase db push`.
 -- It can be run again: the songs are upserted and the functions replaced.
@@ -32,8 +37,12 @@ create table if not exists public.ballots (
   voter uuid primary key references auth.users (id) on delete cascade,
   jury text not null default '' check (char_length(jury) <= 60),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- ISO 3166 code from CF-IPCountry, such as AT; null when unknown.
+  country text check (country ~ '^[A-Z]{2}$')
 );
+-- For projects that ran this file before the country was kept.
+alter table public.ballots add column if not exists country text check (country ~ '^[A-Z]{2}$');
 
 create table if not exists public.votes (
   voter uuid not null references public.ballots (voter) on delete cascade,
@@ -76,6 +85,8 @@ declare
   me uuid := auth.uid();
   clean_jury text;
   last_cast timestamptz;
+  -- PostgREST hands the request headers over as JSON, with lower-case names.
+  country text := upper(nullif(current_setting('request.headers', true), '')::json ->> 'cf-ipcountry');
 begin
   if me is null then
     raise exception 'Sign in to vote.' using errcode = '28000';
@@ -117,8 +128,13 @@ begin
     raise exception 'Easy, jury: wait a few seconds before you vote again.';
   end if;
 
-  insert into public.ballots as b (voter, jury) values (me, clean_jury)
-  on conflict (voter) do update set jury = excluded.jury, updated_at = now();
+  -- XX is Cloudflare's "unknown" and T1 is Tor: neither is a country.
+  if country !~ '^[A-Z]{2}$' or country in ('XX', 'T1') then
+    country := null;
+  end if;
+
+  insert into public.ballots as b (voter, jury, country) values (me, clean_jury, country)
+  on conflict (voter) do update set jury = excluded.jury, country = excluded.country, updated_at = now();
   delete from public.votes v where v.voter = me;
   insert into public.votes (voter, song, points)
   select me, v.key, (v.value #>> '{}')::smallint from jsonb_each(votes) v;
@@ -141,7 +157,8 @@ as $$
   where b.voter = auth.uid();
 $$;
 
--- The totals for everyone to see: how many juries voted, whether voting is open, and for each
+-- The totals for everyone to see: how many juries voted, from how many countries (a count only,
+-- so no lone voter from a small country stands out), whether voting is open, and for each
 -- song its points, how many juries gave it points and how many gave it 12. Highest first.
 create or replace function public.scoreboard()
 returns jsonb
@@ -152,6 +169,7 @@ set search_path = ''
 as $$
   select jsonb_build_object(
     'juries', (select count(*) from public.ballots),
+    'countries', (select count(distinct b.country) from public.ballots b),
     'open', (select c.open from public.contest c),
     'songs', coalesce(jsonb_agg(jsonb_build_object(
       'song', t.id, 'points', t.points, 'juries', t.juries, 'twelves', t.twelves

@@ -109,8 +109,9 @@ export async function myBallot() {
 }
 
 /**
- * The totals: how many juries voted, whether voting is open, and each song's points, highest first.
- * @returns {Promise<{ juries: number, open: boolean, songs: { song: string, points: number, juries: number, twelves: number }[] }>}
+ * The totals: how many juries voted, from how many countries, whether voting is open, and each
+ * song's points, highest first.
+ * @returns {Promise<{ juries: number, countries: number, open: boolean, songs: { song: string, points: number, juries: number, twelves: number }[] }>}
  */
 export async function scoreboard() {
   const db = await supabase();

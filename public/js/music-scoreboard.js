@@ -49,7 +49,9 @@ function render(board) {
     return item;
   }));
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const juries = board.juries === 0 ? 'No jury has voted yet' : `${plural(board.juries, 'jury has', 'juries have')} voted`;
+  // The countries are counted from where the votes came in; ballots of unknown origin are not.
+  const from = board.countries > 0 ? ` from ${plural(board.countries, 'country', 'countries')}` : '';
+  const juries = board.juries === 0 ? 'No jury has voted yet' : `${plural(board.juries, 'jury', 'juries')}${from} ${board.juries === 1 ? 'has' : 'have'} voted`;
   status.textContent = `${juries}${board.open ? '' : ', and voting is closed'}. Updated ${time}.`;
 }
 

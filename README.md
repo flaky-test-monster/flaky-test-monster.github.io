@@ -330,6 +330,14 @@ How it stays safe, with only a static page and the public anon key in the browse
   once, a jury name of at most 60 characters, voting open, at most one change every 5
   seconds), `my_ballot` returns the caller's own ballot only, and `scoreboard` returns the
   totals only: never who gave what, and never the typed-in jury names.
+- **The voter's country, from the connection.** Each ballot keeps the two-letter country
+  Cloudflare, in front of Supabase, names for the caller (the `CF-IPCountry` header),
+  never the IP address. The scoreboard shows only how many countries voted. The page says
+  so next to the vote button. It is a best guess: a VPN changes it, and a ballot whose
+  country is unknown (or comes through Tor) is kept without one. Whether Supabase passes
+  the header on to the database is not documented, so check after the first votes:
+  `select country, count(*) from public.ballots group by country;` If every row is
+  empty, the header does not arrive and the count stays hidden.
 - **Limits on new voters.** Supabase rate-limits anonymous sign-ins per IP address, and a
   Cloudflare Turnstile captcha can be required on top. Someone who clears their browser
   can still vote again; that is the trade-off of voting without an account.

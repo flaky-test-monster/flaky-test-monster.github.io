@@ -185,6 +185,7 @@ h2::before { content: "// "; content: "// " / ""; }
 /* The vote, under the songs: send, and what happened. */
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
 .vote-status { display: block; margin: 0; }
+.vote-privacy { margin: 0; }
 .vote-captcha { margin: 8px 0; }
 /* The scoreboard: one row per song on the song list's parchment, rank, title and points, with a
  * red bar under each for its share of the leader's points. The leader's row is set in red. */
