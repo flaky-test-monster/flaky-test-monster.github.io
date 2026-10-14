@@ -433,6 +433,32 @@ body {
 
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
+/* Over the black frame until the camera runs; the camera only starts on request. */
+.camera-start {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.camera-start::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.camera-start[hidden] { display: none; }
+.camera-start:disabled { opacity: 0.6; cursor: progress; }
+.camera-start:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
 .camera-fullscreen {
   position: absolute;
   top: 8px;
