@@ -43,6 +43,7 @@
           <div class="camera-frame" id="camera-frame">
             <video id="video" autoplay playsinline muted aria-label="Camera preview"></video>
             <canvas id="eyes" class="camera-eyes" aria-hidden="true"></canvas>
+            <button type="button" id="camera-start" class="camera-start">Start the camera</button>
             <div id="countdown" class="countdown" aria-live="assertive" hidden></div>
             <div id="camera-flash" class="camera-flash" aria-hidden="true"></div>
             <div id="camera-score" class="camera-score" aria-hidden="true" hidden>
@@ -69,9 +70,9 @@
           </div>
           <ul id="scan-photo-strip" class="scan-photo-strip" aria-label="Monster photos: a photo is taken at 100, at most every 5 seconds, and the last 6 are kept" hidden></ul>
         </div>
-        <p id="camera-error" class="camera-error" role="alert" hidden>The camera is blocked or missing. Allow camera access for this page in your browser and reload.</p>
+        <p id="camera-error" class="camera-error" role="alert" hidden>The camera is blocked or missing. Allow camera access for this page in your browser and try again.</p>
         <div class="camera-actions">
-          <button type="button" id="take-photo" class="btn btn-primary btn-large">Take photo</button>
+          <button type="button" id="take-photo" class="btn btn-primary btn-large" disabled>Take photo</button>
           <button type="button" id="scan-photos-download" class="btn btn-large" hidden></button>
         </div>
         <p class="hint scan-hint">The monster scan runs in your browser with a local face tracker; the video never leaves this device.</p>

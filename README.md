@@ -133,6 +133,9 @@ screen, where you can reopen or delete them.
 
 ## Monster scan
 
+The camera does not start by itself: click **Start the camera** on the camera card. After
+that it turns on again whenever you come back to the start, until you reload the page.
+
 The monster scan is always on while the camera is: it tracks your face in the live webcam
 video and keeps a **monster score** from 0 (human) to 100 (Flaky Test Monster). Nothing is
 uploaded and no API key is needed.
@@ -409,8 +412,8 @@ npx --yes serve _site   # then open /music.html
   the list starts, skipping any song that cannot be loaded; after the last song it stops.
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied
-  or there is no camera, the camera card says so and its buttons are disabled; allow the
-  camera and reload.
+  or there is no camera, the camera card says so and **Take photo** stays disabled;
+  allow the camera and click **Start the camera** again.
 - **Run time is about 1 to 4 minutes.** The OpenAI image edit takes 20 to 60 seconds.
   The Tripo3D method then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
   server polls Tripo3D every 3 seconds and gives up after 10 minutes. The simple-shapes
