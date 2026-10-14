@@ -136,6 +136,8 @@ function enterStep(step, url = location.pathname) {
  */
 async function startCamera() {
   if (state.stream) return;
+  // Checked before the button is disabled and hidden, which would drop its focus to the page.
+  const hadFocus = document.activeElement === $('camera-start');
   $('camera-start').disabled = true;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
@@ -143,6 +145,8 @@ async function startCamera() {
     // Only a camera that actually ran comes back by itself; a refused one waits for the button.
     state.cameraWanted = true;
     setCameraOn(true);
+    // Keyboard users go on to the next action; a camera resumed by itself takes no focus.
+    if (hadFocus) $('take-photo').focus();
     // The monster scan is always on while the camera is.
     startMonsterScan($('video'));
   } catch {
@@ -150,6 +154,7 @@ async function startCamera() {
   } finally {
     $('camera-start').disabled = false;
   }
+  if (hadFocus && !state.stream) $('camera-start').focus();
 }
 
 /**
