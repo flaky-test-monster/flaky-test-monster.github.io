@@ -412,8 +412,8 @@ npx --yes serve _site   # then open /music.html
   the list starts, skipping any song that cannot be loaded; after the last song it stops.
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied
-  or there is no camera, the camera card says so and its buttons are disabled; allow the
-  camera and click **Start the camera** again.
+  or there is no camera, the camera card says so and **Take photo** stays disabled;
+  allow the camera and click **Start the camera** again.
 - **Run time is about 1 to 4 minutes.** The OpenAI image edit takes 20 to 60 seconds.
   The Tripo3D method then spends 1 to 2 minutes in Tripo3D plus a short STL export; the
   server polls Tripo3D every 3 seconds and gives up after 10 minutes. The simple-shapes

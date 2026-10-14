@@ -87,7 +87,7 @@ const state = {
   figureChoice: {},
   worker: null,
   stream: null,
-  /** Set once the camera is started with its button, so coming back to the start turns it on again. */
+  /** Set once the camera has run, so coming back to the start turns it on again. */
   cameraWanted: false,
   recent: [],
   showAllRecent: false,
@@ -136,11 +136,12 @@ function enterStep(step, url = location.pathname) {
  */
 async function startCamera() {
   if (state.stream) return;
-  state.cameraWanted = true;
   $('camera-start').disabled = true;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
+    // Only a camera that actually ran comes back by itself; a refused one waits for the button.
+    state.cameraWanted = true;
     setCameraOn(true);
     // The monster scan is always on while the camera is.
     startMonsterScan($('video'));
