@@ -56,7 +56,8 @@ public/
   music.html            music page; optional Supabase vote (meta tags)
   music-admin.html      admin page of the vote: sign in, list, add and delete ballots
   about.html            about page: the monster's story, a timeline with photos (media/about/)
-  css/                  style.css (app), music.css (music page), about.css (about page)
+  css/                  header.css (the header all pages share), style.css (app), music.css
+                        (music page), about.css (about page)
   js/                   ES modules, imported with relative './x.js' paths
     app.js              main UI controller
     browser-worker.js   in-browser pipeline worker (Transformers.js models)

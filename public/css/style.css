@@ -69,49 +69,21 @@ body {
   padding: 56px 24px 64px;
 }
 
-/* Header: one compact row, shaped like the music page's: the mascot and the title, which
-   ends in an ellipsis when space runs out, and the links between the two pages. */
-.site-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0 0 12px;
+/* Header: the layout is header.css, shared by all pages; these are the start page's colours. */
+.site-header {
+  --nav-fg: var(--muted);
+  --nav-border: var(--border);
+  --nav-hover: var(--fg);
+  --nav-current-fg: var(--accent);
+  --nav-current-border: var(--accent);
+  --mascot-border: var(--accent);
+  --mascot-hover: var(--fg);
+  --mascot-bg: var(--surface);
 }
-.site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
-.site-nav a {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  text-decoration: none;
-}
-.site-nav a:hover { color: var(--fg); border-color: var(--fg); }
+.site-bar { margin: 0 0 12px; }
 .site-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.site-nav a[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
-
-.masthead {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  color: inherit;
-  text-decoration: none;
-  border-radius: var(--radius);
-}
+.masthead { border-radius: var(--radius); }
 .masthead:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
-.masthead:hover .mascot { border-color: var(--fg); }
-
-.mascot {
-  flex: none;
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  background: var(--surface);
-}
 
 .title {
   min-width: 0;
@@ -853,10 +825,6 @@ body {
 
 @media (max-width: 560px) {
   .app { padding: 32px 16px 48px; }
-  .site-bar, .masthead { gap: 10px; }
-  .mascot { width: 44px; height: 44px; }
-  .site-nav { gap: 6px; }
-  .site-nav a { padding: 4px 10px; }
   .stages { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }
   .camera-stage { flex-direction: column; }

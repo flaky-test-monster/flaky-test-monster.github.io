@@ -26,21 +26,26 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--paper); font: 1rem/1.6 var(--body); }
-.container { width: min(100% - 32px, 960px); margin: auto; padding: 40px 0; }
+/* The same frame as the music page, so the header sits in the same place on both. */
+.container { width: min(100% - 64px, 1040px); margin: auto; padding: 56px 0 40px; }
 a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 img { display: block; max-width: 100%; height: auto; }
 
-/* Header: the same compact row as the music page. */
-.site-bar { display: flex; align-items: center; gap: 16px; }
-.site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
-.site-nav a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
-.site-nav a:hover { text-decoration: underline; }
-.site-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
-.masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
-.mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--accent); }
-.wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display); white-space: nowrap; text-overflow: ellipsis; }
+/* Header: the layout is header.css, shared by all pages; these are the about page's colours. */
+.site-header {
+  --nav-fg: var(--muted);
+  --nav-border: var(--border);
+  --nav-hover: var(--ink);
+  --nav-current-fg: var(--on-accent);
+  --nav-current-bg: var(--accent);
+  --nav-current-border: var(--accent);
+  --nav-font: var(--utility);
+  --mascot-border: var(--accent);
+  --mascot-hover: var(--muted);
+}
+.masthead { color: var(--ink); }
 
 .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; padding: 40px 0 24px; }
 h1 { font: italic 900 clamp(2.75rem, 7vw, 5.5rem)/.9 var(--display); letter-spacing: -.05em; margin: 0 0 20px; }
@@ -90,10 +95,11 @@ footer { margin-top: 40px; text-align: center; font-size: 0.9375rem; }
 footer p { margin: 8px 0 0; }
 .back { font: 0.8125rem var(--utility); }
 
+@media (max-width: 640px) {
+  .container { width: calc(100% - 32px); padding-top: 32px; }
+}
 @media (max-width: 720px) {
   .hero { grid-template-columns: 1fr; padding-top: 24px; }
-  .site-bar { flex-wrap: wrap; }
-  .site-nav { margin-left: 0; }
   .photos-2 { grid-template-columns: 1fr; }
   .timeline { padding-left: 20px; }
   .event::before { left: -29px; }

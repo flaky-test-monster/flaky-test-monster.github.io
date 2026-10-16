@@ -1,0 +1,50 @@
+/* The header every page shares: one compact row with the mascot and the page's title, which
+ * ends in an ellipsis when space runs out, and the links between the pages. Layout only: each
+ * page's own stylesheet, loaded after this one, gives it its colours through these properties:
+ *   --nav-fg, --nav-bg, --nav-border          the links
+ *   --nav-hover                               a link under the pointer
+ *   --nav-current-fg, --nav-current-bg,
+ *   --nav-current-border                      the link to this page
+ *   --nav-font                                the links' font family
+ *   --mascot-border, --mascot-hover, --mascot-bg
+ */
+.site-bar { display: flex; align-items: center; gap: 16px; }
+.site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
+.site-nav a {
+  padding: 5px 12px;
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+  background: var(--nav-bg, transparent);
+  color: var(--nav-fg);
+  font-family: var(--nav-font, inherit);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.site-nav a:hover { border-color: var(--nav-hover); color: var(--nav-hover); }
+.site-nav a[aria-current="page"] {
+  border-color: var(--nav-current-border);
+  background: var(--nav-current-bg, transparent);
+  color: var(--nav-current-fg);
+}
+
+.masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: inherit; text-decoration: none; border-radius: 8px; }
+.mascot {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--mascot-border);
+  background: var(--mascot-bg, transparent);
+}
+.masthead:hover .mascot { border-color: var(--mascot-hover); }
+/* The title of the music and about pages; the start page has its own, a shell prompt. */
+.wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display, serif); white-space: nowrap; text-overflow: ellipsis; }
+
+@media (max-width: 640px) {
+  .site-bar, .masthead { gap: 10px; }
+  .mascot { width: 44px; height: 44px; }
+  .site-nav { gap: 6px; }
+  .site-nav a { padding: 4px 10px; }
+}

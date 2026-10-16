@@ -51,18 +51,24 @@ body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(
 }
 .page::before { background-image: url('../media/music-background.jpg'); }
 .container { width: min(100% - 64px, 1040px); margin: auto; padding: 56px 0 40px; }
-/* Header: one compact row, shaped like the start page's: the monster in a circle and the
- * wordmark, which ends in an ellipsis when space runs out, and the links between the two pages. */
-.site-bar { display: flex; align-items: center; gap: 16px; }
-.site-nav { display: flex; flex: none; gap: 8px; margin-left: auto; }
-/* Pill links: the pages here, and the people under Thanks. */
-.site-nav a, .thanks-list a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
-.site-nav a:hover, .thanks-list a:hover { border-color: var(--red); color: var(--red); }
-.site-nav a[aria-current="page"] { border-color: var(--red); background: var(--red); color: var(--cream); }
-.masthead { display: flex; align-items: center; gap: 14px; min-width: 0; color: var(--ink); text-decoration: none; border-radius: 8px; }
-.mascot { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid var(--red); background: var(--paper); }
-.masthead:hover .mascot { border-color: var(--ink); }
-.wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display); white-space: nowrap; text-overflow: ellipsis; }
+/* Header: the layout is header.css, shared by all pages; these are the music page's colours.
+ * The jury list's links are pills like the header's. */
+.site-header {
+  --nav-fg: var(--ink);
+  --nav-bg: var(--veil);
+  --nav-border: var(--border);
+  --nav-hover: var(--red);
+  --nav-current-fg: var(--cream);
+  --nav-current-bg: var(--red);
+  --nav-current-border: var(--red);
+  --nav-font: var(--utility);
+  --mascot-border: var(--red);
+  --mascot-hover: var(--ink);
+  --mascot-bg: var(--paper);
+}
+.thanks-list a { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--veil); color: var(--ink); font: 0.8125rem/1.4 var(--utility); text-decoration: none; }
+.thanks-list a:hover { border-color: var(--red); color: var(--red); }
+.masthead { color: var(--ink); }
 em { color: var(--red); }
 /* Links in the text, visited or not, in the oxblood of the lettering. */
 a { color: var(--red); }
@@ -155,10 +161,6 @@ h2::before { content: "// "; content: "// " / ""; }
 }
 @media (max-width: 640px) {
   .container { width: calc(100% - 32px); padding-top: 32px; }
-  .site-bar, .masthead { gap: 10px; }
-  .mascot { width: 44px; height: 44px; }
-  .site-nav { gap: 6px; }
-  .site-nav a { padding: 4px 10px; }
   .hero, .about { width: 100%; }
   .hero { padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
