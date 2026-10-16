@@ -28,6 +28,8 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+          # Link previews of the music page use the preview's own share image.
+          SITE_URL: https://kertal.github.io/flakifier/pr-preview/pr-${{ github.event.number }}/
 
       # Publishes to gh-pages under pr-preview/pr-<number>/, comments the URL on the
       # PR, and removes the preview when the PR is closed or merged.

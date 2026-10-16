@@ -30,7 +30,7 @@ grep -q 'data-backend="none"' _site/index.html
 # TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
 # Without the first two the votes go by email; the Turnstile site key is in the pages already,
 # and the variable only replaces it.
-for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
+for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY SITE_URL; do
   if [[ ! ${!name:-} =~ ^[A-Za-z0-9._:/-]*$ ]]; then
     echo "build-pages.sh: unexpected characters in $name" >&2
     exit 1
@@ -38,9 +38,14 @@ for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
 done
 # A value given replaces what the page has; none leaves the page as it is.
 meta() { [[ -n $2 ]] && printf 's#<meta name="%s" content="[^"]*">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
+# Link previews (og:image, og:url) need absolute URLs, written for the live site. SITE_URL,
+# given by pr-preview.yml, points them at the preview instead, so a preview link unfurls with
+# its own image before the change reaches main.
+LIVE_URL=https://kertal.github.io/flakifier/
+site() { [[ -n $1 ]] && printf 's#%s#%s#g;' "$LIVE_URL" "${1%/}/"; }
 # The admin page of the vote (music-admin.html) gets the same project.
 for page in music music-admin; do
-  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
+  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")$(site "${SITE_URL:-}")" \
     "public/$page.html" \
     | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
       --minify-css true > "_site/$page.html"
