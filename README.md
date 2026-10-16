@@ -434,5 +434,8 @@ npx --yes serve _site   # then open /music.html
 - The 3D viewer loads Three.js from the jsDelivr CDN through an import map, so the result
   page needs internet access. The in-browser pipeline also loads Transformers.js from
   jsDelivr and its models from Hugging Face. Everything else is served locally.
+- The app page and the music page count page views with
+  [GoatCounter](https://www.goatcounter.com/) (`gc.zgo.at/count.js`): no cookies and no
+  personal data. Blocking it changes nothing else.
 - The printed model is only as good as the photo: face the camera, use even lighting and
   keep the background plain.

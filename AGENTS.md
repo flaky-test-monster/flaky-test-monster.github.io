@@ -25,6 +25,8 @@ backend of its own; its jury vote and scoreboard can optionally run on a Supabas
     `supabase/migrations/`; the tables are closed to the browser and reached only through
     the functions there, which check every input. Keep it that way, and keep the email
     vote working when no project is configured.
+  - GoatCounter page-view counting (`gc.zgo.at/count.js`) on `index.html` and `music.html`.
+    It is optional by nature: nothing may depend on it loading.
 - **Node 22+, ES modules only** (`"type": "module"`). Use `import.meta.dirname`, top-level
   `await`, `process.loadEnvFile()`; no CommonJS.
 - **API keys stay on the server.** They are read from `.env` and never sent to the browser
