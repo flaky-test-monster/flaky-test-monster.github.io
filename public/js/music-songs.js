@@ -1,13 +1,8 @@
 /**
- * The song players on the music page: a play and pause button and the time, for each song's
- * MP3. Only one song or the music video plays at a time.
+ * The song players on the music page: a play and pause button for each song's MP3. Only one
+ * song or the music video plays at a time. The songs form a playlist: when one ends, the next
+ * one in the list starts, until the last song has played.
  */
-
-/** "1:05" for 65 seconds; "0:00" while the length is not known yet. */
-function clock(seconds) {
-  const whole = Number.isFinite(seconds) ? Math.floor(seconds) : 0;
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
 
 /** Tells the lock screen and headphone controls which song is playing. */
 function announce(title) {
@@ -16,14 +11,13 @@ function announce(title) {
     title,
     artist: 'The Flaky Test Monster',
     album: 'From Flaky With Love',
-    artwork: [{ src: new URL('monster.jpg', import.meta.url).href, type: 'image/jpeg' }],
+    artwork: [{ src: new URL('../monster.jpg', import.meta.url).href, type: 'image/jpeg' }],
   });
 }
 
 function setUp(song) {
   const audio = song.querySelector('audio');
   const play = song.querySelector('.song-play');
-  const time = song.querySelector('.song-time');
   const name = play.getAttribute('aria-label').replace(/^Play /, '');
 
   function render() {
@@ -31,7 +25,6 @@ function setUp(song) {
     // The button draws a play or pause icon from the song's class; its label says which.
     song.classList.toggle('playing', playing);
     play.setAttribute('aria-label', `${playing ? 'Pause' : 'Play'} ${name}`);
-    time.textContent = `${clock(audio.currentTime)} / ${clock(audio.duration)}`;
   }
 
   // The browser's own controls stay for visitors without JavaScript; with it, ours take over.
@@ -43,7 +36,7 @@ function setUp(song) {
     else audio.pause();
   });
   audio.addEventListener('play', () => announce(song.querySelector('h3').textContent));
-  for (const event of ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata', 'durationchange', 'seeked']) {
+  for (const event of ['play', 'pause', 'ended']) {
     audio.addEventListener(event, render);
   }
   audio.addEventListener('error', unavailable);
@@ -54,11 +47,30 @@ function setUp(song) {
   /** A song whose MP3 cannot be loaded says so, instead of a play button that does nothing. */
   function unavailable() {
     play.disabled = true;
-    time.textContent = 'Not available';
+    play.title = 'Not available';
+    play.setAttribute('aria-label', `${name}: not available`);
   }
 }
 
-document.querySelectorAll('.song').forEach(setUp);
+const songs = [...document.querySelectorAll('.song')];
+songs.forEach(setUp);
+
+/** Starts the first playable song after the given one; after the last song the playlist stops. */
+function playNext(song) {
+  const next = songs.slice(songs.indexOf(song) + 1).find((s) => !s.querySelector('.song-play').disabled);
+  if (!next) return;
+  const audio = next.querySelector('audio');
+  audio.currentTime = 0;
+  // A song that only turns out to be unavailable now is skipped; a blocked or interrupted
+  // play leaves the playlist where it is.
+  audio.play().catch(() => {
+    if (audio.error) playNext(next);
+  });
+}
+
+for (const song of songs) {
+  song.querySelector('audio').addEventListener('ended', () => playNext(song));
+}
 
 // One at a time: whatever starts playing, a song or the music video, pauses all the others.
 document.addEventListener('play', (event) => {

@@ -44,7 +44,7 @@ const MODELS = [
     description: 'Free models run right here on your device and turn the photo into a 3D picture that stands out from a flat back, like a medal, rather than a full figure: a monster bobblehead with googly eyes, or a plain relief. The photo never leaves this device. The first run downloads about 130 MB; after that it takes a minute or two.',
   },
 ];
-/** What the in-browser pipeline can make: the shapes public/relief.js builds. */
+/** What the in-browser pipeline can make: the shapes public/js/relief.js builds. */
 const BROWSER_FIGURES = [
   { id: 'monster', label: 'Monster bobblehead: big head, googly eyes, tongue' },
   { id: 'relief', label: 'Relief with a flat back' },
@@ -87,6 +87,8 @@ const state = {
   figureChoice: {},
   worker: null,
   stream: null,
+  /** Set once the camera has run, so coming back to the start turns it on again. */
+  cameraWanted: false,
   recent: [],
   showAllRecent: false,
   ...freshJobState(),
@@ -128,24 +130,46 @@ function enterStep(step, url = location.pathname) {
   else history.replaceState({ step }, '', url);
 }
 
-/** Starts the webcam preview; says how to fix it when access is refused or there is no camera. */
+/**
+ * Starts the webcam preview; says how to fix it when access is refused or there is no camera.
+ * Only runs from the Start the camera button, or on coming back to the start after that.
+ */
 async function startCamera() {
   if (state.stream) return;
+  // Checked before the button is disabled and hidden, which would drop its focus to the page.
+  const hadFocus = document.activeElement === $('camera-start');
+  $('camera-start').disabled = true;
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
     $('video').srcObject = state.stream;
-    setCameraBlocked(false);
+    // Only a camera that actually ran comes back by itself; a refused one waits for the button.
+    state.cameraWanted = true;
+    setCameraOn(true);
+    // Keyboard users go on to the next action; a camera resumed by itself takes no focus.
+    if (hadFocus) $('take-photo').focus();
     // The monster scan is always on while the camera is.
     startMonsterScan($('video'));
   } catch {
-    setCameraBlocked(true);
+    setCameraOn(false, { blocked: true });
+  } finally {
+    $('camera-start').disabled = false;
   }
+  if (hadFocus && !state.stream) $('camera-start').focus();
 }
 
-/** Shows the camera error and disables the buttons that need the camera, or undoes that. */
-function setCameraBlocked(blocked) {
+/**
+ * Shows the Start the camera button and disables the buttons that need the camera, or the
+ * other way round once it runs; with blocked, also says why it is not running.
+ */
+function setCameraOn(on, { blocked = false } = {}) {
+  $('camera-start').hidden = on;
   $('camera-error').hidden = !blocked;
-  $('take-photo').disabled = blocked;
+  $('take-photo').disabled = !on;
+}
+
+/** Turns the camera back on at the start if it was started before, otherwise waits for its button. */
+function resumeCamera() {
+  if (state.cameraWanted) startCamera();
 }
 
 /** Shows the camera preview and the monster photos full screen, with the logo on top, or leaves full screen. */
@@ -161,6 +185,7 @@ function stopCamera() {
   showLiveCamera();
   state.stream?.getTracks().forEach((track) => track.stop());
   state.stream = null;
+  setCameraOn(false);
 }
 
 /** Shows a 3-2-1 overlay on the video, then resolves. */
@@ -801,17 +826,18 @@ function resetToStart() {
   history.replaceState({ step: 'start' }, '', location.pathname);
   $('job-name').value = '';
   showStep('source');
-  startCamera();
+  resumeCamera();
   loadRecent();
 }
 
+$('camera-start').addEventListener('click', startCamera);
 $('take-photo').addEventListener('click', async () => {
   $('take-photo').disabled = true;
   // The photo is of the camera, so a monster photo being looked at makes way for it.
   showLiveCamera();
   await runCountdown();
   chooseImage(await captureFrame());
-  $('take-photo').disabled = false;
+  $('take-photo').disabled = !state.stream;
 });
 // Not every browser can show an element full screen (iPhone Safari cannot); there the button stays hidden.
 $('fullscreen-toggle').hidden = !document.fullscreenEnabled;
@@ -862,6 +888,5 @@ if (!(await restoreFromUrl())) {
   // A reload of the photo check: the photo is gone, so this entry becomes the start.
   history.replaceState({ step: 'start' }, '', location.pathname);
   showStep('source', { focus: false });
-  startCamera();
 }
 loadRecent();

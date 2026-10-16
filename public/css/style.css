@@ -433,6 +433,32 @@ body {
 
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
 
+/* Over the black frame until the camera runs; the camera only starts on request. */
+.camera-start {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.camera-start::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.camera-start[hidden] { display: none; }
+.camera-start:disabled { opacity: 0.6; cursor: progress; }
+.camera-start:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
 .camera-fullscreen {
   position: absolute;
   top: 8px;
@@ -522,27 +548,24 @@ body {
 .scan-status:empty { display: none; }
 .scan-status { margin: 0; text-align: center; }
 
+/* What the flakifier was built for. */
+.made-for { margin-top: 48px; }
+.made-for-text { margin: 0 0 12px; color: var(--muted); font-size: 0.875rem; }
+.made-for-text a { color: var(--accent); }
+.made-for-photos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.made-for-photos img { display: block; width: 100%; height: auto; aspect-ratio: 1148 / 720; object-fit: cover; border-radius: var(--radius); }
+/* Portrait photos fill two rows beside the landscape ones; positioned so their height doesn't stretch the rows. */
+.made-for-tall { grid-row: span 2; position: relative; }
+.made-for-tall img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
+@media (max-width: 480px) {
+  .made-for-photos { grid-template-columns: 1fr; }
+  .made-for-tall { grid-row: auto; }
+  .made-for-tall img { position: static; height: auto; aspect-ratio: 768 / 1024; }
+}
+
 /* Recent conversions */
 .recent { margin-top: 48px; }
 
-/* Music: a link to the monster's own page with its Eurovision songs and music video. */
-.music { margin-top: 48px; }
-.music-link {
-  display: grid;
-  gap: 6px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--muted);
-  text-decoration: none;
-}
-.music-link:hover { border-color: var(--accent); }
-.music-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.music-link-title { font: italic 900 1.75rem/1 'Bodoni MT', Didot, 'Times New Roman', serif; letter-spacing: -0.03em; color: var(--fg); }
-.music-link-title em { color: #c0392b; }
-.music-link strong { color: var(--fg); }
-.music-link-cta { color: var(--accent); font-weight: 600; }
 .recent-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 
 .recent-row { display: flex; align-items: stretch; gap: 6px; }

@@ -20,6 +20,11 @@ jobs:
 
       - name: Build site
         run: scripts/build-pages.sh
+        # The online jury vote on the music page; see supabase/migrations/.
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4

@@ -1,7 +1,7 @@
 // Makes the in-browser figure funnier with the face landmarks MediaPipe finds in the photo:
 // it measures how far the real face stands out, for the flat depth map, warps the picture into a caricature
 // (a bobblehead with bigger eyes, nose and mouth), and says where the monster parts go:
-// googly eyes, a tongue, fangs and horns, which public/relief.js builds into the STL.
+// googly eyes, a tongue, fangs and horns, which public/js/relief.js builds into the STL.
 // Pure functions on pixel arrays, no DOM, so it runs in the worker and in Node.
 
 /** Landmarks of MediaPipe Face Landmarker (478 points, normalised 0..1, z smaller is closer). */

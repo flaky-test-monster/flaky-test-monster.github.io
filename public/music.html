@@ -3,11 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>From Flaky With Love · flakifier</title>
-  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote by email, and a music video.">
+  <title>From Flaky With Love · The Flaky Test Monster</title>
+  <meta name="description" content="The Flaky Test Monster is looking for a country that would nominate it for the Eurovision Song Contest: a song for each candidate country, a jury vote, a scoreboard, a jury photo to share, and a music video.">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
-  <link rel="stylesheet" href="public/music.css">
+  <link rel="stylesheet" href="public/css/music.css">
+  <meta name="flaky-supabase-url" content="">
+  <meta name="flaky-supabase-key" content="">
+  <meta name="flaky-captcha-sitekey" content="0x4AAAAAAFVVpwHBbX25Yj1k">
+  <!-- Page-view counts (GoatCounter: no cookies, no personal data). -->
+  <script data-goatcounter="https://kertal.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
   <div class="page">
@@ -16,7 +22,7 @@
         <div class="site-bar">
           <a class="masthead" href="./" aria-label="From Flaky With Love: back to flakifier">
             <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
-            <span class="wordmark">From <em>Flaky</em> With <em>Love</em></span>
+            <span class="wordmark">The <em>Flaky</em> Test <em>Monster</em></span>
           </a>
           <nav class="site-nav" aria-label="Pages">
             <a href="./">flakifier</a>
@@ -27,168 +33,294 @@
       </header>
 
       <main>
-        <p class="intro">Flaky on CI, flaky on stage. <strong>Let’s make the Eurovision Song Contest flaky.</strong> First the monster needs a country brave enough to nominate it, so here is a song for every candidate. Which country will send a monster?</p>
-
         <section class="hero" aria-labelledby="title">
           <!-- Each line has a Klingon twin, which fades in with the dark page (music.css).
                Screen readers always read the first one, so nothing changes under them. -->
           <h1 id="title" class="swap">
-            <span class="swap-usual">From<br><em>Flaky</em><br>With <em>Love</em></span>
-            <span class="swap-klingon" aria-hidden="true">From<br><em>Qo’noS</em><br>With <em>Honour</em></span>
+            <span class="swap-usual"><span class="line">From</span> <em class="line">Flaky</em> <span class="line">With <em>Love</em></span></span>
+            <span class="swap-klingon" aria-hidden="true"><span class="line">From</span> <em class="line" lang="tlh">Qo’noS</em> <span class="line">With <em>Honour</em></span></span>
           </h1>
           <p class="subtitle swap">
-            <span class="swap-usual">Making the Eurovision Song Contest flaky.</span>
+            <span class="swap-usual">The Eurovision <s>Slop</s> <s>Song</s> Slong Contest.</span>
             <span class="swap-klingon" aria-hidden="true">Today is a good day for your ears to die.</span>
           </p>
+          <p class="intro">3D printed at <a href="https://www.happylab.at">Happylab</a>, flaky on CI, flaky on stage. <strong>Let’s make the Eurovision <s>Slop</s> <s>Song</s> Slong Contest flaky.</strong> First the monster needs a country that’s honoured to nominate it, so here is a song for every candidate. Who will send a monster?</p>
         </section>
 
+       
         <section class="songs" aria-labelledby="songs-title">
           <h2 id="songs-title">Songs</h2>
-          <p class="songs-intro">You are the jury. As at the Eurovision Song Contest, give 12 points to your favourite, then 10, 8, 7 and down to 1, right next to each song. Each score goes to one song only.</p>
-          <!-- One list item per song: a heading, a note, the player for the song's MP3 in public/media/songs/.
-               music-vote.js puts the choice of points next to each player. -->
-          <ul class="song-list">
-            <li class="song">
-              <h3>From Flaky with love: the international version</h3>
-              <p>In English. No risk, less fun.</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-international.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play From Flaky with love, the international version in English, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
+          <p class="intro">You're the jury. Distribute the points. The winner might get an enhanced deslopification procedure.</p>
+            <form id="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
+              <ul class="song-list">
+              <li class="song" data-song="international">
+                <h3>From Flaky With Love: the international version</h3>
+                <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Utah, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-international.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play From Flaky With Love, the international version in English, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="greek">
+                <h3>The Greek version</h3>
+                <p>Inspired by Greek heroes battling flaky tests: definitely more risk and more drama than the international version.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-greek.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Greek version, for Panos, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="austrian">
+                <h3>The Austrian version</h3>
+                <p>With some “creativity” and <span lang="de">knüppelharte</span> translation work, it could also be Germany’s candidate. Or Switzerland’s. Or Britain’s: Look Mum No Computer’s recent song was partly in German too. 100% German, 100% risk, 100% fun.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-austrian.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Austrian version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <!-- song-klingon: hovering or playing this song turns the page dark and Klingon (music.css). -->
+              <li class="song song-klingon" data-song="klingon">
+                <h3>The Klingon version</h3>
+                <p>First the European Broadcasting Union needs a word with the High Council. Australia got in, so why not <span lang="tlh">Qo’noS</span>? Klingons respect a worthy foe, and no foe is more worthy than a test that fails one run in ten. Klingon is the only language where a failing test is a glorious death, not a bug, so the monster feels at home. <span lang="tlh">Heghlu’meH QaQ jajvam</span>: today is a good day to die. Tomorrow too, if you re-run the pipeline. Press play and the lights go down: Klingons don’t do parchment. <span lang="tlh">Qapla’!</span></p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-klingon.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Klingon version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="spanish">
+                <h3>The Spanish version</h3>
+                <p><span lang="es">¡Olé!</span> Spain is home to many fighters of flaky tests, and this song honours the monster’s foes with flair and passion.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-spanish.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Spanish version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="italian">
+                <h3>The Italian version</h3>
+                <p>Italy, playing it safe. Italy last won in 2021, so the monster plays copycat. A successful strategy can be repeated with minor tweaks. A test that was flaky once can have a second chance.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-italian.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Italian version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="polish">
+                <h3>The Polish version</h3>
+                <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes! And Poland never won so far. Wat?? Let the monster take care of it.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-polish.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The Polish version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="french">
+                <h3>The French version</h3>
+                <p>France last won in 1977. Time to go back to basics: grand emotion, a <span lang="fr">chanson</span>. After all, flaky tests aren’t funny. They are a hidden tragedy.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-french.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The French version, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+              <li class="song" data-song="cat">
+                <h3>The cat version</h3>
+                <p>In cat, says a language model. Doubtful: ask a cat to sing and it walks off. Cats don’t sing; they order a human, or a monster, to sing for them.</p>
+                <div class="player">
+                  <audio src="public/media/songs/the-flaky-test-monster-with-love-cat.mp3" preload="metadata" controls></audio>
+                  <div class="player-controls" hidden>
+                    <button type="button" class="song-play" aria-label="Play The cat version, in what a language model claims is cat, by the Flaky Test Monster"></button>
+                  </div>
+                </div>
+              </li>
+            </ul>
+            <div class="vote-form">
+              <!-- The jury name, the same as the one on the photo (music-photo.js keeps the two
+                   fields in step). Empty, the jury goes by the monster name it shows. -->
+              <div class="vote-name">
+                <label for="vote-name">Your jury name</label>
+                <input id="vote-name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="vote-name-hint vote-name-error">
+                <p id="vote-name-hint" class="helper">On your votes and your jury photo. Up to 24 characters.</p>
+                <p id="vote-name-error" class="field-error" hidden></p>
+              </div>
+              <!-- A split button: the main way to send the votes, and an arrow with the other ways.
+                   With the online vote the main button casts them, and email moves into the menu. -->
+              <div class="vote-split">
+                <button type="submit" class="primary vote-main">Send my votes by email</button>
+                <button type="button" id="vote-more" class="vote-more" aria-haspopup="menu" aria-expanded="false" aria-controls="vote-menu" aria-label="More ways to send your votes">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div id="vote-menu" class="vote-menu" role="menu" aria-labelledby="vote-more" hidden>
+                  <button type="button" id="vote-email" role="menuitem" hidden>Send by email</button>
+                  <button type="button" id="vote-copy" role="menuitem">Copy my votes</button>
                 </div>
               </div>
-            </li>
-            <li class="song">
-              <h3>The Greek version</h3>
-              <p>For a Greek hero: Panos, foe of the monster and tireless resolver of flaky tests.</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-greek.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Greek version, for Panos, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <li class="song">
-              <h3>The Austrian version</h3>
-              <p>With a sort of German flavour. With some “creativity” and <span lang="de">knüppelharte</span> translation work, it could also be Germany’s candidate. Or Great Britain’s: Look Mum No Computer’s recent song was partly in German too, and the monster’s father liked it.</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-austrian.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Austrian version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <!-- song-klingon: hovering or playing this song turns the page dark and Klingon (music.css). -->
-            <li class="song song-klingon">
-              <h3>The Klingon version</h3>
-              <p>First the European Broadcasting Union needs a word with the High Council. Australia got in, so why not Qo’noS? Klingons respect a worthy foe, and no foe is more worthy than a test that fails one run in ten. Klingon is the only language where a failing test is a glorious death, not a bug, so the monster feels at home. <span lang="tlh">Heghlu’meH QaQ jajvam</span>: today is a good day to die. Tomorrow too, if you re-run the pipeline. Press play and the lights go down: Klingons don’t do parchment. <span lang="tlh">Qapla’!</span></p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-klingon.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Klingon version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <li class="song">
-              <h3>The Spanish version</h3>
-              <p>Spain is home to many of the fearless foes of the flaky test monster. One has to honour one’s foes!</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-spanish.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Spanish version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <li class="song">
-              <h3>The Italian version</h3>
-              <p>Italy has had success with stuff like this before. Why innovate?</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-italian.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Italian version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <li class="song">
-              <h3>The Polish version</h3>
-              <p>Poland is home to Knitty McGritty, one of the monster’s foes. Honour your foes!</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-polish.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The Polish version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-            <li class="song">
-              <h3>The French version</h3>
-              <p>France last won in 1977. Time to go back to the basics: grand emotion, a <span lang="fr">chanson</span>. After all, flaky tests aren’t funny. They are a hidden tragedy.</p>
-              <div class="player">
-                <audio src="public/media/songs/the-flaky-test-monster-with-love-french.mp3" preload="metadata" controls></audio>
-                <div class="player-controls" hidden>
-                  <button type="button" class="song-play" aria-label="Play The French version, by the Flaky Test Monster"></button>
-                  <span class="helper song-time">0:00 / 0:00</span>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </section>
-
-        <section class="vote" aria-labelledby="vote-title">
-          <h2 id="vote-title">Your votes</h2>
-          <p class="vote-intro">Given your points next to the songs? Tell us who is voting and send your votes by email.</p>
-          <!-- The points are chosen next to each song above. data-email is where the votes go;
-               when it is empty, the email opens without a recipient. -->
-          <form id="vote-form" class="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
-            <label class="vote-field">
-              <span>Jury of</span>
-              <input id="vote-jury" name="jury" type="text" maxlength="60" autocomplete="country-name" placeholder="your country, or your name">
-            </label>
-            <p id="vote-status" class="helper vote-status" role="status"></p>
-            <label class="vote-copy-field" id="vote-copy-field" hidden>
-              <span>Your votes, to copy</span>
-              <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
-            </label>
-            <button type="submit" class="primary">Send my votes by email</button>
-            <div class="vote-actions">
-              <button type="button" id="vote-copy" class="secondary">Copy my votes</button>
-              <button type="reset" class="secondary">Start over</button>
+              <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
+              <div id="vote-captcha" class="vote-captcha" hidden></div>
+              <output id="vote-status" class="helper vote-status" role="status"></output>
+              <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->
+              <label id="vote-copy-field" class="vote-copy-field" hidden>
+                <span>Your votes, to copy</span>
+                <textarea id="vote-text" class="vote-text" rows="6" readonly></textarea>
+              </label>
+              <!-- Shown with the online vote only (music-vote.js). -->
+              <p id="vote-privacy" class="helper vote-privacy" hidden>Votes are final once cast. Online votes are kept with the country your internet connection comes from, to count the countries on the scoreboard. Not your IP address, and nothing else about you.</p>
             </div>
           </form>
         </section>
 
-        <section class="video" aria-labelledby="video-title">
-          <h2 id="video-title">Music video</h2>
-          <p class="helper video-note" id="video-note" role="status">Preview: slop mitigation is being applied.</p>
-          <div class="stage">
-            <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
-            <span class="pill stage-label">Preview</span>
-          </div>
-          <button type="button" id="video-play" class="primary">Play</button>
-          <div class="video-controls">
-            <button type="button" id="video-stop" class="secondary" aria-label="Stop the video">Stop</button>
-            <button type="button" id="video-repeat" class="secondary video-repeat" aria-pressed="true">Repeat</button>
-            <button type="button" id="video-fullscreen" class="secondary">Full screen</button>
-            <span id="video-time" class="helper video-time">0:00 / 0:00</span>
-          </div>
+        <!-- Filled in by music-scoreboard.js, with the online vote only. Closed at first, so the
+             points so far do not sway a jury before it votes: the totals load once it is opened. -->
+        <section id="scoreboard" class="scoreboard" aria-labelledby="scoreboard-title" hidden>
+          <h2 id="scoreboard-title">Scoreboard</h2>
+          <p class="intro">Vote first, then peek: the points so far might sway you. Only the totals are shown; who gave what stays secret.</p>
+          <details id="scoreboard-details" class="scoreboard-details">
+            <summary>Show the scoreboard</summary>
+            <ol id="scoreboard-list" class="scoreboard-list"></ol>
+            <div class="scoreboard-actions">
+              <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
+              <button type="button" id="scoreboard-refresh" class="scoreboard-refresh">Refresh</button>
+            </div>
+          </details>
         </section>
 
-      </main>
+        <section class="photo" aria-labelledby="photo-title">
+          <h2 id="photo-title">Jury photo</h2>
+          <p class="intro">Turn into the monster, with your name and your <span lang="fr">douze points</span> on the picture. Click the name on the picture to change it: it goes on your votes too. Download it, or share it with your votes. The photo stays on your device until you share it.</p>
+          <div class="stage photo-stage">
+            <canvas id="photo-canvas" class="photo-canvas" width="1600" height="900" role="img" aria-label="Your jury photo: you as the Flaky Test Monster, with your name, the song that gets your douze points and the Flaky sign"></canvas>
+            <video id="photo-video" class="visually-hidden" aria-hidden="true" playsinline muted></video>
+            <div id="photo-countdown" class="photo-countdown" aria-live="assertive" hidden></div>
+            <button type="button" id="photo-start" class="photo-start">Start the camera</button>
+            <label for="jury-name" class="visually-hidden">Your jury name, on the photo and the votes</label>
+            <input id="jury-name" class="photo-name" name="name" type="text" maxlength="24" autocomplete="nickname" enterkeyhint="done" spellcheck="false" aria-describedby="jury-name-hint jury-name-error">
+            <div class="photo-controls">
+              <button type="button" id="photo-take" class="video-button photo-take" aria-label="Take the picture" title="Take the picture" hidden></button>
+              <div id="photo-actions" class="photo-actions" hidden>
+                <button type="button" id="photo-retake" class="video-button" aria-label="Retake" title="Retake">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+                <button type="button" id="photo-share" class="video-button" aria-label="Share" title="Share" hidden>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+                </button>
+                <button type="button" id="photo-download" class="video-button photo-download" aria-label="Download" title="Download">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p id="jury-name-hint" class="visually-hidden">Up to 24 characters.</p>
+          <p id="jury-name-error" class="field-error" hidden></p>
+          <p id="photo-status" class="helper photo-status" role="status"></p>
+        </section>
 
-      <footer>
-        <a class="back" href="./"><span aria-hidden="true">← </span>Back to flakifier</a>
-        <p>Born in Happylab</p>
-      </footer>
+        <section class="video" aria-labelledby="video-title">
+          <h2 id="video-title">Karaoke</h2>
+          <p class="intro" id="video-note" role="status">
+            Here is a very flaky karaoke video. You need to learn the lyrics, since currently they are not in the video.
+            The young video editor demanded more pocket money for adding subtitles "for such a slop".
+            Negotiations are ongoing.
+          </p>
+        
+          <!-- The controls sit over the video and fade out while it plays; hover or keyboard focus brings them back (music.css). -->
+          <div class="stage" id="video-stage">
+            <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
+            <span class="pill stage-label">Preview</span>
+            <div class="video-controls">
+              <!-- Round icon buttons like the songs' play button; the play and stop icons are drawn in CSS. -->
+              <button type="button" id="video-play" class="video-button video-play" aria-label="Play the video" title="Play"></button>
+              <button type="button" id="video-stop" class="video-button video-stop" aria-label="Stop the video" title="Stop"></button>
+              <button type="button" id="video-repeat" class="video-button video-repeat" aria-label="Repeat" title="Repeat" aria-pressed="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+              </button>
+              <button type="button" id="video-fullscreen" class="video-button video-fullscreen" aria-label="Full screen" title="Full screen">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V3h6"/><path d="M21 9V3h-6"/><path d="M3 15v6h6"/><path d="M21 15v6h-6"/></svg>
+              </button>
+            </div>
+          </div>
+            <details class="lyrics">
+            <summary>Show the lyrics</summary>
+            <div class="lyrics-text">
+              <p>You eat cookies all the day,<br>
+                Usually they taste okay.<br>
+                After cookie ninety-nine,<br>
+                The next one tastes like nasty slime.</p>
+              <p>There’s no change in recipe,<br>
+                No cook ran off to urgently pee.<br>
+                “Flakiness” is what we say<br>
+                When sometimes things just go astray.</p>
+              <p>That’s a monster’s daily job:<br>
+                Spice up life with every sob.<br>
+                If things always work okay,<br>
+                Life gets boring day by day.</p>
+              <p class="lyrics-chorus">Here you are, your flaky test,<br>
+                Made with love, like all the rest.<br>
+                Here you are, your flaky test,<br>
+                Made with love, like all the rest.</p>
+              <p>If I wake—the pipeline’s green!<br>
+                Time for me to intervene.<br>
+                In the night, ten tests were new,<br>
+                Let’s make one of those flaky too!</p>
+              <p>Let’s speed things up, then make them slow,<br>
+                Timing troubles—off we go!<br>
+                Let’s not clean up the previous test,<br>
+                Leave some garbage for the rest!</p>
+              <p>Somehow devs don’t quite like me,<br>
+                Especially those busy bees.<br>
+                But I try hard to entertain—<br>
+                A little chaos keeps them sane!</p>
+              <p class="lyrics-chorus">Here you are, your flaky test,<br>
+                Made with love, like all the rest.<br>
+                Here you are, your flaky test,<br>
+                Made with love, like all the rest.</p>
+            </div>
+          </details>
+        </section>
+        <section class="thanks" aria-labelledby="thanks-title">
+          <h2 id="thanks-title">Thanks</h2>
+          <p>Valentin, Frieda &amp; Katharina Polman, <a href="https://www.happylab.at">Happylab</a>, Werner Mayer, Friedrich Manseder, and lots of fearless flaky test fighters, past, present and future:</p>
+          <ul class="thanks-list">
+            <li><a href="https://github.com/akowalska622"><img src="public/media/thanks/akowalska622.jpg" width="16" height="16" alt="" loading="lazy">akowalska622</a></li>
+            <li><a href="https://github.com/AlexGPlay"><img src="public/media/thanks/AlexGPlay.png" width="16" height="16" alt="" loading="lazy">AlexGPlay</a></li>
+            <li><a href="https://github.com/alexmarhaba"><img src="public/media/thanks/alexmarhaba.jpg" width="16" height="16" alt="" loading="lazy">alexmarhaba</a></li>
+            <li><a href="https://github.com/bartoval"><img src="public/media/thanks/bartoval.jpg" width="16" height="16" alt="" loading="lazy">bartoval</a></li>
+            <li><a href="https://github.com/davismcphee"><img src="public/media/thanks/davismcphee.png" width="16" height="16" alt="" loading="lazy">davismcphee</a></li>
+            <li><a href="https://github.com/drewdaemon"><img src="public/media/thanks/drewdaemon.png" width="16" height="16" alt="" loading="lazy">drewdaemon</a></li>
+            <li><a href="https://github.com/jenlastic"><img src="public/media/thanks/jenlastic.jpg" width="16" height="16" alt="" loading="lazy">jenlastic</a></li>
+            <li><a href="https://github.com/jsanz"><img src="public/media/thanks/jsanz.png" width="16" height="16" alt="" loading="lazy">jsanz</a></li>
+            <li><a href="https://github.com/jughosta"><img src="public/media/thanks/jughosta.jpg" width="16" height="16" alt="" loading="lazy">jughosta</a></li>
+            <li><a href="https://github.com/kowalczyk-krzysztof"><img src="public/media/thanks/kowalczyk-krzysztof.jpg" width="16" height="16" alt="" loading="lazy">kowalczyk-krzysztof</a></li>
+            <li><a href="https://github.com/l-suarez"><img src="public/media/thanks/l-suarez.png" width="16" height="16" alt="" loading="lazy">l-suarez</a></li>
+            <li><a href="https://github.com/lukasolson"><img src="public/media/thanks/lukasolson.jpg" width="16" height="16" alt="" loading="lazy">lukasolson</a></li>
+            <li><a href="https://github.com/mattkime"><img src="public/media/thanks/mattkime.jpg" width="16" height="16" alt="" loading="lazy">mattkime</a></li>
+            <li><a href="https://github.com/MiloszRadzynski"><img src="public/media/thanks/MiloszRadzynski.jpg" width="16" height="16" alt="" loading="lazy">MiloszRadzynski</a></li>
+            <li><a href="https://github.com/momovdg"><img src="public/media/thanks/momovdg.jpg" width="16" height="16" alt="" loading="lazy">momovdg</a></li>
+            <li><a href="https://github.com/ninoslavmiskovic"><img src="public/media/thanks/ninoslavmiskovic.jpg" width="16" height="16" alt="" loading="lazy">ninoslavmiskovic</a></li>
+            <li><a href="https://github.com/sddonne"><img src="public/media/thanks/sddonne.jpg" width="16" height="16" alt="" loading="lazy">sddonne</a></li>
+            <li><a href="https://github.com/stratoula"><img src="public/media/thanks/stratoula.png" width="16" height="16" alt="" loading="lazy">stratoula</a></li>
+            <li><a href="https://github.com/streamich"><img src="public/media/thanks/streamich.png" width="16" height="16" alt="" loading="lazy">streamich</a></li>
+          </ul>
+          <p>And many, many more at Elastic</p>
+           <h2 id="thanks-title">Credits</h2>
+          <p>Built and maintained, lyrics and lead melody by <a href="https://github.com/kertal">@kertal</a>, with an orchestra of insane genies out of several bottles.</p>
+        </section>
+      </main>
     </div>
   </div>
-  <script type="module" src="public/music-video.js"></script>
-  <script type="module" src="public/music-songs.js"></script>
-  <script type="module" src="public/music-vote.js"></script>
+  <script type="module" src="public/js/music-video.js"></script>
+  <script type="module" src="public/js/music-songs.js"></script>
+  <script type="module" src="public/js/music-vote.js"></script>
+  <script type="module" src="public/js/music-scoreboard.js"></script>
 </body>
 </html>
