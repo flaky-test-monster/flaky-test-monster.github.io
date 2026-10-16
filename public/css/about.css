@@ -1,5 +1,5 @@
 /* The about page: black and white, like a newspaper. The photos are black and white too,
- * except for the monster's green and red: the only colours on the page. */
+ * except for the monster's green and red, and the green of the TL;DR box: the only colours on the page. */
 :root {
   color-scheme: light dark;
   --paper: #fff;
@@ -9,6 +9,7 @@
   --muted: #555;
   --border: #000;
   --panel: #f2f2f2;
+  --highlight: #237a23; /* the app's "pass" green */
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
@@ -22,6 +23,7 @@
     --muted: #aaa;
     --border: #fff;
     --panel: #141414;
+    --highlight: #4fc24f;
   }
 }
 * { box-sizing: border-box; }
@@ -54,9 +56,8 @@ h1 { font: italic 900 clamp(2.75rem, 7vw, 5.5rem)/.9 var(--display); letter-spac
 
 h2 { font: italic 700 clamp(1.75rem, 4vw, 2.5rem)/1.1 var(--display); margin: 0 0 12px; }
 section { margin-top: 32px; }
-.tldr { padding: 20px 24px; border: 2px solid var(--accent); border-radius: 8px; background: var(--panel); }
+.tldr { padding: 20px 24px; border: 2px solid var(--highlight); border-radius: 8px; background: var(--panel); }
 .tldr p { margin: 0; }
-.explainer p { max-width: 68ch; }
 .aside { font: 0.875rem var(--utility); color: var(--muted); }
 
 /* The timeline: a rule down the left, a dot per event. */
@@ -78,9 +79,9 @@ section { margin-top: 32px; }
 .event-next { padding-bottom: 0; }
 .when { margin: 0; font: 0.8125rem/1.5 var(--utility); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
-.event > p:not(.when) { max-width: 68ch; margin: 0 0 12px; }
+.event > p:not(.when) { margin: 0 0 12px; }
 
-.measures { max-width: 68ch; margin: 0 0 12px; padding-left: 20px; }
+.measures { margin: 0 0 12px; padding-left: 20px; }
 .measures li + li { margin-top: 6px; }
 .photos { display: grid; gap: 12px; margin: 0 0 12px; }
 .photos img { width: 100%; height: 100%; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
