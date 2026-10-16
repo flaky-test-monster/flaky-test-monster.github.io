@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Builds the static frontend into _site for GitHub Pages. Pages serves the site under a
-# sub-path (/flakifier/, /flakifier/pr-preview/pr-N/), which is why index.html links its
-# assets relatively. There is no backend there, so the page is marked data-backend="none":
-# the camera, the monster scan and the in-browser 3D method work, and what needs
-# `npm start` is disabled.
+# sub-path (/flakifier/, /flakifier/pr-preview/pr-N/), which is why the pages link their
+# assets relatively. There is no backend there, so the app (flakifier.html) is marked
+# data-backend="none": the camera, the monster scan and the in-browser 3D method work, and
+# what needs `npm start` is disabled. The music page is the start page (index.html).
 # JS, CSS and HTML are minified with pinned tools fetched by npx; the app itself keeps no
 # npm dependencies, and the Node server still serves public/ unminified.
 set -euo pipefail
@@ -21,10 +21,10 @@ cp -R public/media _site/public/
 # Each module on its own, no bundling: relative imports and the CDN imports stay as they are.
 npx --yes "$ESBUILD" public/js/*.js public/css/*.css --minify --format=esm --target=es2022 \
   --outbase=public --outdir=_site/public --log-level=warning
-sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/index.html \
+sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/flakifier.html \
   | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-    --minify-css true > _site/index.html
-grep -q 'data-backend="none"' _site/index.html
+    --minify-css true > _site/flakifier.html
+grep -q 'data-backend="none"' _site/flakifier.html
 # The music page needs no backend. Its online vote does need a Supabase project: the workflows
 # pass the repository variables SUPABASE_URL, SUPABASE_ANON_KEY and, optionally,
 # TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
@@ -45,6 +45,8 @@ for page in music music-admin; do
     | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
       --minify-css true > "_site/$page.html"
 done
+# The music page is also the start page.
+cp _site/music.html _site/index.html
 # The about page needs no backend either.
 npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
   --minify-css true public/about.html > _site/about.html
@@ -58,5 +60,6 @@ rm -f _site/*.bak _site/public/js/*.bak
 grep -q "music-photo.js?v=$VERSION" _site/public/js/music-vote.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
-grep -q "app.js?v=$VERSION" _site/index.html
+grep -q "app.js?v=$VERSION" _site/flakifier.html
+grep -q "music-vote.js?v=$VERSION" _site/index.html
 touch _site/.nojekyll
