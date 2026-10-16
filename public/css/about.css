@@ -92,6 +92,53 @@ h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
 .photos-wide { max-width: none; }
 .photos-wide img { aspect-ratio: 2; }
 
+/* Slideshow: a row of photos that snaps one at a time. Without JS it still scrolls and swipes;
+ * about-slideshow.js adds the buttons and the counter. */
+.slideshow { margin: 0 0 12px; }
+.slides {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.slide { flex: 0 0 100%; margin: 0; scroll-snap-align: start; }
+/* Portrait and landscape photos share one 4:3 frame, shown whole; tall screens don't stretch it. */
+.slide img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  max-height: min(70vh, 520px);
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+/* With the buttons there, the scrollbar is only clutter. */
+.slideshow.has-controls .slides { scrollbar-width: none; }
+.slideshow.has-controls .slides::-webkit-scrollbar { display: none; }
+.slide figcaption { margin-top: 8px; font: 0.875rem/1.5 var(--utility); color: var(--muted); }
+.slide-controls { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.slide-controls[hidden] { display: none; }
+.slide-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  font: 1.25rem var(--utility);
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.slide-controls button:hover:not(:disabled) { color: var(--on-accent); background: var(--accent); }
+.slide-controls button:disabled { opacity: .35; cursor: default; }
+.slide-count { font: 0.875rem var(--utility); color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .slides { scroll-behavior: auto; }
+}
+
 footer { margin-top: 40px; text-align: center; font-size: 0.9375rem; }
 footer p { margin: 8px 0 0; }
 .back { font: 0.8125rem var(--utility); }

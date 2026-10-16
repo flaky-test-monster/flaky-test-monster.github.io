@@ -61,5 +61,6 @@ grep -q "music-photo.js?v=$VERSION" _site/public/js/music-vote.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
 grep -q "app.js?v=$VERSION" _site/flakifier.html
+grep -q "about-slideshow.js?v=$VERSION" _site/about.html
 grep -q "music-vote.js?v=$VERSION" _site/index.html
 touch _site/.nojekyll

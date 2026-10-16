@@ -32,6 +32,7 @@ const STATIC_TYPES = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
   '.ico': 'image/x-icon',
   '.mp4': 'video/mp4',
   '.mp3': 'audio/mpeg',
