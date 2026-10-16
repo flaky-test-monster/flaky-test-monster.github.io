@@ -3,7 +3,8 @@
  * live tag at the top and a semi-transparent panel at the bottom with the name, the song that
  * gets the douze points and the Flaky sign, to download as a PNG. The monster filter of the
  * start page is always on while a face is in view: the green poster look, and the monster's
- * eyes and tongue on every face. Everything is drawn on a canvas in this page; the photo never
+ * eyes and tongue on every face. With a face in view, the Flaky sign shows that head as the
+ * camera sees it, without the filter, instead of the monster. Everything is drawn on a canvas in this page; the photo never
  * leaves the device, unless it is shared (music-vote.js). This module also owns the name of
  * the jury member and its check, which the vote uses too.
  */
@@ -37,6 +38,12 @@ const MONSTER_GREEN = 'rgb(47 209 47)';
 /** How long the filter stays on after the face is lost, so a face the tracker misses for a
     few frames does not make the picture flicker. */
 const LOOK_HOLD_MS = 500;
+/** The head in the sign: the square around the face's landmarks, this many times their size,
+    raised a little so the hair fits too; and how much of each new frame's square to take, so
+    the head does not jitter in the sign. */
+const HEAD_ZOOM = 1.7;
+const HEAD_RAISE = .12;
+const HEAD_SMOOTHING = .4;
 const DISPLAY = "'Bodoni MT', Didot, 'Times New Roman', serif";
 const NO_WINNER = 'the song still to be chosen…';
 
@@ -71,6 +78,10 @@ let faceSeenAt = -Infinity;
 const eyes = document.createElement('canvas');
 /** The eyes and tongue of the picture taken, or null when there was no face in it. */
 let stillEyes = null;
+/** The square around the head in the live camera, in video pixels, or null before a face. */
+let headBox = null;
+/** The square around the head in the picture taken, or null when there was no face in it. */
+let stillHead = null;
 /** The finished picture as a PNG file, made ahead of time: sharing it must start right on the
  * click, and the browser forgets the click while the canvas is still being encoded. */
 let photoFile = null;
@@ -278,7 +289,18 @@ function lowerThird(withName) {
   ctx.beginPath();
   ctx.arc(signX, cy, SIGN_RADIUS + 4, 0, Math.PI * 2);
   ctx.fill();
-  if (monster.complete && monster.naturalWidth) {
+  const head = signHead();
+  if (head) {
+    // The jury member's own head, plain and mirrored like the picture around it.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(signX, cy, SIGN_RADIUS, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.translate(signX + SIGN_RADIUS, cy - SIGN_RADIUS);
+    ctx.scale(-1, 1);
+    ctx.drawImage(head.source, head.box.x, head.box.y, head.box.side, head.box.side, 0, 0, SIGN_RADIUS * 2, SIGN_RADIUS * 2);
+    ctx.restore();
+  } else if (monster.complete && monster.naturalWidth) {
     ctx.save();
     ctx.beginPath();
     ctx.arc(signX, cy, SIGN_RADIUS, 0, Math.PI * 2);
@@ -293,6 +315,33 @@ function lowerThird(withName) {
   ctx.fillStyle = '#fff';
   ctx.fillText('FLAKY', signX + 3, y + h - 20);
   ctx.letterSpacing = '0px';
+}
+
+/** The head for the sign, from the picture taken or the live camera, or null with no face in view. */
+function signHead() {
+  if (still) return stillHead && { source: still, box: stillHead };
+  if (stream && video.videoWidth && headBox && monsterInView()) return { source: video, box: headBox };
+  return null;
+}
+
+/**
+ * The square around the largest face, in video pixels and inside the frame.
+ * @param {{x: number, y: number}[][]} faces the landmarks of each face, from 0 to 1
+ */
+function headSquare(faces, width, height) {
+  let best = null;
+  for (const points of faces) {
+    const xs = points.map((p) => p.x * width);
+    const ys = points.map((p) => p.y * height);
+    const box = { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+    const size = Math.max(box.right - box.left, box.bottom - box.top);
+    if (!best || size > best.size) best = { ...box, size };
+  }
+  const side = Math.min(best.size * HEAD_ZOOM, width, height);
+  const cx = (best.left + best.right) / 2;
+  const cy = (best.top + best.bottom) / 2 - best.size * HEAD_RAISE;
+  const clamp = (value, max) => Math.min(Math.max(value, 0), max);
+  return { x: clamp(cx - side / 2, width - side), y: clamp(cy - side / 2, height - side), side };
 }
 
 /** The file name, with the name of the jury member: flaky-jury-anna-banana.png. */
@@ -353,7 +402,13 @@ function track() {
     tracker = null;
   }
   drawFaces(video, faces, eyes);
-  if (faces.length) faceSeenAt = performance.now();
+  if (!faces.length) return;
+  const wasInView = monsterInView();
+  faceSeenAt = performance.now();
+  const next = headSquare(faces, video.videoWidth, video.videoHeight);
+  // A face that comes back after a while jumps straight to its place; one in view glides there.
+  headBox = !headBox || !wasInView ? next : Object.fromEntries(
+    Object.entries(next).map(([key, value]) => [key, headBox[key] + (value - headBox[key]) * HEAD_SMOOTHING]));
 }
 
 /** Whether a face is in view, so the monster filter is on. */
@@ -414,6 +469,7 @@ async function startCamera() {
   await video.play().catch(() => {});
   still = null;
   stillEyes = null;
+  stillHead = null;
   photoFile = null;
   say(tracker ? 'Look into the camera: the monster sees you.' : 'Loading the monster filter…');
   if (!tracker) {
@@ -441,6 +497,7 @@ function stopCamera() {
   lastVideoTime = -1;
   lastDrawn = '';
   faceSeenAt = -Infinity;
+  headBox = null;
 }
 
 /** Counts down 3, 2, 1, unless the picture is cancelled on the way. */
@@ -470,6 +527,7 @@ async function takePicture() {
   still.getContext('2d').drawImage(video, 0, 0);
   // The monster filter as it was at the click: with a face in view, its eyes and tongue go with the picture.
   stillEyes = null;
+  stillHead = monsterInView() && headBox ? { ...headBox } : null;
   if (monsterInView()) {
     stillEyes = document.createElement('canvas');
     stillEyes.width = eyes.width;
