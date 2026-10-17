@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About the Flaky Test Monster · flakifier</title>
+  <meta name="description" content="Where the Flaky Test Monster comes from: a joke in a chat of the Kibana Discover team, which became a 3D-printed monster and an exhibit at the Happylab 20th anniversary in Vienna.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/css/header.css">
+  <link rel="stylesheet" href="public/css/about.css">
+  <!-- Page-view counts (GoatCounter: no cookies, no personal data). -->
+  <script data-goatcounter="https://kertal.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <div class="site-bar">
+        <a class="masthead" href="./" aria-label="The Flaky Test Monster: back to the start">
+          <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
+          <span class="wordmark">The <em>Flaky</em> Test <em>Monster</em></span>
+        </a>
+        <nav class="site-nav" aria-label="Pages">
+          <a href="music.html">music</a>
+          <a href="flakifier.html">flakifier</a>
+          <a href="about.html" aria-current="page">about</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div class="hero-text">
+          <h1 id="title">Where the <em>monster</em> comes from</h1>
+          <p class="subtitle">Born as a joke in a chat, 3D printed, traveling the world.</p>
+        </div>
+        <img class="hero-photo" src="public/media/about/monster-chef.jpg" width="1594" height="1600" alt="The green 3D-printed Flaky Test Monster, with spiky black hair and big teeth, sits in the blue bowl of a little robot chef with a red hat.">
+      </section>
+
+      <section class="tldr" aria-labelledby="tldr-title">
+        <h2 id="tldr-title">TL;DR</h2>
+        <p>Born around Kibana 8.11 as a joke in the chat of the <strong>Discover</strong> team at <a href="https://www.elastic.co/kibana/">Elastic’s Kibana</a>: somebody had to be making all those flaky tests, so the culprit got a face. Holidays, a LinkedIn job hunt and giveaways all failed to get rid of it. Later it was 3D printed, and in October 2026 it became an exhibit at the <a href="https://www.happylab.at">Happylab</a> makerspace’s 20th anniversary in Vienna.</p>
+      </section>
+
+      <section class="explainer" aria-labelledby="flaky-title">
+        <h2 id="flaky-title">What is a flaky test?</h2>
+        <p>Every code change is checked by automated tests on a <strong>CI</strong> (continuous integration) system. A test is <strong>flaky</strong> when it sometimes fails although nothing changed: timing, leftovers from other tests, a slow network, a busy machine. Rerun it and it passes. At scale, flaky tests are daily life: failures to chase, tests to skip, releases held up by a red build that turns green on retry. Is the pipeline haunted… or is a little goblin handcrafting flaky tests with love?</p>
+        <p class="aside">Passed locally, failed on CI.</p>
+      </section>
+
+      <section class="timeline-section" aria-labelledby="timeline-title">
+        <h2 id="timeline-title">Timeline</h2>
+        <ol class="timeline">
+          <li class="event">
+            <p class="when">27 October 2023 · Kibana 8.11 / 8.12</p>
+            <h3>A suspect in the chat</h3>
+            <p>A teammate notices that while <a href="https://github.com/kertal">kertal</a> was on holiday, fewer flaky tests came in. Suspicious: is kertal the flaky test monster? AI guessed what a flaky test monster looks like. There were similarities in the picture it returned, no question, but when the monster was turned into a 3D print two years later, it was clear: the monster was its own entity.</p>
+            <figure class="photos photos-1">
+              <img src="public/media/about/wanted-poster.jpg" width="720" height="480" loading="lazy" alt="Holding up a wanted poster, “Wanted, skipped or unskipped, Flaky Test Monster, 8.12 or 8.11”, next to the green 3D-printed monster.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">20 July 2025 · <a href="https://github.com/elastic/kibana/issues/228706">Kibana issue #228706</a></p>
+            <h3>A flaky postcard from Italy and Austria</h3>
+            <p>The monster opened a Kibana issue of its own, labeled <code>test-failure-flaky</code>: on holiday with kertal in Italy and the Austrian Alps, it passed out on the way to the post office and woke up with an arm missing. <q>Have flaky test fixers become violent? HELP!</q> The team offered it to <q>resume vacationing indefinitely</q>. Confession: the arm broke off during a photo shoot for its Instagram career. The monster was promised a sturdier body with a steel skeleton. Its answer: <q>I’ll be back (with 2 hands)!</q></p>
+            <div class="slideshow" role="region" aria-roledescription="slideshow" aria-label="Photos from the flaky postcard">
+              <div class="slides" tabindex="0">
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="1 of 8">
+                  <img src="public/media/about/postcard-arm.jpg" width="1024" height="768" loading="lazy" alt="The monster on a cracked white table in front of Italian villas, its right arm lying broken off beside it.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="2 of 8">
+                  <img src="public/media/about/postcard-sunglasses.jpg" width="1024" height="768" loading="lazy" alt="The monster at a beach bar, peering out from behind a huge pair of sunglasses.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="3 of 8">
+                  <img src="public/media/about/postcard-cards.jpg" width="768" height="1024" loading="lazy" alt="The monster on a table, behind four playing cards laid face down.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="4 of 8">
+                  <img src="public/media/about/postcard-alps.jpg" width="1024" height="1024" loading="lazy" alt="The monster on a tree stump by a mountain lake, jagged rocky peaks behind it.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="5 of 8">
+                  <img src="public/media/about/postcard-sunset.jpg" width="1200" height="1600" loading="lazy" alt="Close-up of the monster’s face, the sea at sunset blurred behind it.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="6 of 8">
+                  <img src="public/media/about/postcard-cappuccino.jpg" width="768" height="1024" loading="lazy" alt="The monster holding a spoon, next to a cappuccino and the receipt.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="7 of 8">
+                  <img src="public/media/about/postcard-beach.gif" width="350" height="262" loading="lazy" alt="Animation: the monster on wet sand at the water’s edge, waves rolling in behind it.">
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="8 of 8">
+                  <img src="public/media/about/postcard-new-body.jpg" width="1600" height="1200" loading="lazy" alt="In a workshop, a grey prototype figure with sunglasses, a jacket and a minigun stands next to the painted green monster.">
+                </figure>
+              </div>
+            </div>
+          </li>
+          <li class="event">
+            <p class="when">The tour continues</p>
+            <h3>Sent on holiday</h3>
+            <p>Again Italy, Croatia, the Austrian Alps, Spain or Las Vegas, together with the monster fighters Minichef and Knitty McGritty. That didn’t solve the flaky test problem.</p>
+            <figure class="photos photos-wide">
+              <img src="public/media/about/seaside-trio.jpg" width="1600" height="800" loading="lazy" alt="The monster, painted and weathered, a crocheted red ball and the robot chef sit on rocks by the sea.">
+              <img src="public/media/about/mountains.jpg" width="1600" height="800" loading="lazy" alt="The three friends, out of focus, look out at grey limestone mountains under clouds.">
+              <img src="public/media/about/sunset.jpg" width="1600" height="800" loading="lazy" alt="The three friends, seen from behind, watch the sunset from a rock.">
+            </figure>
+          </li>
+          <li class="event">
+            <p class="when">To sum it up</p>
+            <h3>Measures to resolve the flakiness</h3>
+            <p>Several measures were applied to get rid of the monster. All of them were flaky.</p>
+            <ul class="measures">
+              <li><strong>Relocation.</strong> Convince the monster to stay in Italy, Croatia, Austria, Spain or Las Vegas. It came back.</li>
+              <li><strong>A new career.</strong> Open a LinkedIn account for it, with the <q>Open to work</q> badge. The account was blocked. No sense of humor on LinkedIn.</li>
+              <li><strong>Spreading the load.</strong> Give away cute Flaky Test Monster prints and buttons to other teams and companies. No reduction in flakiness observed.</li>
+              <li><strong>Social media.</strong> A flaky influencer, seems the demand was limited.</li>
+            </ul>
+          </li>
+          <li class="event event-now">
+            <p class="when">October 2026</p>
+            <h3>Monster at Happylab</h3>
+            <p>On 9 October the goblin from the CI pipeline entered the physical world again as one of the makers’ exhibits at the 20th anniversary of the <strong>Happylab</strong> makerspace in Vienna. The monster refused to stay there, and the flakiness continued unabated.</p>
+            <figure class="photos photos-1">
+              <img src="public/media/about/monster-fans.jpg" width="886" height="886" loading="lazy" alt="Collage: the green 3D-printed monster in the middle, surrounded by photos of its fans, tinted green, with big googly eyes and red mouths pasted on their faces.">
+            </figure>
+          </li>
+          <li class="event event-next">
+            <p class="when">What’s next?</p>
+            <h3>A musical career</h3>
+            <p>Let’s convince the monster to pursue a musical career: <a href="music.html">help it find a country for the Eurovision Slong Contest</a>.</p>
+          </li>
+        </ol>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

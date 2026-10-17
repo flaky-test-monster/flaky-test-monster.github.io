@@ -18,10 +18,13 @@
   <meta property="og:image:alt" content="The Flaky Test Monster in sunglasses, singing into a vintage microphone">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/css/header.css">
   <link rel="stylesheet" href="public/css/music.css">
   <meta name="flaky-supabase-url" content="">
   <meta name="flaky-supabase-key" content="">
   <meta name="flaky-captcha-sitekey" content="0x4AAAAAAFVVpwHBbX25Yj1k">
+  <!-- The app used to be the start page: send its job links on to it. -->
+  <script>if (/^#job=/.test(location.hash)) location.replace('flakifier.html' + location.hash);</script>
   <!-- Page-view counts (GoatCounter: no cookies, no personal data). -->
   <script data-goatcounter="https://kertal.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
@@ -31,13 +34,14 @@
     <div class="container">
       <header class="site-header">
         <div class="site-bar">
-          <a class="masthead" href="./" aria-label="From Flaky With Love: back to flakifier">
+          <a class="masthead" href="./" aria-label="From Flaky With Love: back to the start">
             <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
             <span class="wordmark">The <em>Flaky</em> Test <em>Monster</em></span>
           </a>
           <nav class="site-nav" aria-label="Pages">
-            <a href="./">flakifier</a>
             <a href="music.html" aria-current="page">music</a>
+            <a href="flakifier.html">flakifier</a>
+            <a href="about.html">about</a>
           </nav>
         </div>
       </header>

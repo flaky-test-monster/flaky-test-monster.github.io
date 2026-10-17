@@ -118,7 +118,8 @@ This starts the local 3D server in the background when the local pipeline is ins
 stops both. A 3D server you already started yourself is reused and left running.
 `node server.js` still works when you only use the cloud pipelines.
 
-Open <http://localhost:3000>. Take a photo, choose how to make it and a figure, and click
+Open <http://localhost:3000/flakifier> (the start page, <http://localhost:3000>, is the music
+page). Take a photo, choose how to make it and a figure, and click
 **Flakify**. The stepper lights up as each stage finishes, the styled image
 appears as soon as it is ready, and the final screen shows the model in a rotating 3D
 viewer with download buttons for the STL, the styled image and the original photo, plus

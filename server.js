@@ -32,6 +32,7 @@ const STATIC_TYPES = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
   '.ico': 'image/x-icon',
   '.mp4': 'video/mp4',
   '.mp3': 'audio/mpeg',
@@ -274,19 +275,24 @@ function fileSlug(name) {
   return slug || 'flakifier';
 }
 
-/** GET / */
-async function serveIndex(req, res) {
-  await sendFile(res, path.join(PUBLIC_DIR, 'index.html'), STATIC_TYPES['.html']);
+/** GET /flakifier.html or /flakifier: the app */
+async function serveApp(req, res) {
+  await sendFile(res, path.join(PUBLIC_DIR, 'flakifier.html'), STATIC_TYPES['.html']);
 }
 
-/** GET /music.html */
+/** GET /, /music.html or /music: the music page is the start page */
 async function serveMusic(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'music.html'), STATIC_TYPES['.html']);
 }
 
-/** GET /music-admin.html */
+/** GET /music-admin.html or /music-admin */
 async function serveMusicAdmin(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'music-admin.html'), STATIC_TYPES['.html']);
+}
+
+/** GET /about.html or /about */
+async function serveAbout(req, res) {
+  await sendFile(res, path.join(PUBLIC_DIR, 'about.html'), STATIC_TYPES['.html']);
 }
 
 /** GET /public/* */
@@ -376,10 +382,13 @@ async function jobFileRoute(req, res, url, [, id, name]) {
   await sendFile(res, filePath, JOB_FILE_TYPES[name], download ? `${prefix}-${name}` : undefined);
 }
 
+// Pages also answer without .html, as GitHub Pages does. No trailing slash: the pages
+// link their assets relatively, which only resolves from the site root.
 const ROUTES = [
-  { pattern: /^\/$/, handlers: { GET: serveIndex } },
-  { pattern: /^\/music\.html$/, handlers: { GET: serveMusic } },
-  { pattern: /^\/music-admin\.html$/, handlers: { GET: serveMusicAdmin } },
+  { pattern: /^\/(music(\.html)?)?$/, handlers: { GET: serveMusic } },
+  { pattern: /^\/flakifier(\.html)?$/, handlers: { GET: serveApp } },
+  { pattern: /^\/music-admin(\.html)?$/, handlers: { GET: serveMusicAdmin } },
+  { pattern: /^\/about(\.html)?$/, handlers: { GET: serveAbout } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },
   { pattern: /^\/api\/figures$/, handlers: { GET: listFiguresRoute } },
   { pattern: /^\/api\/pipelines$/, handlers: { GET: listPipelinesRoute } },
