@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A Spooky Story · The Flaky Test Monster</title>
-  <meta name="description" content="A Halloween story for Syntax: how lost Macromedia Flash source code turned into an electronic Bukovina hit in the 2000s, and how, years later, flaky tests turned into a monster, a 3D print and the Eurovision Slong Contest.">
+  <title>From Failure to Fun · The Flaky Test Monster</title>
+  <meta name="description" content="Two not-so-spooky developer stories for the Syntax Halloween episode: a virus that wiped a Flash project and led to a hit song, and a Flaky Test Monster that escaped the CI pipeline and started making music.">
   <meta name="theme-color" content="#0d0a12">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
   <link rel="stylesheet" href="public/css/header.css">
@@ -31,63 +31,88 @@
 
     <main>
       <section class="hero" aria-labelledby="title">
-        <p class="kicker">A spooky story for <a href="https://syntax.fm/spooky">Syntax</a> · Halloween 2026</p>
-        <h1 id="title">The code that <em>turned into music</em>. Twice.</h1>
-        <p class="subtitle">Some bugs you fix. Some bugs you lose. And some come back, years later, singing.</p>
+        <p class="kicker">Two stories for the <a href="https://syntax.fm/spooky">Syntax</a> Halloween episode</p>
+        <h1 id="title">From <em>Failure</em> to Fun</h1>
+        <p class="subtitle">Two not-so-spooky developer stories.</p>
+      </section>
+
+      <section class="letter" aria-label="Introduction">
+        <p class="greeting">Hey Syntax FM!</p>
+        <p>I have two stories for your Halloween episode. They’re not exactly spooky stories, but rather stories about <strong>turning failure into fun</strong>. Both involve monsters in computers, unexpected musical success, and about twenty years between them.</p>
       </section>
 
       <article class="story">
-        <section class="chapter" aria-labelledby="ch1-title">
-          <p class="when">Chapter one · somewhere in the 2000s</p>
-          <h2 id="ch1-title">The source that vanished</h2>
-          <p>It was the age of <strong>Macromedia Flash</strong>. Intros you couldn’t skip, buttons that wobbled, and everything lived in one precious <code>.fla</code> file: the timeline, the tweens, the ActionScript, the sounds.</p>
-          <p>Then one day the source was gone. No backup, no version control, no <code>git reflog</code> to crawl back into. What was left was a compiled <code>.swf</code> that still played but could never be edited again. The software was dead.</p>
-          <p>But something in it would not stay buried. What could no longer be code became <strong>music</strong>: an alternative electronic record with the brass and the restless rhythms of the <strong>Bukovina</strong>, which went on to become a hit.</p>
-          <p class="aside">From software to music. Nobody planned it. Nobody could have.</p>
+        <section class="chapter" aria-labelledby="part1-title">
+          <p class="when">Part one · about twenty years ago</p>
+          <h2 id="part1-title">The virus that accidentally created a successful song</h2>
+          <p>About twenty years ago, when <strong>Macromedia Flash</strong> was still popular, I got a contract to develop a Flash application for a movie website.</p>
+          <p>I didn’t know much about Flash, but after three weeks of learning and coding, I had a working application.</p>
+          <p class="beat">Then disaster struck.</p>
+          <p>I accidentally executed some malware. My screen turned grey, my computer started working furiously, and instead of immediately shutting it down, I waited.</p>
+          <p class="beat">Bad idea.</p>
+          <p>The malware was overwriting my hard drive. My compiled Flash application survived, but the source code was gone. And naturally, I had no backup.</p>
+          <p class="beat">Three weeks of work, lost.</p>
+          <p>That evening, while desperately checking what files had survived, I discovered a recording a friend had given me featuring a famous German Schlager singer. It contained the line:</p>
+          <blockquote class="pull">
+            <p lang="de">„Alles verloren, was ich hab“</p>
+            <p class="translation">“I’ve lost everything I had.”</p>
+          </blockquote>
+          <p class="beat">Perfect.</p>
+          <p>Since I was also a musician, I sampled that line and wrote a song about losing my work and wishing I could become a sheep farmer instead of a developer. I called it <cite lang="de">Alles verloren</cite>.</p>
+          <p>Some time later, I performed it in a small underground venue. A drummer friend liked it and asked to develop it further. I agreed, especially since clearing the Schlager sample wasn’t something I wanted to deal with.</p>
+          <p class="beat">And then things got weird.</p>
+          <p>He entered the song in Austria’s <strong>Protest Song Contest</strong>, an alternative to Eurovision, and came third! The song got radio airplay, was reworked several times, eventually involved a well-known German DJ and singer Rainer von Vielen, and appeared on compilations and radio best-of collections.</p>
+          <p>By then, almost nothing of my original song remained except the chorus, which wasn’t even sampled anymore.</p>
           <figure class="video">
             <div class="video-frame">
-              <iframe src="https://www.youtube-nocookie.com/embed/1lyYuZPzkD0" title="The Bukovina record, on YouTube" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+              <iframe src="https://www.youtube-nocookie.com/embed/1lyYuZPzkD0" title="Alles verloren, on YouTube" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
             </div>
-            <figcaption>The record that came out of the lost source. <a href="https://www.youtube.com/watch?v=1lyYuZPzkD0">Watch on YouTube</a>.</figcaption>
+            <figcaption>What became of <cite lang="de">Alles verloren</cite>. <a href="https://www.youtube.com/watch?v=1lyYuZPzkD0">Watch on YouTube</a>.</figcaption>
           </figure>
+          <p>And here’s the punchline:</p>
+          <p class="punchline">That song earned me more royalties than anything else in my entire musical career.</p>
+          <p>Not a fortune, but still. A computer virus had accidentally led to my most financially successful song.</p>
+          <p class="aside">Unfortunately, I still had to rewrite that Flash application.</p>
         </section>
 
-        <p class="interlude" aria-hidden="true">· · · many years pass · · ·</p>
+        <p class="interlude" aria-hidden="true">· · · fast-forward twenty years · · ·</p>
 
-        <section class="chapter" aria-labelledby="ch2-title">
-          <p class="when">Chapter two · October 2023 · Kibana 8.11</p>
-          <h2 id="ch2-title">Something in the pipeline</h2>
-          <p>Every change to <a href="https://www.elastic.co/kibana/">Kibana</a> runs through thousands of automated tests on CI. Some of them fail although nothing changed. Rerun them and they pass. Those are <strong>flaky tests</strong>, and at scale they never stop coming.</p>
-          <p>In the chat of the Discover team, someone noticed that while <a href="https://github.com/kertal">kertal</a> was on holiday, fewer flaky tests came in. Suspicious. Somebody had to be making them, so the culprit got a face: <strong>the Flaky Test Monster</strong>, a little green goblin handcrafting flaky tests with love.</p>
-          <p class="aside">Passed locally, failed on CI.</p>
-        </section>
-
-        <section class="chapter" aria-labelledby="ch3-title">
-          <p class="when">Chapter three · character design and 3D printing</p>
-          <h2 id="ch3-title">It crawled out of the screen</h2>
+        <section class="chapter" aria-labelledby="part2-title">
+          <p class="when">Part two · twenty years later</p>
+          <h2 id="part2-title">The monster that escaped the CI pipeline</h2>
+          <p>I’m now a software engineer working on <a href="https://www.elastic.co/kibana/">Kibana</a> at Elastic, dealing with something every developer fears: <strong>flaky tests</strong>.</p>
+          <p>Our CI pipelines were sometimes so unreliable that we developed a theory: the pipeline was cursed, and a creature called the <strong>Flaky Test Monster</strong> was responsible.</p>
+          <p>Then, one weekend while I was on vacation, the flakiness decreased. My colleagues immediately suspected that perhaps <em>I</em> was the Flaky Test Monster.</p>
+          <p>Naturally, I used AI to confirm this theory. And since AI is always right, the resulting monster looked suspiciously like me.</p>
           <figure class="photo photo-right">
-            <img src="public/media/about/first-print.jpg" width="1596" height="1600" loading="lazy" alt="The green 3D-printed Flaky Test Monster with spiky black hair, big white eyes and a wide mouth full of square teeth, in front of a red-topped microphone.">
+            <img src="public/media/about/monster-and-makers.jpg" width="1596" height="1600" loading="lazy" alt="The green 3D-printed Flaky Test Monster, between three small grey resin figures of people, one of them lying at its feet.">
           </figure>
-          <p>A joke became a <strong>character</strong>: spiky black hair, googly eyes, a mouth too wide for its face. The character became a <strong>3D model</strong>, and the model came off the printer, layer by layer, into the physical world.</p>
-          <p>The team tried everything to get rid of it. It was sent on holiday to Italy, Croatia, the Austrian Alps, Spain and Las Vegas. It came back. It got a LinkedIn account, <q>Open to work</q>. The account was blocked. Prints and buttons were given away to other teams. No reduction in flakiness observed. Every measure was flaky.</p>
-          <p>In October 2026 it was exhibited at the 20th anniversary of the <a href="https://www.happylab.at">Happylab</a> makerspace in Vienna. It even inspired <a href="flakifier.html">a tool</a> that turns anyone’s face into a printable monster.</p>
-        </section>
-
-        <section class="chapter chapter-last" aria-labelledby="ch4-title">
-          <p class="when">Chapter four · and in the end: music</p>
-          <h2 id="ch4-title">The monster wants to sing</h2>
-          <p>And then, just like twenty years before, the code found its way into music. The Flaky Test Monster is going for the <strong>Eurovision <s>Song</s> Slong Contest</strong>. All it needs is a country brave enough to send it, so it recorded <em>From Flaky With Love</em> in every candidate’s style: Austrian, Italian, French, Greek, Spanish, Polish… even Klingon, and in cat.</p>
+          <p>What started as a joke became an emoji, then a LEGO-style figure, and eventually a 3D-printed monster.</p>
+          <p>At a local makerspace, I began turning colleagues and entire teams into 3D characters. Eventually, I exhibited the monster and its creations at a maker event, including <a href="flakifier.html">a webcam-to-3D pipeline</a> that could transform visitors into monsters.</p>
+          <p>So a fictional creature from our CI pipeline had literally escaped into the physical world.</p>
+          <p class="beat">But it didn’t stop there.</p>
+          <p class="punchline">The Flaky Test Monster started making music.</p>
+          <p>I created songs about flaky tests and the monster’s questionable contributions to software engineering.</p>
           <figure class="photo">
             <img src="public/media/music-share.jpg" width="1200" height="630" loading="lazy" alt="The Flaky Test Monster in sunglasses, singing into a vintage microphone.">
           </figure>
-          <p class="cta"><a class="button" href="music.html">Listen and vote for its country</a></p>
+        </section>
+
+        <section class="chapter chapter-last" aria-labelledby="circle-title">
+          <p class="when">Full circle</p>
+          <h2 id="circle-title">Twenty years, two failures, two songs</h2>
+          <p>And suddenly, I realized I’d come full circle. Twenty years ago, a computer virus destroyed my code and unexpectedly led to a successful song. Now, flaky tests had created a monster that was dragging me back into making music.</p>
+          <p>Perhaps the next logical step is entering the <strong>Eurovision Song Contest</strong> with the Flaky Test Monster. Or maybe producing the world’s first <em>Flaky Test Monster Rock Opera</em>.</p>
+          <p class="cta"><a class="button" href="music.html">Help the monster find a country</a></p>
         </section>
       </article>
 
       <section class="moral" aria-labelledby="moral-title">
-        <h2 id="moral-title">The moral</h2>
-        <p>Lose your source and you may get a hit record. Ignore your flaky tests and they grow teeth, get printed and enter Eurovision. Software doesn’t die. It just changes genre.</p>
-        <p class="aside">Back up your <code>.fla</code> files. Fix your flaky tests. Or don’t, and see what happens.</p>
+        <h2 id="moral-title">After all</h2>
+        <p>Both stories demonstrate something important:</p>
+        <p class="punchline">The first software failure became a song. The second became a monster that makes songs.</p>
+        <p>And maybe that’s the real horror: after twenty years, I’m still a software developer.</p>
+        <p class="signoff">Happy Halloween!</p>
       </section>
     </main>
   </div>
