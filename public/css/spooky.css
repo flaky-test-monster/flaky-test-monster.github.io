@@ -1,0 +1,91 @@
+/* The spooky page: a Halloween story, dark in both colour schemes. Pumpkin orange for links
+ * and accents, the monster's green for the emphasis; everything else is ink on night. */
+:root {
+  color-scheme: dark;
+  --night: #0d0a12;
+  --panel: #1a1522;
+  --ink: #f1ebe0;
+  --muted: #b3a99c;
+  --border: #4a3f57;
+  --pumpkin: #ff8a1f;
+  --on-pumpkin: #0d0a12;
+  --slime: #7bd25a;
+  --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
+  --body: Georgia, serif;
+  --utility: 'Courier New', monospace;
+}
+@media (prefers-contrast: more) {
+  :root { --muted: var(--ink); --border: var(--ink); }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 50% -10%, #2a1d3a, transparent 60%) no-repeat, var(--night);
+  font: 1.0625rem/1.65 var(--body);
+}
+.container { width: min(100% - 64px, 760px); margin: auto; padding: 56px 0 40px; }
+a { color: var(--pumpkin); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--pumpkin); outline-offset: 4px; }
+img { display: block; max-width: 100%; height: auto; }
+code { font: 0.9em var(--utility); color: var(--slime); }
+
+/* Header: the layout is header.css, shared by all pages; these are this page's colours. */
+.site-header {
+  --nav-fg: var(--muted);
+  --nav-border: var(--border);
+  --nav-hover: var(--pumpkin);
+  --nav-font: var(--utility);
+  --mascot-border: var(--pumpkin);
+  --mascot-hover: var(--slime);
+}
+.masthead { color: var(--ink); }
+
+.hero { padding: 48px 0 16px; text-align: center; }
+.kicker, .when { margin: 0; font: 0.8125rem/1.5 var(--utility); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+h1 { font: italic 900 clamp(2.5rem, 7vw, 4.75rem)/.95 var(--display); letter-spacing: -.04em; margin: 16px 0 20px; }
+h1 em { color: var(--slime); }
+.subtitle { margin: 0 auto; max-width: 36ch; font-size: clamp(1.0625rem, 2vw, 1.25rem); font-weight: bold; line-height: 1.35; }
+
+h2 { font: italic 700 clamp(1.75rem, 4vw, 2.375rem)/1.1 var(--display); margin: 4px 0 12px; }
+section { margin-top: 40px; }
+.chapter > p:not(.when) { margin: 0 0 14px; }
+.aside { font: 0.9375rem var(--utility); color: var(--muted); }
+.aside::before { content: '> '; color: var(--pumpkin); }
+
+.interlude { margin: 48px 0 0; text-align: center; font: italic 1.125rem var(--display); color: var(--muted); letter-spacing: .1em; }
+
+/* The video keeps 16:9 at any width. */
+.video { margin: 20px 0 0; }
+.video-frame { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #000; }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+figcaption { margin-top: 8px; font: 0.875rem var(--utility); color: var(--muted); }
+
+.photo { margin: 0 0 16px; }
+.photo img { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.photo-right { float: right; width: min(42%, 280px); margin: 4px 0 12px 24px; }
+.photo-right img { aspect-ratio: 1; object-fit: cover; }
+.chapter::after { content: ''; display: table; clear: both; }
+
+.cta { margin-top: 20px; }
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--pumpkin);
+  color: var(--on-pumpkin);
+  font: bold 0.9375rem var(--utility);
+  text-decoration: none;
+}
+.button:hover { background: var(--slime); }
+
+.moral { margin-top: 56px; padding: 24px 28px; border: 1px dashed var(--pumpkin); border-radius: 12px; background: var(--panel); }
+.moral > p { margin: 0 0 12px; }
+.moral > p:last-child { margin-bottom: 0; }
+
+@media (max-width: 640px) {
+  .container { width: calc(100% - 32px); padding-top: 32px; }
+  .hero { padding-top: 24px; }
+  .photo-right { float: none; width: 100%; max-width: 360px; margin: 0 0 16px; }
+}

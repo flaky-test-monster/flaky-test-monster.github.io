@@ -60,6 +60,9 @@ cp _site/music.html _site/index.html
 # The about page needs no backend either.
 npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
   --minify-css true public/about.html > _site/about.html
+# So does the spooky story.
+npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
+  --minify-css true public/spooky.html > _site/spooky.html
 # Every link to a script or stylesheet, in the pages and in the modules' imports, carries the
 # commit, so a new deploy never runs next to files the browser cached from the last one: Pages
 # lets browsers keep them for ten minutes, and an old module against a new page breaks it.
@@ -72,4 +75,5 @@ grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
 grep -q "app.js?v=$VERSION" _site/flakifier.html
 grep -q "music-vote.js?v=$VERSION" _site/index.html
+grep -q "spooky.css?v=$VERSION" _site/spooky.html
 touch _site/.nojekyll
