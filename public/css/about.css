@@ -1,5 +1,5 @@
 /* The about page: black and white, like a newspaper. The photos are black and white too,
- * except for the monster's green and red, and the green of the TL;DR box: the only colours on the page. */
+ * except for the monster's green and red: the only colours on the page. */
 :root {
   color-scheme: light dark;
   --paper: #fff;
@@ -9,7 +9,6 @@
   --muted: #555;
   --border: #000;
   --panel: #f2f2f2;
-  --highlight: #237a23; /* the app's "pass" green */
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
@@ -23,7 +22,6 @@
     --muted: #aaa;
     --border: #fff;
     --panel: #141414;
-    --highlight: #4fc24f;
   }
 }
 * { box-sizing: border-box; }
@@ -56,8 +54,6 @@ h1 { font: italic 900 clamp(2.75rem, 7vw, 5.5rem)/.9 var(--display); letter-spac
 
 h2 { font: italic 700 clamp(1.75rem, 4vw, 2.5rem)/1.1 var(--display); margin: 0 0 12px; }
 section { margin-top: 32px; }
-.tldr { padding: 20px 24px; border: 2px solid var(--highlight); border-radius: 8px; background: var(--panel); }
-.tldr p { margin: 0; }
 .aside { font: 0.875rem var(--utility); color: var(--muted); }
 
 /* The timeline: a rule down the left, a dot per event. */
@@ -86,15 +82,23 @@ h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
 .photos { display: grid; gap: 12px; margin: 0 0 12px; }
 .photos img { width: 100%; height: 100%; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
 .photos-1 { max-width: 560px; }
-.photos-2 { grid-template-columns: 1fr 1fr; align-items: stretch; }
 .photos-3 { grid-template-columns: 1fr 1fr 1fr; }
 .photos-3 img { aspect-ratio: 1; }
 .photos-wide { max-width: none; }
 .photos-wide img { aspect-ratio: 2; }
 
-/* Slideshow: a row of photos that snaps one at a time. Without JS it still scrolls and swipes;
- * about-slideshow.js adds the buttons and the counter. */
-.slideshow { margin: 0 0 12px; }
+/* Slideshow, CSS only: a row of photos that snaps one at a time. Every browser can scroll, swipe
+ * and use the arrow keys on it; where the CSS carousel pseudo-elements are supported
+ * (::scroll-button, ::scroll-marker), previous and next buttons and a dot per photo are laid over
+ * the photos. The photos sit on black and the controls are white in both colour schemes, so they
+ * read on any photo. */
+.slideshow {
+  --gallery-bg: #000;
+  --gallery-fg: #fff;
+  position: relative;
+  max-width: 720px;
+  margin: 0 0 12px;
+}
 .slides {
   display: flex;
   gap: 12px;
@@ -103,38 +107,61 @@ h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
   scroll-behavior: smooth;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
+  border-radius: 8px;
 }
-.slide { flex: 0 0 100%; margin: 0; scroll-snap-align: start; }
+.slide { position: relative; flex: 0 0 100%; margin: 0; overflow: hidden; border-radius: 8px; scroll-snap-align: start; }
 /* Portrait and landscape photos share one 4:3 frame, shown whole; tall screens don't stretch it. */
 .slide img {
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
-  max-height: min(70vh, 520px);
+  max-height: min(80vh, 600px);
   object-fit: contain;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
+  background: var(--gallery-bg);
 }
-/* With the buttons there, the scrollbar is only clutter. */
-.slideshow.has-controls .slides { scrollbar-width: none; }
-.slideshow.has-controls .slides::-webkit-scrollbar { display: none; }
-.slide figcaption { margin-top: 8px; font: 0.875rem/1.5 var(--utility); color: var(--muted); }
-.slide-controls { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-.slide-controls[hidden] { display: none; }
-.slide-controls button {
-  min-width: 44px;
-  min-height: 44px;
-  font: 1.25rem var(--utility);
-  color: var(--ink);
-  background: var(--paper);
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  cursor: pointer;
+
+@supports selector(::scroll-marker) {
+  /* With the buttons and dots there, the scrollbar is only clutter. */
+  .slides { scrollbar-width: none; scroll-marker-group: after; }
+  .slides::-webkit-scrollbar { display: none; }
+  .slides::scroll-marker-group {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    display: flex;
+    transform: translateX(-50%);
+  }
+  /* A 22px hit area around a small ring; the current photo's ring is filled. */
+  .slide::scroll-marker {
+    content: '';
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 3px, var(--gallery-fg) 3.5px 5px, transparent 5.5px);
+  }
+  .slide::scroll-marker:target-current { background: radial-gradient(circle, var(--gallery-fg) 5px, transparent 5.5px); }
+  .slide::scroll-marker:focus-visible { outline-color: var(--gallery-fg); outline-offset: 0; }
+  /* Centred on the photo's sides: the row holds nothing but the photos. */
+  .slides::scroll-button(*) {
+    position: absolute;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    font: 1.25rem/1 var(--utility);
+    color: var(--gallery-fg);
+    background: rgb(0 0 0 / .45);
+    border: 1.5px solid var(--gallery-fg);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+  }
+  .slides::scroll-button(left) { content: '←' / 'Previous photo'; left: 12px; }
+  .slides::scroll-button(right) { content: '→' / 'Next photo'; right: 12px; }
+  .slides::scroll-button(*):hover:not(:disabled) { color: var(--gallery-bg); background: var(--gallery-fg); }
+  .slides::scroll-button(*):focus-visible { outline-color: var(--gallery-fg); outline-offset: 2px; }
+  .slides::scroll-button(*):disabled { opacity: 0; cursor: default; }
 }
-.slide-controls button:hover:not(:disabled) { color: var(--on-accent); background: var(--accent); }
-.slide-controls button:disabled { opacity: .35; cursor: default; }
-.slide-count { font: 0.875rem var(--utility); color: var(--muted); font-variant-numeric: tabular-nums; }
+
 @media (prefers-reduced-motion: reduce) {
   .slides { scroll-behavior: auto; }
 }
@@ -148,7 +175,6 @@ footer p { margin: 8px 0 0; }
 }
 @media (max-width: 720px) {
   .hero { grid-template-columns: 1fr; padding-top: 24px; }
-  .photos-2 { grid-template-columns: 1fr; }
   .timeline { padding-left: 20px; }
   .event::before { left: -29px; }
 }

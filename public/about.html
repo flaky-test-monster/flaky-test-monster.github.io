@@ -41,13 +41,12 @@
 
       <section class="tldr" aria-labelledby="tldr-title">
         <h2 id="tldr-title">TL;DR</h2>
-        <p>The Flaky Test Monster started as a joke in a chat of the team that works on <strong>Discover</strong>, the part of <a href="https://www.elastic.co/kibana/">Elastic’s Kibana</a> where you explore your data, around the Kibana 8.11 and 8.12 releases. Somebody had to be making all those flaky tests, so the team gave the culprit a face. Every measure to get rid of it failed: sending it on holiday to Italy, Croatia, Austria, Spain and Las Vegas, finding it a job on LinkedIn, giving it away as prints and buttons to other teams. Around Kibana 9.5 it was 3D printed, and in October 2026 it moved into the physical world for good: as an exhibit at the <a href="https://www.happylab.at">Happylab</a> makerspace’s 20th anniversary in Vienna.</p>
+        <p>Born around Kibana 8.11 as a joke in the chat of the <strong>Discover</strong> team at <a href="https://www.elastic.co/kibana/">Elastic’s Kibana</a>: somebody had to be making all those flaky tests, so the culprit got a face. Holidays, a LinkedIn job hunt and giveaways all failed to get rid of it. Later it was 3D printed, and in October 2026 it became an exhibit at the <a href="https://www.happylab.at">Happylab</a> makerspace’s 20th anniversary in Vienna.</p>
       </section>
 
       <section class="explainer" aria-labelledby="flaky-title">
         <h2 id="flaky-title">What is a flaky test?</h2>
-        <p>Software teams check every change with automated tests, run on a <strong>CI</strong> (continuous integration) system: the quality control of software engineering. A test is <strong>flaky</strong> when it usually passes and sometimes fails. Nothing changed, yet the result did. Typical causes are timing, tests that depend on each other’s leftovers, a slow network or a busy CI machine.</p>
-        <p>A flaky test rarely says why it failed. Rerun it and it passes. At a certain scale every CI setup has some; scale up a bit further and they are part of daily life: failures to investigate, tests to skip and unskip, releases held up by a red build that turns green on retry. Eventually you start wondering whether your CI pipeline is haunted… or whether a little goblin somewhere is handcrafting flaky tests with love.</p>
+        <p>Every code change is checked by automated tests on a <strong>CI</strong> (continuous integration) system. A test is <strong>flaky</strong> when it sometimes fails although nothing changed: timing, leftovers from other tests, a slow network, a busy machine. Rerun it and it passes. At scale, flaky tests are daily life: failures to chase, tests to skip, releases held up by a red build that turns green on retry. Is the pipeline haunted… or is a little goblin handcrafting flaky tests with love?</p>
         <p class="aside">Passed locally, failed on CI.</p>
       </section>
 
@@ -57,83 +56,52 @@
           <li class="event">
             <p class="when">27 October 2023 · Kibana 8.11 / 8.12</p>
             <h3>A suspect in the chat</h3>
-            <p>A teammate notices that while <a href="https://github.com/kertal">kertal</a> was on holiday, fewer flaky tests came in. Suspicious: is kertal the flaky test monster? kertal asked an AI what a flaky test monster looks like. There were similarities in the picture it returned, no question, but when the monster was turned into a 3D print two years later, it was clear: the monster was its own entity.</p>
+            <p>A teammate notices that while <a href="https://github.com/kertal">kertal</a> was on holiday, fewer flaky tests came in. Suspicious: is kertal the flaky test monster? AI guessed what a flaky test monster looks like. There were similarities in the picture it returned, no question, but when the monster was turned into a 3D print two years later, it was clear: the monster was its own entity.</p>
             <figure class="photos photos-1">
               <img src="public/media/about/wanted-poster.jpg" width="720" height="480" loading="lazy" alt="Holding up a wanted poster, “Wanted, skipped or unskipped, Flaky Test Monster, 8.12 or 8.11”, next to the green 3D-printed monster.">
             </figure>
           </li>
           <li class="event">
-            <p class="when">On tour</p>
-            <h3>Sent on holiday</h3>
-            <p>Once the monster was a physical entity, kertal took it on holiday, trying to convince it to stay in Italy, Croatia, the Austrian Alps, Spain or Las Vegas, together with the monster fighters Minichef and Knitty McGritty. That didn’t work so well: the flaky test problem persisted.</p>
-            <figure class="photos photos-wide">
-              <img src="public/media/about/seaside-trio.jpg" width="1600" height="800" loading="lazy" alt="The monster, painted and weathered, a crocheted red ball and the robot chef sit on rocks by the sea.">
-              <img src="public/media/about/mountains.jpg" width="1600" height="800" loading="lazy" alt="The three friends, out of focus, look out at grey limestone mountains under clouds.">
-              <img src="public/media/about/sunset.jpg" width="1600" height="800" loading="lazy" alt="The three friends, seen from behind, watch the sunset from a rock.">
-            </figure>
-          </li>
-          <li class="event">
             <p class="when">20 July 2025 · <a href="https://github.com/elastic/kibana/issues/228706">Kibana issue #228706</a></p>
             <h3>A flaky postcard from Italy and Austria</h3>
-            <p>The monster opened an issue of its own in the Kibana repository, labeled <code>test-failure-flaky</code>. kertal had talked it into a holiday in Italy and the Austrian Alps: a break is important, to come back with great new ideas for making the CI pipeline flaky. On the way to the post office, to send the team a postcard, the monster passed out, and woke up with an arm missing. Had kertal only invited it to get rid of the good old Flaky Test Monster? Would it be replaced by a soulless AI agent that makes flakiness that is easy to fix? <q>Has @kertal become evil? HELP!</q></p>
-            <p>The team was not very sympathetic: one teammate formally offered it to <q>resume vacationing indefinitely</q>. Then kertal confessed. The arm broke off while the monster posed for its career as an Instagram influencer, and the post office story was made up. The monster was promised a sturdier body with a steel skeleton. Its answer: <q>I’ll be back (with 2 hands)!</q> And to everyone else: <q>Flakiness for all is my slogan!</q></p>
+            <p>The monster opened a Kibana issue of its own, labeled <code>test-failure-flaky</code>: on holiday with kertal in Italy and the Austrian Alps, it passed out on the way to the post office and woke up with an arm missing. <q>Have flaky test fixers become violent? HELP!</q> The team offered it to <q>resume vacationing indefinitely</q>. Confession: the arm broke off during a photo shoot for its Instagram career. The monster was promised a sturdier body with a steel skeleton. Its answer: <q>I’ll be back (with 2 hands)!</q></p>
             <div class="slideshow" role="region" aria-roledescription="slideshow" aria-label="Photos from the flaky postcard">
               <div class="slides" tabindex="0">
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="1 of 8">
                   <img src="public/media/about/postcard-arm.jpg" width="1024" height="768" loading="lazy" alt="The monster on a cracked white table in front of Italian villas, its right arm lying broken off beside it.">
-                  <figcaption>The postcard: one arm short.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="2 of 8">
                   <img src="public/media/about/postcard-sunglasses.jpg" width="1024" height="768" loading="lazy" alt="The monster at a beach bar, peering out from behind a huge pair of sunglasses.">
-                  <figcaption>Beach bar, Italy.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="3 of 8">
                   <img src="public/media/about/postcard-cards.jpg" width="768" height="1024" loading="lazy" alt="The monster on a table, behind four playing cards laid face down.">
-                  <figcaption>A game of cards.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="4 of 8">
                   <img src="public/media/about/postcard-alps.jpg" width="1024" height="1024" loading="lazy" alt="The monster on a tree stump by a mountain lake, jagged rocky peaks behind it.">
-                  <figcaption>A lake in the Austrian Alps.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="5 of 8">
                   <img src="public/media/about/postcard-sunset.jpg" width="1200" height="1600" loading="lazy" alt="Close-up of the monster’s face, the sea at sunset blurred behind it.">
-                  <figcaption>Sunset by the sea.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="6 of 8">
                   <img src="public/media/about/postcard-cappuccino.jpg" width="768" height="1024" loading="lazy" alt="The monster holding a spoon, next to a cappuccino and the receipt.">
-                  <figcaption>Cappuccino break.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="7 of 8">
                   <img src="public/media/about/postcard-beach.gif" width="350" height="262" loading="lazy" alt="Animation: the monster on wet sand at the water’s edge, waves rolling in behind it.">
-                  <figcaption>A walk on the beach.</figcaption>
                 </figure>
                 <figure class="slide" role="group" aria-roledescription="slide" aria-label="8 of 8">
                   <img src="public/media/about/postcard-new-body.jpg" width="1600" height="1200" loading="lazy" alt="In a workshop, a grey prototype figure with sunglasses, a jacket and a minigun stands next to the painted green monster.">
-                  <figcaption>The prototype of its new body: a steel skeleton, and ways to defend itself.</figcaption>
                 </figure>
-              </div>
-              <div class="slide-controls" hidden>
-                <button type="button" class="slide-prev" aria-label="Previous photo">←</button>
-                <span class="slide-count" aria-live="polite">1 / 8</span>
-                <button type="button" class="slide-next" aria-label="Next photo">→</button>
               </div>
             </div>
           </li>
           <li class="event">
-            <p class="when">Vienna</p>
-            <h3>Hasta la vista, flaky test</h3>
-            <p>In the meantime the monster’s world expanded: the Flakinator was sent from the future to help with the flakiness. Famous last words of a flaky test before it is quarantined: <q>I’ll be unskipped!</q></p>
-            <figure class="photos photos-2">
-              <img src="public/media/about/terminator-u3.jpg" width="1057" height="1054" loading="lazy" alt="Vintage-style photo at the entrance of a Vienna U3 underground station, with a Terminator lookalike in a leather jacket in the background.">
-              <img src="public/media/about/terminator-monster.jpg" width="1595" height="1600" loading="lazy" alt="The monster as the Terminator, with leather jacket, sunglasses, a red eye and a minigun, next to a grey figure in a cap and glasses.">
-            </figure>
-          </li>
-          <li class="event">
-            <p class="when">The fan club</p>
-            <h3>Everybody gets the eyes</h3>
-            <p>Brave flaky test hunters started wearing the monster’s big googly eyes as a disguise for the hunt.</p>
-            <figure class="photos photos-1 photos-wide">
-              <img src="public/media/about/team-googly-eyes.jpg" width="1600" height="800" loading="lazy" alt="Black and white group photo of a team with conference lanyards, everyone wearing the monster’s big googly eyes, photo by Sophie Chang.">
+            <p class="when">The tour continues</p>
+            <h3>Sent on holiday</h3>
+            <p>Again Italy, Croatia, the Austrian Alps, Spain or Las Vegas, together with the monster fighters Minichef and Knitty McGritty. That didn’t solve the flaky test problem.</p>
+            <figure class="photos photos-wide">
+              <img src="public/media/about/seaside-trio.jpg" width="1600" height="800" loading="lazy" alt="The monster, painted and weathered, a crocheted red ball and the robot chef sit on rocks by the sea.">
+              <img src="public/media/about/mountains.jpg" width="1600" height="800" loading="lazy" alt="The three friends, out of focus, look out at grey limestone mountains under clouds.">
+              <img src="public/media/about/sunset.jpg" width="1600" height="800" loading="lazy" alt="The three friends, seen from behind, watch the sunset from a rock.">
             </figure>
           </li>
           <li class="event">
@@ -144,12 +112,13 @@
               <li><strong>Relocation.</strong> Convince the monster to stay in Italy, Croatia, Austria, Spain or Las Vegas. It came back.</li>
               <li><strong>A new career.</strong> Open a LinkedIn account for it, with the <q>Open to work</q> badge. The account was blocked. No sense of humor on LinkedIn.</li>
               <li><strong>Spreading the load.</strong> Give away cute Flaky Test Monster prints and buttons to other teams and companies. No reduction in flakiness observed.</li>
+              <li><strong>Social media.</strong> A flaky influencer, seems the demand was limited.</li>
             </ul>
           </li>
           <li class="event event-now">
             <p class="when">October 2026</p>
             <h3>Monster at Happylab</h3>
-            <p>On 9 October the goblin from the CI pipeline entered the physical world, as one of the makers’ exhibits at the 20th anniversary of the <strong>Happylab</strong> makerspace in Vienna. The monster refused to stay there, and the flakiness continued unabated.</p>
+            <p>On 9 October the goblin from the CI pipeline entered the physical world again as one of the makers’ exhibits at the 20th anniversary of the <strong>Happylab</strong> makerspace in Vienna. The monster refused to stay there, and the flakiness continued unabated.</p>
             <figure class="photos photos-1">
               <img src="public/media/about/monster-fans.jpg" width="886" height="886" loading="lazy" alt="Collage: the green 3D-printed monster in the middle, surrounded by photos of its fans, tinted green, with big googly eyes and red mouths pasted on their faces.">
             </figure>
@@ -157,12 +126,11 @@
           <li class="event event-next">
             <p class="when">What’s next?</p>
             <h3>A musical career</h3>
-            <p>Let’s convince the monster to pursue a musical career: <a href="music.html">help it find a country for the Eurovision Song Contest</a>.</p>
+            <p>Let’s convince the monster to pursue a musical career: <a href="music.html">help it find a country for the Eurovision Slong Contest</a>.</p>
           </li>
         </ol>
       </section>
     </main>
   </div>
-  <script type="module" src="public/js/about-slideshow.js"></script>
 </body>
 </html>

@@ -65,7 +65,6 @@ public/
     caricature.js       face warp and monster parts for the relief
     monster-*.js        live face tracking and the monster score
     music-*.js          music page modules
-    about-slideshow.js  the about page's photo slideshow
     viewer.js, zip.js   3D viewer, tiny zip writer
   media/                videos, songs, photos (copied as is into the Pages build)
 supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard,
