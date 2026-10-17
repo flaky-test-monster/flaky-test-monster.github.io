@@ -295,6 +295,11 @@ async function serveAbout(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'about.html'), STATIC_TYPES['.html']);
 }
 
+/** GET /spooky.html or /spooky: the Halloween story */
+async function serveSpooky(req, res) {
+  await sendFile(res, path.join(PUBLIC_DIR, 'spooky.html'), STATIC_TYPES['.html']);
+}
+
 /** GET /public/* */
 async function serveStatic(req, res, url, [, relative]) {
   const filePath = path.resolve(PUBLIC_DIR, relative);
@@ -389,6 +394,7 @@ const ROUTES = [
   { pattern: /^\/flakifier(\.html)?$/, handlers: { GET: serveApp } },
   { pattern: /^\/music-admin(\.html)?$/, handlers: { GET: serveMusicAdmin } },
   { pattern: /^\/about(\.html)?$/, handlers: { GET: serveAbout } },
+  { pattern: /^\/spooky(\.html)?$/, handlers: { GET: serveSpooky } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },
   { pattern: /^\/api\/figures$/, handlers: { GET: listFiguresRoute } },
   { pattern: /^\/api\/pipelines$/, handlers: { GET: listPipelinesRoute } },
