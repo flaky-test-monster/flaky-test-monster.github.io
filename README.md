@@ -315,6 +315,14 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
 the first deploy.
 
+The site works from any account: the workflows build it for this repository's own Pages
+address, `https://<owner>.github.io/<repo>/`, which the absolute links need (the music
+page's link preview image). If the site is served somewhere else, such as a custom domain
+or a `<owner>.github.io` repository served at the root, set the repository variable
+`SITE_URL` (**Settings → Secrets and variables → Actions → Variables**) to that address,
+for example `https://flaky.example.com/`. To build locally for another address, run
+`SITE_URL=https://<owner>.github.io/<repo>/ scripts/build-pages.sh`.
+
 ## Music page vote and scoreboard
 
 The music page (`public/music.html`) lets visitors give the songs Eurovision points (12, 10,
@@ -375,8 +383,8 @@ Setup:
    unbuilt, fill in the `flaky-supabase-*` meta tags in both `public/music.html` and
    `public/music-admin.html`, or try it as in "To try it locally" below. Both values are
    public by design.
-4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for `kertal.github.io`
-   (and `localhost`, to test), enter its secret key in Supabase under **Authentication →
+4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for your Pages host
+   (for example `kertal.github.io`, and `localhost` to test), enter its secret key in Supabase under **Authentication →
    Attack Protection**. The site key of the project's widget is already in the
    `flaky-captcha-sitekey` meta tags of both pages; a repository variable
    `TURNSTILE_SITE_KEY` replaces it, say for a widget of your own. Supabase then asks for

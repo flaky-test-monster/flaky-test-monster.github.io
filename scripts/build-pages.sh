@@ -30,7 +30,7 @@ grep -q 'data-backend="none"' _site/flakifier.html
 # TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
 # Without the first two the votes go by email; the Turnstile site key is in the pages already,
 # and the variable only replaces it.
-for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
+for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY SITE_URL SITE_PATH; do
   if [[ ! ${!name:-} =~ ^[A-Za-z0-9._:/-]*$ ]]; then
     echo "build-pages.sh: unexpected characters in $name" >&2
     exit 1
@@ -38,9 +38,19 @@ for name in SUPABASE_URL SUPABASE_ANON_KEY TURNSTILE_SITE_KEY; do
 done
 # A value given replaces what the page has; none leaves the page as it is.
 meta() { [[ -n $2 ]] && printf 's#<meta name="%s" content="[^"]*">#<meta name="%s" content="%s">#;' "$1" "$1" "$2"; }
+# Link previews (og:image, og:url) need absolute URLs. The pages' source has them for the
+# original site (SOURCE_URL); the workflows pass SITE_URL, where this repository's Pages site
+# lives (https://<owner>.github.io/<repo>/ or the repository variable SITE_URL), so a copy of
+# the repository under another account links to itself. SITE_PATH is where this build goes
+# under it: pr-preview.yml gives pr-preview/pr-<number>/, so a preview link unfurls with the
+# preview's own image before the change reaches main.
+SOURCE_URL=https://kertal.github.io/flakifier/
+BUILD_URL="${SITE_URL:-$SOURCE_URL}"
+BUILD_URL="${BUILD_URL%/}/${SITE_PATH:+${SITE_PATH%/}/}"
+site() { [[ $BUILD_URL != "$SOURCE_URL" ]] && printf 's#%s#%s#g;' "$SOURCE_URL" "$BUILD_URL"; }
 # The admin page of the vote (music-admin.html) gets the same project.
 for page in music music-admin; do
-  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")" \
+  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")$(site)" \
     "public/$page.html" \
     | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
       --minify-css true > "_site/$page.html"
