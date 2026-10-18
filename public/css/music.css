@@ -183,7 +183,16 @@ h2::before { content: "// "; content: "// " / ""; }
 .song-vote select option { background: var(--paper); color: var(--ink); }
 /* The vote, under the songs: send, and what happened. */
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.vote-status { display: block; margin: 0; }
+/* What happened to the votes, in a box that stands out from the helper text around it: plain
+ * while under way, a red mark when they went out, solid red when something is missing or broke. */
+.vote-status { display: block; margin: 0; padding: 12px 14px; border: 2px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: bold 0.9375rem/1.5 var(--utility); }
+.vote-status[data-tone="success"] { border-color: var(--ink); border-left: 8px solid var(--red); }
+.vote-status[data-tone="success"]::before { content: "✓ "; content: "✓ " / ""; color: var(--red); }
+.vote-status[data-tone="error"] { border-color: var(--red); background: var(--red); color: var(--cream); }
+.vote-status[data-tone="error"]::before { content: "! "; content: "! " / ""; }
+.vote-status-flash { animation: vote-status-flash .5s ease-out; }
+@keyframes vote-status-flash { from { transform: scale(1.03); box-shadow: 0 0 0 6px rgb(146 31 26 / .3); } }
+@media (prefers-reduced-motion: reduce) { .vote-status-flash { animation: none; } }
 .vote-privacy { margin: 0; }
 /* The jury name, in the title type, right above the vote button. Until a name is
  * typed it shows the monster name the jury goes by, muted so a typed name stands out from it. */
@@ -367,7 +376,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .field-error::before { content: "! "; content: "! " / ""; }
 .photo-status { margin: 8px 0 0; }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
-.photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
+.photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; padding: 0; border: 0; }
 @media (max-width: 640px) {
   .photo-controls { right: 8px; bottom: 8px; }
   /* A column up the right edge: a row this wide would reach into the name panel. */
