@@ -28,9 +28,10 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
-          # Absolute links (the music page's link preview): this repository's Pages site, or
-          # the repository variable SITE_URL (a custom domain), and the preview under it.
-          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+          # Absolute links (the music page's link preview): this repository's Pages site, at the
+          # domain root for an <owner>.github.io repository, or the repository variable SITE_URL
+          # (a custom domain), and the preview under it.
+          SITE_URL: ${{ vars.SITE_URL || (github.event.repository.name == format('{0}.github.io', github.repository_owner) && format('https://{0}/', github.event.repository.name) || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name)) }}
           SITE_PATH: pr-preview/pr-${{ github.event.number }}/
 
       # Publishes to gh-pages under pr-preview/pr-<number>/, comments the URL on the
