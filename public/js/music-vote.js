@@ -109,6 +109,12 @@ form.addEventListener('submit', (event) => {
   else email(body);
 });
 
+// Online, the menu offers the direct vote too, the default: the same as the main button.
+// Not while a vote is on its way, which disables the main button.
+$('vote-cast').addEventListener('click', () => {
+  if (!submit.disabled) form.requestSubmit();
+});
+
 // Online, email stays a choice next to the online vote; offline, it is the main button.
 $('vote-email').addEventListener('click', () => {
   const body = readyBallot();
@@ -229,6 +235,7 @@ function lock(ballot) {
   $('vote-name-hint').hidden = true;
   submit.textContent = 'Votes cast';
   submit.disabled = true;
+  $('vote-cast').hidden = true;
 }
 
 /** Shows this browser's ballot, when it has cast one; resolves to whether it has. */
@@ -284,6 +291,7 @@ $('photo-share').addEventListener('click', share);
 /** Online, the button says so, and a jury that voted before from this browser sees its votes. */
 async function goOnline() {
   submit.textContent = 'Cast my votes';
+  $('vote-cast').hidden = false;
   $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {

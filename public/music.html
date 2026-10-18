@@ -176,6 +176,8 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div id="vote-menu" class="vote-menu" role="menu" aria-labelledby="vote-more" hidden>
+                  <!-- The direct vote, the same as the main button and marked as its default. Online only. -->
+                  <button type="button" id="vote-cast" role="menuitem" hidden>Cast my votes <span class="vote-menu-note">Direct vote · Default</span></button>
                   <button type="button" id="vote-email" role="menuitem" hidden>Send by email</button>
                   <button type="button" id="vote-copy" role="menuitem">Copy my votes</button>
                 </div>
