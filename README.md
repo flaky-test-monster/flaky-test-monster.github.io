@@ -407,6 +407,35 @@ To close voting: the admin page's **Close voting**, or
 `update public.contest set open = false;` (and `true` to open it again). The scoreboard
 keeps showing the final totals.
 
+### QR codes with counted scans
+
+The admin page also makes QR codes, say for a poster, a flyer or a slide. Give the code a
+description, a short name (filled in from the description; it goes into the link and cannot
+change once printed) and the page it opens: the music page, the about page, the spooky story
+or the app. The code links to that page with `?qr=<short name>`, for example
+`https://kertal.github.io/flakifier/?qr=happylab-poster`. Each code shows its link, its scans
+in all and in the last 7 days, the last scan, a bar for each of the last 30 days (UTC) and
+the countries the scans came from, and can be saved as SVG (for print) or PNG.
+
+- **What is counted.** When a page is opened with `?qr=`, it calls `track_qr_scan` once and
+  takes the parameter out of the address bar, so a reload or a shared link does not count
+  again. Each scan keeps the time and the two-letter country from `CF-IPCountry`, as the
+  ballots do: no IP address and no user. Unknown short names are ignored.
+- **Counts are a good guess, not proof.** Anyone can call `track_qr_scan` by hand, so a
+  count can be inflated; at most 60 scans a minute count per code, which keeps the table
+  small. A phone that opens the link twice, or a link preview in a chat, can count too.
+- **Make codes for print on the main site.** The links point at the site the admin page is
+  on. The admin page warns when that is a PR preview or `localhost`.
+- **Deleting a code** deletes its scans too; printed copies still open the page, uncounted.
+
+Setup: run `supabase/migrations/20261020000000_qr_links.sql` after the vote's migration, in
+the SQL editor or with `supabase db push`. It can be run again. The pages that count scans
+(`music.html`, `about.html`, `spooky.html`, `flakifier.html`) get the project from the same
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` repository variables; for `npm start`, fill in their
+`flaky-supabase-*` meta tags. Without a project, the codes cannot be made and the pages just
+ignore `?qr=`. To see the raw numbers:
+`select slug, count(*) from public.qr_scans group by slug;`
+
 To try it locally without touching the pages, build the site the way Pages does,
 with the values in the environment, and serve the build:
 

@@ -99,6 +99,41 @@
             <output id="ballots-status" class="helper admin-status" role="status"></output>
             <ol id="ballots-list" class="admin-ballots"></ol>
           </section>
+
+          <section class="admin-section" aria-labelledby="qr-title">
+            <h2 id="qr-title">QR codes</h2>
+            <p class="intro">A code for a poster, a flyer or a slide: it opens a page of the site, and every scan is counted, with the day and the country, never who scanned it.</p>
+            <!-- Where the links point: this copy of the site. music-admin-qr.js warns when that is a preview or localhost. -->
+            <p id="qr-base" class="helper"></p>
+            <form id="qr-form" class="admin-form" novalidate>
+              <label class="admin-field">
+                <span>What it is for</span>
+                <input id="qr-label" type="text" maxlength="80" autocomplete="off" placeholder="Poster at the Happylab">
+              </label>
+              <label class="admin-field">
+                <span>Short name, in the link</span>
+                <input id="qr-slug" type="text" maxlength="40" autocomplete="off" pattern="[a-z0-9\-]{1,40}" aria-describedby="qr-slug-help">
+                <span id="qr-slug-help" class="helper">Lower-case letters, digits and dashes. It cannot be changed later, as printed codes keep it.</span>
+              </label>
+              <label class="admin-field">
+                <span>Page it opens</span>
+                <select id="qr-target" class="admin-select">
+                  <option value="">Music page (start page)</option>
+                  <option value="about.html">About page</option>
+                  <option value="spooky.html">From Failure to Fun</option>
+                  <option value="flakifier.html">Flakifier app</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Make the code</button>
+              <output id="qr-status" class="helper admin-status" role="status"></output>
+            </form>
+            <div class="admin-bar">
+              <p id="qr-count" class="admin-state"></p>
+              <button type="button" id="qr-refresh" class="admin-button">Refresh</button>
+            </div>
+            <output id="qr-list-status" class="helper admin-status" role="status"></output>
+            <ol id="qr-list" class="admin-ballots"></ol>
+          </section>
         </div>
       </main>
     </div>

@@ -1,11 +1,13 @@
 /**
  * The admin page of the jury vote (music-admin.html): an admin signs in with an email and
- * password, then lists, adds and deletes ballots, and opens or closes voting. Only the database
+ * password, then lists, adds and deletes ballots, opens or closes voting, and makes QR codes
+ * whose scans are counted (music-admin-qr.js). Only the database
  * decides who is an admin (public.admins, see supabase/migrations/): this page just asks it, and
  * every admin_* function checks again. Everything shown comes in as data and goes on the page
  * as text only.
  */
 
+import { setUpQrCodes, loadQrCodes } from './music-admin-qr.js';
 import { captchaOptions, connect, online } from './music-online.js';
 
 const $ = (id) => document.getElementById(id);
@@ -64,7 +66,7 @@ async function enter(email) {
   }
   $('admin-who').textContent = `Signed in as ${email}.`;
   show('panel');
-  await load();
+  await Promise.all([load(), loadQrCodes()]);
 }
 
 /** Loads whether voting is open, the songs and the ballots, and shows them. */
@@ -207,6 +209,7 @@ $('contest-toggle').addEventListener('click', async () => {
 });
 
 $('ballots-refresh').addEventListener('click', load);
+setUpQrCodes(call);
 
 $('signout').addEventListener('click', async () => {
   await db.auth.signOut();
