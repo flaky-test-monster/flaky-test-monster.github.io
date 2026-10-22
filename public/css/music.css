@@ -273,6 +273,11 @@ h2::before { content: "// "; content: "// " / ""; }
 .qr-link { overflow-wrap: anywhere; color: var(--red); font: 0.8125rem/1.5 var(--utility); }
 .qr-chart { display: block; width: 100%; max-width: 360px; height: 32px; margin-top: 4px; fill: var(--red); }
 .qr-chart .qr-chart-empty { fill: var(--rule); }
+.qr-days { font: 0.8125rem/1.5 var(--utility); }
+.qr-days summary { cursor: pointer; }
+.qr-days summary:hover { color: var(--red); }
+.qr-days ul, .qr-days p { margin: 4px 0 0; }
+.qr-days ul { padding-left: 20px; }
 .qr-actions { margin-top: 4px; }
 .qr-actions .admin-button { min-height: 32px; }
 @media (max-width: 640px) {

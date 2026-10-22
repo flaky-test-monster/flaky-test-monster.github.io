@@ -63,6 +63,8 @@ function pngBlob(modules) {
 
 const plural = (count, word) => `${count.toLocaleString()} ${word}${count === 1 ? '' : 's'}`;
 
+const dayName = (day) => new Date(day).toLocaleDateString([], { dateStyle: 'medium', timeZone: 'UTC' });
+
 /** A bar for each of the last 30 days; each bar names its day and its scans on hover. */
 function chart(days) {
   const svgNs = 'http://www.w3.org/2000/svg';
@@ -85,12 +87,34 @@ function chart(days) {
     bar.setAttribute('height', String(height));
     if (day.scans === 0) bar.setAttribute('class', 'qr-chart-empty');
     const title = document.createElementNS(svgNs, 'title');
-    const date = new Date(day.day).toLocaleDateString([], { dateStyle: 'medium', timeZone: 'UTC' });
-    title.textContent = `${date}: ${plural(day.scans, 'scan')}`;
+    title.textContent = `${dayName(day.day)}: ${plural(day.scans, 'scan')}`;
     bar.append(title);
     svg.append(bar);
   }
   return svg;
+}
+
+/**
+ * The chart's numbers as text, for keyboards and screen readers, which cannot reach the bars'
+ * hover titles: the days with scans, newest first. Null when there were none.
+ */
+function dayList(days) {
+  const busy = days.filter((day) => day.scans > 0).reverse();
+  if (busy.length === 0) return null;
+  const details = document.createElement('details');
+  details.className = 'qr-days';
+  const summary = document.createElement('summary');
+  summary.textContent = `Scans by day (UTC): ${plural(busy.length, 'day')} with scans`;
+  const list = document.createElement('ul');
+  list.replaceChildren(...busy.map((day) => {
+    const item = document.createElement('li');
+    item.textContent = `${dayName(day.day)}: ${plural(day.scans, 'scan')}`;
+    return item;
+  }));
+  const note = document.createElement('p');
+  note.textContent = `The other days of the last ${DAYS_SHOWN} had none.`;
+  details.append(summary, list, note);
+  return details;
 }
 
 function button(text, label, onClick) {
@@ -164,7 +188,7 @@ function renderCode(code) {
     remove,
   );
 
-  body.append(head, anchor, stats, chart(code.days), countries, actions);
+  body.append(...[head, anchor, stats, chart(code.days), dayList(code.days), countries, actions].filter(Boolean));
   item.append(image, body);
   return item;
 }

@@ -56,8 +56,13 @@ declare
   -- PostgREST hands the request headers over as JSON, with lower-case names.
   country text := upper(nullif(current_setting('request.headers', true), '')::json ->> 'cf-ipcountry');
 begin
-  if track_qr_scan.slug is null or track_qr_scan.slug !~ '^[a-z0-9-]{1,40}$'
-    or not exists (select 1 from public.qr_links l where l.slug = track_qr_scan.slug) then
+  if track_qr_scan.slug is null or track_qr_scan.slug !~ '^[a-z0-9-]{1,40}$' then
+    return;
+  end if;
+  -- Locks the code until this scan is stored, so scans of one code take turns: two at the same
+  -- moment cannot both pass the limit below. The lock leaves foreign key checks alone.
+  perform 1 from public.qr_links l where l.slug = track_qr_scan.slug for no key update;
+  if not found then
     return;
   end if;
   if (select count(*) from public.qr_scans s
