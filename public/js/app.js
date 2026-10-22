@@ -555,6 +555,7 @@ function resetProgress() {
   const labels = ui.stageLabels ?? STAGE_LABELS;
   document.querySelectorAll('#stepper li').forEach((li, i) => {
     li.classList.remove('done', 'active');
+    li.removeAttribute('aria-current');
     li.textContent = labels[i];
   });
 }
@@ -564,7 +565,9 @@ function showError(message) {
   $('error-text').textContent = message;
   $('error').hidden = false;
   $('progress-hint').hidden = true;
-  document.querySelector('#stepper li.active')?.classList.remove('active');
+  const active = document.querySelector('#stepper li.active');
+  active?.classList.remove('active');
+  active?.removeAttribute('aria-current');
 }
 
 /**
@@ -578,6 +581,9 @@ function renderStages(stages, imageUrl = stages.image && `/api/jobs/${state.jobI
     const done = Boolean(stages[li.dataset.stage]);
     li.classList.toggle('done', done);
     li.classList.toggle('active', !done && nextPending);
+    // The running step is marked for assistive tech too, not just by the class the CSS lights up.
+    if (!done && nextPending) li.setAttribute('aria-current', 'step');
+    else li.removeAttribute('aria-current');
     if (!done && nextPending) {
       const message = `Running: ${li.textContent}`;
       if ($('progress-status').textContent !== message) $('progress-status').textContent = message;

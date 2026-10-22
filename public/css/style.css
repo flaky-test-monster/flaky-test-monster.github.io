@@ -777,7 +777,7 @@ body {
   counter-reset: stage;
 }
 
-.stage-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stage-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; }
 
 .stage-label { font-size: 0.8125rem; font-weight: 600; }
 .stage-label::before {
@@ -816,6 +816,7 @@ body {
   font-size: 0.75rem;
   color: var(--muted);
 }
+.footer p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .title::after, .tag-flaky, .tag-flaky::before, .stepper li.active::before { animation: none; }
