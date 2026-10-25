@@ -19,7 +19,7 @@ const SUBJECT = 'From Flaky With Love: my votes';
 
 /** The songs, in the order of the song list, and their ids in the database. */
 const songItems = [...document.querySelectorAll('.song')];
-const songs = songItems.map((song) => song.querySelector('h3').textContent.trim());
+const songs = songItems.map((song) => song.querySelector('.song-version').textContent.trim());
 const songIds = songItems.map((song) => song.dataset.song);
 
 /** Puts a choice of points right next to each song's player. */

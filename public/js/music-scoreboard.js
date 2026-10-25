@@ -17,7 +17,7 @@ const REFRESH_MS = 30_000;
 
 /** The song titles, by song id, from the song list. */
 const titles = new Map([...document.querySelectorAll('.song')]
-  .map((song) => [song.dataset.song, song.querySelector('h3').textContent.trim()]));
+  .map((song) => [song.dataset.song, song.querySelector('.song-version').textContent.trim()]));
 
 const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 
