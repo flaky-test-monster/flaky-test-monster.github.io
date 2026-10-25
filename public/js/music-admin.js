@@ -30,23 +30,31 @@ function show(state) {
   $('admin-panel').hidden = state !== 'panel';
 }
 
+/** The migration that adds each function this page calls, named when the project lacks it. */
+const migrationFor = (name) => (name.includes('qr') ? '20261020000000_qr_links.sql' : '20261011000000_music_votes.sql');
+
 /**
  * The message for a failed call: the database's own message for what an admin did wrong
- * (P0001), and plain words for the rest. Losing admin rights, or the session, ends the panel.
+ * (P0001), the migration to run when the project has no such function (PGRST202), and plain
+ * words for the rest. Losing admin rights, or the session, ends the panel.
+ * @param {string} [name] the function that was called
  */
-function failure(error) {
+function failure(error, name = '') {
   if (error?.code === '42501' || /JWT|token/i.test(error?.message ?? '')) {
     signedOut('Your session ended, or this account is no longer an admin. Sign in again.');
     return 'Signed out.';
   }
   if (error?.code === 'P0001' && error.message) return error.message;
+  if (error?.code === 'PGRST202' && name) {
+    return `The project has no ${name} function yet. Run supabase/migrations/${migrationFor(name)} on it (see the README).`;
+  }
   return 'The vote server did not answer. Try again in a moment.';
 }
 
 /** Calls an admin function; throws the message to show when it fails. */
 async function call(name, args) {
   const { data, error } = await db.rpc(name, args);
-  if (error) throw new Error(failure(error));
+  if (error) throw new Error(failure(error, name));
   return data;
 }
 

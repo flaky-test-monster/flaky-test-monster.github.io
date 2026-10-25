@@ -8,6 +8,8 @@
  */
 
 const PARAM = 'qr';
+// The slug rule of qr_links in supabase/migrations/20261020000000_qr_links.sql, which decides.
+// This module imports nothing, so every page can load it on its own, and keeps a copy.
 const SLUG = /^[a-z0-9-]{1,40}$/;
 
 const meta = (name) => document.querySelector(`meta[name="${name}"]`)?.content.trim() ?? '';
@@ -21,12 +23,13 @@ if (slug !== null) {
   const url = meta('flaky-supabase-url');
   const key = meta('flaky-supabase-key');
   if (url && key && SLUG.test(slug)) {
-    // keepalive lets the call finish when the visitor goes on to another page at once.
+    // No keepalive: with the headers and body this call needs a preflight, and older browsers
+    // refuse a keepalive call that needs one. The call is small and the visitor has only just
+    // arrived, so it finishes long before they go on.
     fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/track_qr_scan`, {
       method: 'POST',
       headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ slug }),
-      keepalive: true,
     }).catch(() => {});
   }
 }

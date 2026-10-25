@@ -79,7 +79,8 @@ $$;
 
 -- For the admin page: every code, newest first, with its scans in all, in the last 7 days,
 -- the last one, the countries (most scans first) and the scans of each of the last 30 days
--- (UTC), oldest first, days without scans included.
+-- (UTC), oldest first, days without scans included. The scans are grouped once per view
+-- (by code, by code and country, by code and day), not counted again for every code and day.
 create or replace function public.admin_qr_links()
 returns jsonb
 language plpgsql
@@ -87,32 +88,51 @@ stable
 security definer
 set search_path = ''
 as $$
+declare
+  today constant timestamptz := date_trunc('day', now(), 'UTC');
 begin
   perform public.require_admin();
   return (
+    with
+      totals as (
+        select s.slug, count(*) as scans,
+          count(*) filter (where s.scanned_at > now() - interval '7 days') as week,
+          max(s.scanned_at) as last
+        from public.qr_scans s
+        group by s.slug
+      ),
+      countries as (
+        select c.slug, jsonb_agg(jsonb_build_object('country', c.country, 'scans', c.scans) order by c.scans desc, c.country) as list
+        from (
+          select s.slug, s.country, count(*) as scans from public.qr_scans s group by s.slug, s.country
+        ) c
+        group by c.slug
+      ),
+      by_day as (
+        select s.slug, date_trunc('day', s.scanned_at, 'UTC') as day, count(*) as scans
+        from public.qr_scans s
+        where s.scanned_at >= today - interval '29 days'
+        group by s.slug, date_trunc('day', s.scanned_at, 'UTC')
+      ),
+      days as (
+        select l.slug, jsonb_agg(jsonb_build_object('day', d.day, 'scans', coalesce(b.scans, 0)) order by d.day) as list
+        from public.qr_links l
+        cross join generate_series(today - interval '29 days', today, interval '1 day') as d(day)
+        left join by_day b on b.slug = l.slug and b.day = d.day
+        group by l.slug
+      )
     select coalesce(jsonb_agg(jsonb_build_object(
       'slug', l.slug, 'label', l.label, 'target', l.target, 'created_at', l.created_at,
-      'scans', (select count(*) from public.qr_scans s where s.slug = l.slug),
-      'week', (select count(*) from public.qr_scans s where s.slug = l.slug and s.scanned_at > now() - interval '7 days'),
-      'last', (select max(s.scanned_at) from public.qr_scans s where s.slug = l.slug),
-      'countries', (
-        select coalesce(jsonb_agg(jsonb_build_object('country', c.country, 'scans', c.scans) order by c.scans desc, c.country), '[]'::jsonb)
-        from (
-          select s.country, count(*) as scans from public.qr_scans s
-          where s.slug = l.slug group by s.country
-        ) c
-      ),
-      'days', (
-        select jsonb_agg(jsonb_build_object('day', d.day, 'scans', (
-          select count(*) from public.qr_scans s
-          where s.slug = l.slug and s.scanned_at >= d.day and s.scanned_at < d.day + interval '1 day'
-        )) order by d.day)
-        from generate_series(
-          date_trunc('day', now(), 'UTC') - interval '29 days', date_trunc('day', now(), 'UTC'), interval '1 day'
-        ) as d(day)
-      )
+      'scans', coalesce(t.scans, 0),
+      'week', coalesce(t.week, 0),
+      'last', t.last,
+      'countries', coalesce(c.list, '[]'::jsonb),
+      'days', d.list
     ) order by l.created_at desc), '[]'::jsonb)
     from public.qr_links l
+    left join totals t on t.slug = l.slug
+    left join countries c on c.slug = l.slug
+    left join days d on d.slug = l.slug
   );
 end;
 $$;

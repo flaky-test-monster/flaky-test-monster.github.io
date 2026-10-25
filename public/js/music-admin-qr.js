@@ -10,10 +10,19 @@ import { encodeQr, qrSvg, QUIET_ZONE } from './qr.js';
 const $ = (id) => document.getElementById(id);
 /** Pixels per module of a saved PNG: 37 modules of a typical link make a 1,320 px square. */
 const PNG_MODULE_PX = 30;
+/** The side of a code's image on the page, in CSS pixels. */
+const PREVIEW_PX = 128;
 const DAYS_SHOWN = 30;
 const CHART_BAR_WIDTH = 6;
 const CHART_HEIGHT = 32;
+/** The slug rule of qr_links (supabase/migrations/20261020000000_qr_links.sql), which decides. */
 const SLUG_MAX = 40;
+const SLUG_CHARS = '[a-z0-9-]';
+const SLUG = new RegExp(`^${SLUG_CHARS}{1,${SLUG_MAX}}$`);
+/** How long "Copied" stays on the copy button. */
+const COPY_NOTE_MS = 2000;
+/** How long a saved file's URL stays valid after the click that downloads it. */
+const REVOKE_MS = 1000;
 const PAGE_NAMES = { '': 'Music page', 'about.html': 'About page', 'spooky.html': 'From Failure to Fun', 'flakifier.html': 'Flakifier app' };
 
 /** The site the links point at: the folder this admin page is in. */
@@ -43,7 +52,7 @@ function save(blob, name) {
   link.href = URL.createObjectURL(blob);
   link.download = name;
   link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  setTimeout(() => URL.revokeObjectURL(link.href), REVOKE_MS);
 }
 
 /** The code as a PNG, drawn module by module so it stays sharp. */
@@ -58,7 +67,11 @@ function pngBlob(modules) {
   modules.forEach((row, y) => row.forEach((on, x) => {
     if (on) context.fillRect((x + QUIET_ZONE) * PNG_MODULE_PX, (y + QUIET_ZONE) * PNG_MODULE_PX, PNG_MODULE_PX, PNG_MODULE_PX);
   }));
-  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => {
+    // The browser gives null when it cannot draw the image, for lack of memory for example.
+    if (blob) resolve(blob);
+    else reject(new Error('The browser could not make the PNG. Save the SVG instead, or try a smaller code.'));
+  }, 'image/png'));
 }
 
 const plural = (count, word) => `${count.toLocaleString()} ${word}${count === 1 ? '' : 's'}`;
@@ -68,7 +81,9 @@ const dayName = (day) => new Date(day).toLocaleDateString([], { dateStyle: 'medi
 /** A bar for each of the last 30 days; each bar names its day and its scans on hover. */
 function chart(days) {
   const svgNs = 'http://www.w3.org/2000/svg';
-  const most = Math.max(1, ...days.map((day) => day.scans));
+  const peak = Math.max(0, ...days.map((day) => day.scans));
+  // The scale: a day with no scans must not divide by zero.
+  const most = Math.max(1, peak);
   const svg = document.createElementNS(svgNs, 'svg');
   svg.setAttribute('class', 'qr-chart');
   svg.setAttribute('viewBox', `0 0 ${days.length * CHART_BAR_WIDTH} ${CHART_HEIGHT}`);
@@ -76,7 +91,8 @@ function chart(days) {
   svg.setAttribute('preserveAspectRatio', 'none');
   svg.setAttribute('role', 'img');
   const total = days.reduce((sum, day) => sum + day.scans, 0);
-  svg.setAttribute('aria-label', `${plural(total, 'scan')} in the last ${DAYS_SHOWN} days, at most ${most} on one day.`);
+  svg.setAttribute('aria-label', total === 0 ? `No scans in the last ${DAYS_SHOWN} days.`
+    : `${plural(total, 'scan')} in the last ${DAYS_SHOWN} days, at most ${plural(peak, 'scan')} on one day.`);
   for (const [i, day] of days.entries()) {
     const bar = document.createElementNS(svgNs, 'rect');
     // At least a sliver, so an empty day still reads as a day.
@@ -111,10 +127,22 @@ function dayList(days) {
     item.textContent = `${dayName(day.day)}: ${plural(day.scans, 'scan')}`;
     return item;
   }));
-  const note = document.createElement('p');
-  note.textContent = `The other days of the last ${DAYS_SHOWN} had none.`;
-  details.append(summary, list, note);
+  details.append(summary, list);
+  if (busy.length < days.length) {
+    const note = document.createElement('p');
+    note.textContent = `The other days of the last ${DAYS_SHOWN} had none.`;
+    details.append(note);
+  }
   return details;
+}
+
+/** Where the scans came from, most first. Null when no scan had a known country. */
+function countryList(countries) {
+  if (countries.length === 0) return null;
+  const element = document.createElement('p');
+  element.className = 'admin-ballot-points';
+  element.textContent = `From: ${countries.map((c) => `${c.country ?? 'unknown'} ${c.scans.toLocaleString()}`).join(' · ')}`;
+  return element;
 }
 
 function button(text, label, onClick) {
@@ -139,7 +167,7 @@ function renderCode(code) {
   const image = document.createElement('img');
   image.className = 'qr-image';
   image.src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-  image.width = image.height = 128;
+  image.width = image.height = PREVIEW_PX;
   image.alt = `QR code for ${link}`;
 
   const body = document.createElement('div');
@@ -163,10 +191,6 @@ function renderCode(code) {
   stats.className = 'admin-ballot-points';
   const last = code.last ? `, the last ${new Date(code.last).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : '';
   stats.textContent = `${plural(code.scans, 'scan')}, ${code.week.toLocaleString()} in the last 7 days${last}.`;
-  const countries = document.createElement('p');
-  countries.className = 'admin-ballot-points';
-  countries.textContent = code.countries.length === 0 ? ''
-    : `From: ${code.countries.map((c) => `${c.country ?? 'unknown'} ${c.scans.toLocaleString()}`).join(' · ')}`;
 
   const actions = document.createElement('div');
   actions.className = 'admin-bar qr-actions';
@@ -177,18 +201,24 @@ function renderCode(code) {
     } catch {
       copy.textContent = 'Copy failed';
     }
-    setTimeout(() => { copy.textContent = 'Copy link'; }, 2000);
+    setTimeout(() => { copy.textContent = 'Copy link'; }, COPY_NOTE_MS);
   });
   const remove = button('Delete', `Delete the code ${name}`, () => deleteCode(code, remove));
   remove.classList.add('admin-delete');
   actions.append(
     button('SVG', `Save ${name} as SVG, for print`, () => save(new Blob([svg], { type: 'image/svg+xml' }), fileName(code.slug, 'svg'))),
-    button('PNG', `Save ${name} as PNG`, async () => save(await pngBlob(modules), fileName(code.slug, 'png'))),
+    button('PNG', `Save ${name} as PNG`, async () => {
+      try {
+        save(await pngBlob(modules), fileName(code.slug, 'png'));
+      } catch (error) {
+        $('qr-list-status').textContent = error.message;
+      }
+    }),
     copy,
     remove,
   );
 
-  body.append(...[head, anchor, stats, chart(code.days), dayList(code.days), countries, actions].filter(Boolean));
+  body.append(...[head, anchor, stats, chart(code.days), dayList(code.days), countryList(code.countries), actions].filter(Boolean));
   item.append(image, body);
   return item;
 }
@@ -234,6 +264,9 @@ export function setUpQrCodes(callAdmin) {
   const preview = /(^|\.)localhost$|^127\./.test(base.hostname) || base.pathname.includes('/pr-preview/');
   $('qr-base').textContent = `The codes link to ${base.href}.${preview ? ' That is a preview or a local copy: make codes for print on the main site, so they keep working.' : ''}`;
 
+  // The slug field takes the rule from here, so the page and the database agree.
+  $('qr-slug').maxLength = SLUG_MAX;
+  $('qr-slug').pattern = `${SLUG_CHARS}{1,${SLUG_MAX}}`;
   $('qr-label').addEventListener('input', () => {
     if (!$('qr-slug').dataset.edited) $('qr-slug').value = slugFrom($('qr-label').value);
   });
@@ -245,7 +278,7 @@ export function setUpQrCodes(callAdmin) {
     event.preventDefault();
     const label = $('qr-label').value.trim();
     const slug = $('qr-slug').value.trim();
-    if (!/^[a-z0-9-]{1,40}$/.test(slug)) {
+    if (!SLUG.test(slug)) {
       $('qr-status').textContent = 'Give it a short name: lower-case letters, digits and dashes.';
       return;
     }

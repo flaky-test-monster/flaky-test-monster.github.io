@@ -112,7 +112,7 @@
               </label>
               <label class="admin-field">
                 <span>Short name, in the link</span>
-                <input id="qr-slug" type="text" maxlength="40" autocomplete="off" pattern="[a-z0-9\-]{1,40}" aria-describedby="qr-slug-help">
+                <input id="qr-slug" type="text" autocomplete="off" aria-describedby="qr-slug-help">
                 <span id="qr-slug-help" class="helper">Lower-case letters, digits and dashes. It cannot be changed later, as printed codes keep it.</span>
               </label>
               <label class="admin-field">
@@ -132,7 +132,7 @@
               <button type="button" id="qr-refresh" class="admin-button">Refresh</button>
             </div>
             <output id="qr-list-status" class="helper admin-status" role="status"></output>
-            <ol id="qr-list" class="admin-ballots"></ol>
+            <ol id="qr-list" class="admin-ballots" role="list"></ol>
           </section>
         </div>
       </main>
