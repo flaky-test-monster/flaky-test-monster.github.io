@@ -1,14 +1,14 @@
 /**
- * The admin page of the jury vote (music-admin.html): an admin signs in with an email and
+ * The admin page of the jury vote (admin/index.html): an admin signs in with an email and
  * password, then lists, adds and deletes ballots, opens or closes voting, and makes QR codes
- * whose scans are counted (music-admin-qr.js). Only the database
+ * whose scans are counted (admin-qr.js). Only the database
  * decides who is an admin (public.admins, see supabase/migrations/): this page just asks it, and
  * every admin_* function checks again. Everything shown comes in as data and goes on the page
  * as text only.
  */
 
-import { setUpQrCodes, loadQrCodes } from './music-admin-qr.js';
-import { captchaOptions, connect, online } from './music-online.js';
+import { setUpQrCodes, loadQrCodes } from './admin-qr.js';
+import { captchaOptions, connect, online } from '../js/music-online.js';
 
 const $ = (id) => document.getElementById(id);
 const POINTS = [12, 10, 8, 7, 6, 5, 4, 3, 2, 1];
