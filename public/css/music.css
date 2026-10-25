@@ -219,6 +219,8 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-menu button:is(:hover, :focus-visible) { background: var(--red); color: var(--cream); outline-offset: -3px; }
 /* The default way to send, named on its own line under the item. */
 .vote-menu-note { display: block; font-size: 0.75rem; opacity: .75; }
+/* Full strength on the red highlight: faded, the small note is too faint there. */
+.vote-menu button:is(:hover, :focus-visible) .vote-menu-note { opacity: 1; }
 #vote-cast { padding-block: 6px; }
 /* Cast, the votes are final: the main button stays in place, faded, and no longer looks clickable. */
 .vote-main:disabled { opacity: .65; cursor: default; }

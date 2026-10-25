@@ -88,11 +88,13 @@ function ballot() {
  * way, marked when the votes went out, red when something is missing or did not work.
  * @param {string} message
  * @param {'info' | 'success' | 'error'} [tone]
+ * @param {{ passive?: boolean }} [options] passive: not an answer to a click, so it neither
+ *   flashes nor scrolls the page away from what the visitor is reading.
  */
-function say(message, tone = 'info') {
+function say(message, tone = 'info', { passive = false } = {}) {
   status.textContent = message;
   status.dataset.tone = tone;
-  if (!message) return;
+  if (!message || passive) return;
   // Restart the flash, so a message repeated by a second click still catches the eye.
   status.classList.remove('vote-status-flash');
   void status.offsetWidth;
@@ -307,7 +309,7 @@ async function goOnline() {
   $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {
-    if (await showCast()) say('Welcome back, jury. These are the votes you cast, and votes are final.', 'success');
+    if (await showCast()) say('Welcome back, jury. These are the votes you cast, and votes are final.', 'success', { passive: true });
   } catch {
     // Not knowing the earlier votes is fine: the database turns a second ballot away anyway.
   }
