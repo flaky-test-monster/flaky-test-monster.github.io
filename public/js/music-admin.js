@@ -1,11 +1,13 @@
 /**
  * The admin page of the jury vote (music-admin.html): an admin signs in with an email and
- * password, then lists, adds and deletes ballots, and opens or closes voting. Only the database
+ * password, then lists, adds and deletes ballots, opens or closes voting, and makes QR codes
+ * whose scans are counted (music-admin-qr.js). Only the database
  * decides who is an admin (public.admins, see supabase/migrations/): this page just asks it, and
  * every admin_* function checks again. Everything shown comes in as data and goes on the page
  * as text only.
  */
 
+import { setUpQrCodes, loadQrCodes } from './music-admin-qr.js';
 import { captchaOptions, connect, online } from './music-online.js';
 
 const $ = (id) => document.getElementById(id);
@@ -28,23 +30,31 @@ function show(state) {
   $('admin-panel').hidden = state !== 'panel';
 }
 
+/** The migration that adds each function this page calls, named when the project lacks it. */
+const migrationFor = (name) => (name.includes('qr') ? '20261020000000_qr_links.sql' : '20261011000000_music_votes.sql');
+
 /**
  * The message for a failed call: the database's own message for what an admin did wrong
- * (P0001), and plain words for the rest. Losing admin rights, or the session, ends the panel.
+ * (P0001), the migration to run when the project has no such function (PGRST202), and plain
+ * words for the rest. Losing admin rights, or the session, ends the panel.
+ * @param {string} [name] the function that was called
  */
-function failure(error) {
+function failure(error, name = '') {
   if (error?.code === '42501' || /JWT|token/i.test(error?.message ?? '')) {
     signedOut('Your session ended, or this account is no longer an admin. Sign in again.');
     return 'Signed out.';
   }
   if (error?.code === 'P0001' && error.message) return error.message;
+  if (error?.code === 'PGRST202' && name) {
+    return `The project has no ${name} function yet. Run supabase/migrations/${migrationFor(name)} on it (see the README).`;
+  }
   return 'The vote server did not answer. Try again in a moment.';
 }
 
 /** Calls an admin function; throws the message to show when it fails. */
 async function call(name, args) {
   const { data, error } = await db.rpc(name, args);
-  if (error) throw new Error(failure(error));
+  if (error) throw new Error(failure(error, name));
   return data;
 }
 
@@ -64,7 +74,7 @@ async function enter(email) {
   }
   $('admin-who').textContent = `Signed in as ${email}.`;
   show('panel');
-  await load();
+  await Promise.all([load(), loadQrCodes()]);
 }
 
 /** Loads whether voting is open, the songs and the ballots, and shows them. */
@@ -207,6 +217,7 @@ $('contest-toggle').addEventListener('click', async () => {
 });
 
 $('ballots-refresh').addEventListener('click', load);
+setUpQrCodes(call);
 
 $('signout').addEventListener('click', async () => {
   await db.auth.signOut();

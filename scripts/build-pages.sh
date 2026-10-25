@@ -21,10 +21,6 @@ cp -R public/media _site/public/
 # Each module on its own, no bundling: relative imports and the CDN imports stay as they are.
 npx --yes "$ESBUILD" public/js/*.js public/css/*.css --minify --format=esm --target=es2022 \
   --outbase=public --outdir=_site/public --log-level=warning
-sed 's#<html lang="en">#<html lang="en" data-backend="none">#' public/flakifier.html \
-  | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-    --minify-css true > _site/flakifier.html
-grep -q 'data-backend="none"' _site/flakifier.html
 # The music page needs no backend. Its online vote does need a Supabase project: the workflows
 # pass the repository variables SUPABASE_URL, SUPABASE_ANON_KEY and, optionally,
 # TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
@@ -48,22 +44,27 @@ SOURCE_URL=https://kertal.github.io/flakifier/
 BUILD_URL="${SITE_URL:-$SOURCE_URL}"
 BUILD_URL="${BUILD_URL%/}/${SITE_PATH:+${SITE_PATH%/}/}"
 site() { [[ $BUILD_URL != "$SOURCE_URL" ]] && printf 's#%s#%s#g;' "$SOURCE_URL" "$BUILD_URL"; }
-# The admin page of the vote (music-admin.html) gets the same project.
-for page in music music-admin; do
-  sed "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")$(site)" \
-    "public/$page.html" \
+# Minifies public/<name>.html into _site/<name>.html, after the sed script given (may be empty).
+page() {
+  sed "$2" "public/$1.html" \
     | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-      --minify-css true > "_site/$page.html"
+      --minify-css true > "_site/$1.html"
+}
+# The Supabase project's meta tags. Every page gets them: the music page for the vote, the
+# admin page for the vote and the QR codes, the other pages only to count QR code scans
+# (qr-track.js). (Not named supabase: that is the CLI the README points at.)
+project() { printf '%s' "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")"; }
+for name in music music-admin; do
+  page "$name" "$(project)$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")$(site)"
 done
 # The music page is also the start page.
 cp _site/music.html _site/index.html
+page flakifier "s#<html lang=\"en\">#<html lang=\"en\" data-backend=\"none\">#;$(project)"
+grep -q 'data-backend="none"' _site/flakifier.html
 # The about page needs no backend either.
-npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-  --minify-css true public/about.html > _site/about.html
-# So does the spooky story; its link preview points at this build, like the music page's.
-sed "$(site)" public/spooky.html \
-  | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
-    --minify-css true > _site/spooky.html
+page about "$(project)"
+# Nor does the spooky story; its link preview points at this build, like the music page's.
+page spooky "$(project)$(site)"
 # Every link to a script or stylesheet, in the pages and in the modules' imports, carries the
 # commit, so a new deploy never runs next to files the browser cached from the last one: Pages
 # lets browsers keep them for ten minutes, and an old module against a new page breaks it.
@@ -77,4 +78,6 @@ grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
 grep -q "app.js?v=$VERSION" _site/flakifier.html
 grep -q "music-vote.js?v=$VERSION" _site/index.html
 grep -q "spooky.css?v=$VERSION" _site/spooky.html
+grep -q "qr-track.js?v=$VERSION" _site/about.html
+grep -q "qr.js?v=$VERSION" _site/public/js/music-admin-qr.js
 touch _site/.nojekyll

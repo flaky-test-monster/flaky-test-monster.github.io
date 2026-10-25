@@ -283,8 +283,25 @@ h2::before { content: "// "; content: "// " / ""; }
 .admin-ballot-head .helper { color: var(--muted); }
 .admin-delete { margin-left: auto; min-height: 32px; }
 .admin-ballot-points { margin: 4px 0 0; font: 0.8125rem/1.5 var(--utility); }
+.admin-select { min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--veil); color: var(--ink); font: 1rem var(--body); }
+.admin-select:hover { border-color: var(--red); }
+/* A QR code beside its link and scans. The code keeps its own white: scanners want contrast. */
+.qr-code { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 16px; }
+.qr-image { display: block; border: 1px solid var(--rule); border-radius: 4px; background: #fff; }
+.qr-body { display: grid; gap: 4px; min-width: 0; }
+.qr-link { overflow-wrap: anywhere; color: var(--red); font: 0.8125rem/1.5 var(--utility); }
+.qr-chart { display: block; width: 100%; max-width: 360px; height: 32px; margin-top: 4px; fill: var(--red); }
+.qr-chart .qr-chart-empty { fill: var(--rule); }
+.qr-days { font: 0.8125rem/1.5 var(--utility); }
+.qr-days summary { cursor: pointer; }
+.qr-days summary:hover { color: var(--red); }
+.qr-days ul, .qr-days p { margin: 4px 0 0; }
+.qr-days ul { padding-left: 20px; }
+.qr-actions { margin-top: 4px; }
+.qr-actions .admin-button { min-height: 32px; }
 @media (width <= 640px) {
   .admin-ballots { padding: 0 16px; }
+  .qr-code { grid-template-columns: minmax(0, 1fr); }
 }
 /* Narrow: the points stay beside the title, the note takes the width under it. */
 @media (width <= 640px) {
