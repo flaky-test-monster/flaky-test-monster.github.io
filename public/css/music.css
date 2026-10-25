@@ -232,7 +232,11 @@ h2::before { content: "// "; content: "// " / ""; }
 .scoreboard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
 .scoreboard-status { flex: 1 1 240px; margin: 0; color: var(--muted); }
 .scoreboard-refresh { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
-.scoreboard-refresh:hover { border-color: var(--red); color: var(--red); }
+.scoreboard-refresh:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.scoreboard-refresh:disabled { opacity: .5; cursor: progress; }
+/* While the scores load, a small red ring turns in front of the status line. */
+.scoreboard-loading .scoreboard-status::before { content: ''; display: inline-block; width: 0.9em; height: 0.9em; margin-right: 8px; vertical-align: -0.1em; border: 2px solid var(--rule); border-top-color: var(--red); border-radius: 50%; animation: scoreboard-spin .8s linear infinite; }
+@keyframes scoreboard-spin { to { rotate: 1turn; } }
 /* Closed, the scoreboard and the lyrics are a single bar to open, on the same parchment as their content. */
 :is(.scoreboard-details, .lyrics) > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
 :is(.scoreboard-details, .lyrics) > summary:hover { border-color: var(--red); color: var(--red); }
@@ -330,7 +334,10 @@ h2::before { content: "// "; content: "// " / ""; }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
   .video-controls, .stage-label, .video-button, .song-play, .photo-take::before { transition: none; }
+  /* A still ring that pulses slowly instead of turning. */
+  .scoreboard-loading .scoreboard-status::before { animation: scoreboard-pulse 1.6s ease-in-out infinite alternate; }
 }
+@keyframes scoreboard-pulse { to { opacity: .3; } }
 
 /* The jury photo: drawn on a canvas, wide like a webcam picture, in the video's frame and glass,
  * with its round buttons over the picture. */

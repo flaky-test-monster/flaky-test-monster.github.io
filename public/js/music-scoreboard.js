@@ -57,6 +57,19 @@ function render(board) {
   status.textContent = `${juries}${board.open ? '' : ', and voting is closed'}. Updated ${time}.`;
 }
 
+/**
+ * Shows that the scores are loading: a spinner on the status line, the list marked busy for
+ * screen readers, and Refresh off until the request is back. The first load says so in words;
+ * later ones keep the last scores and their time in view under the spinner.
+ * @param {boolean} busy
+ */
+function setBusy(busy) {
+  details.classList.toggle('scoreboard-loading', busy);
+  list.setAttribute('aria-busy', String(busy));
+  $('scoreboard-refresh').disabled = busy;
+  if (busy && !list.children.length) status.textContent = 'Counting the votes…';
+}
+
 // One request at a time; one asked for meanwhile, say right after a vote, follows it.
 let loading = false;
 let again = false;
@@ -66,12 +79,14 @@ async function refresh() {
     return;
   }
   loading = true;
+  setBusy(true);
   try {
     render(await scoreboard());
   } catch (error) {
     status.textContent = `${error.message} The scoreboard shows the last scores it had.`;
   } finally {
     loading = false;
+    setBusy(false);
     if (again) {
       again = false;
       refresh();
