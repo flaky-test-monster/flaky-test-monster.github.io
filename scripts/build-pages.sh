@@ -19,8 +19,9 @@ find public -maxdepth 1 -type f ! -name '*.html' -exec cp {} _site/public/ \;
 # Videos and other media, also as is.
 cp -R public/media _site/public/
 # Each module on its own, no bundling: relative imports and the CDN imports stay as they are.
-npx --yes "$ESBUILD" public/js/*.js public/css/*.css --minify --format=esm --target=es2022 \
-  --outbase=public --outdir=_site/public --log-level=warning
+# The admin page's modules and stylesheet live in public/admin/ and keep that place in _site.
+npx --yes "$ESBUILD" public/js/*.js public/css/*.css public/admin/*.js public/admin/*.css \
+  --minify --format=esm --target=es2022 --outbase=public --outdir=_site/public --log-level=warning
 # The music page needs no backend. Its online vote does need a Supabase project: the workflows
 # pass the repository variables SUPABASE_URL, SUPABASE_ANON_KEY and, optionally,
 # TURNSTILE_SITE_KEY, which go into the pages' meta tags. All three are public by design.
@@ -45,16 +46,18 @@ BUILD_URL="${SITE_URL:-$SOURCE_URL}"
 BUILD_URL="${BUILD_URL%/}/${SITE_PATH:+${SITE_PATH%/}/}"
 site() { [[ $BUILD_URL != "$SOURCE_URL" ]] && printf 's#%s#%s#g;' "$SOURCE_URL" "$BUILD_URL"; }
 # Minifies public/<name>.html into _site/<name>.html, after the sed script given (may be empty).
+# The name may have a folder in it (admin/index), which is made.
 page() {
+  mkdir -p "_site/$(dirname "$1")"
   sed "$2" "public/$1.html" \
     | npx --yes "$HTML_MINIFIER" --collapse-whitespace --conservative-collapse --remove-comments \
       --minify-css true > "_site/$1.html"
 }
 # The Supabase project's meta tags. Every page gets them: the music page for the vote, the
-# admin page for the vote and the QR codes, the other pages only to count QR code scans
-# (qr-track.js). (Not named supabase: that is the CLI the README points at.)
+# admin page (admin/index.html) for the vote and the QR codes, the other pages only to count QR
+# code scans (qr-track.js). (Not named supabase: that is the CLI the README points at.)
 project() { printf '%s' "$(meta flaky-supabase-url "${SUPABASE_URL:-}")$(meta flaky-supabase-key "${SUPABASE_ANON_KEY:-}")"; }
-for name in music music-admin; do
+for name in music admin/index; do
   page "$name" "$(project)$(meta flaky-captcha-sitekey "${TURNSTILE_SITE_KEY:-}")$(site)"
 done
 # The music page is also the start page.
@@ -69,15 +72,22 @@ page spooky "$(project)$(site)"
 # commit, so a new deploy never runs next to files the browser cached from the last one: Pages
 # lets browsers keep them for ten minutes, and an old module against a new page breaks it.
 VERSION=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
+# The links start with ./, public/js/, public/css/ or public/admin/, from the admin page and its
+# modules (one folder down) with ../ in front; a bare "x.js" in a module is left alone.
 # -i with an attached suffix is the one form both GNU sed and macOS sed read the same way.
-sed -E -i.bak "s#\"((\./|public/(js|css)/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VERSION\"#g" _site/*.html _site/public/js/*.js
-rm -f _site/*.bak _site/public/js/*.bak
+sed -E -i.bak "s#\"((\.\./)*(\./|public/(js|css|admin)/|js/)[A-Za-z0-9_-]+\.(js|css))\"#\"\1?v=$VERSION\"#g" \
+  _site/*.html _site/admin/*.html _site/public/js/*.js _site/public/admin/*.js
+rm -f _site/*.bak _site/admin/*.bak _site/public/js/*.bak _site/public/admin/*.bak
 grep -q "music-photo.js?v=$VERSION" _site/public/js/music-vote.js
 grep -q "music-online.js?v=$VERSION" _site/public/js/music-scoreboard.js
-grep -q "music-online.js?v=$VERSION" _site/public/js/music-admin.js
+grep -q "\"\.\./js/music-online.js?v=$VERSION\"" _site/public/admin/admin.js
+grep -q "\"\./admin-qr.js?v=$VERSION\"" _site/public/admin/admin.js
 grep -q "app.js?v=$VERSION" _site/flakifier.html
 grep -q "music-vote.js?v=$VERSION" _site/index.html
 grep -q "spooky.css?v=$VERSION" _site/spooky.html
 grep -q "qr-track.js?v=$VERSION" _site/about.html
-grep -q "qr.js?v=$VERSION" _site/public/js/music-admin-qr.js
+grep -q "\"\.\./js/qr.js?v=$VERSION\"" _site/public/admin/admin-qr.js
+grep -q "\"\.\./public/admin/admin.js?v=$VERSION\"" _site/admin/index.html
+grep -q "\"\.\./public/admin/admin.css?v=$VERSION\"" _site/admin/index.html
+grep -q "\"\.\./public/css/music.css?v=$VERSION\"" _site/admin/index.html
 touch _site/.nojekyll

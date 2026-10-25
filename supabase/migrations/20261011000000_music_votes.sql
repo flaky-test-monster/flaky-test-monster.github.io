@@ -11,7 +11,7 @@
 --   * All access goes through functions: cast_ballot checks every vote before it is stored,
 --     my_ballot returns the caller's own ballot only, and scoreboard returns the totals only,
 --     never who gave what, nor the jury names people typed in.
---   * The admin page (public/music-admin.html) lists, adds and deletes ballots through the
+--   * The admin page (public/admin/index.html) lists, adds and deletes ballots through the
 --     admin_* functions. Each one first checks that the caller is an admin: a signed-in,
 --     non-anonymous user listed in public.admins. Signing in is not enough, as every voter
 --     is signed in too; only someone with the SQL editor can add an admin:

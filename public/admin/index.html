@@ -7,9 +7,11 @@
   <!-- Not for search engines: the page is of use to admins only. -->
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#f5ead5">
-  <link rel="icon" type="image/jpeg" href="public/monster.jpg">
-  <link rel="stylesheet" href="public/css/header.css">
-  <link rel="stylesheet" href="public/css/music.css">
+  <!-- The page lives in admin/, one folder below the site root, so every link goes up one. -->
+  <link rel="icon" type="image/jpeg" href="../public/monster.jpg">
+  <link rel="stylesheet" href="../public/css/header.css">
+  <link rel="stylesheet" href="../public/css/music.css">
+  <link rel="stylesheet" href="../public/admin/admin.css">
   <!-- The same Supabase project as the music page (see music.html); filled in by the Pages build. -->
   <meta name="flaky-supabase-url" content="">
   <meta name="flaky-supabase-key" content="">
@@ -20,13 +22,13 @@
     <div class="container">
       <header class="site-header">
         <div class="site-bar">
-          <a class="masthead" href="music.html" aria-label="Back to the music page">
-            <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
+          <a class="masthead" href="../music.html" aria-label="Back to the music page">
+            <img class="mascot" src="../public/monster.jpg" width="56" height="56" alt="">
             <span class="wordmark">Jury <em>admin</em></span>
           </a>
           <nav class="site-nav" aria-label="Pages">
-            <a href="music.html">music</a>
-            <a href="music-admin.html" aria-current="page">admin</a>
+            <a href="../music.html">music</a>
+            <a href="./" aria-current="page">admin</a>
           </nav>
         </div>
       </header>
@@ -34,7 +36,7 @@
       <main class="admin">
         <!-- The header already reads "Jury admin": this heading is for screen readers. -->
         <h1 class="visually-hidden">Jury admin</h1>
-        <!-- music-admin.js shows one of these: no project set up, the vote server out of reach,
+        <!-- admin.js shows one of these: no project set up, the vote server out of reach,
              the sign-in, or the admin tools. -->
         <div id="admin-error" class="admin-section" hidden>
           <p id="admin-error-text" class="intro" role="alert"></p>
@@ -80,7 +82,7 @@
                 <span>Jury name</span>
                 <input id="add-jury" type="text" maxlength="60" autocomplete="off">
               </label>
-              <!-- One choice of points per song, filled in by music-admin.js from the database. -->
+              <!-- One choice of points per song, filled in by admin.js from the database. -->
               <fieldset class="admin-points">
                 <legend>Points</legend>
                 <div id="add-songs" class="admin-songs"></div>
@@ -103,7 +105,7 @@
           <section class="admin-section" aria-labelledby="qr-title">
             <h2 id="qr-title">QR codes</h2>
             <p class="intro">A code for a poster, a flyer or a slide: it opens a page of the site, and every scan is counted, with the day and the country, never who scanned it.</p>
-            <!-- Where the links point: this copy of the site. music-admin-qr.js warns when that is a preview or localhost. -->
+            <!-- Where the links point: this copy of the site. admin-qr.js warns when that is a preview or localhost. -->
             <p id="qr-base" class="helper"></p>
             <form id="qr-form" class="admin-form" novalidate>
               <label class="admin-field">
@@ -138,6 +140,6 @@
       </main>
     </div>
   </div>
-  <script type="module" src="public/js/music-admin.js"></script>
+  <script type="module" src="../public/admin/admin.js"></script>
 </body>
 </html>

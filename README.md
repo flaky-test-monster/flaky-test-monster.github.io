@@ -353,7 +353,7 @@ How it stays safe, with only a static page and the public anon key in the browse
   the header on to the database is not documented, so check after the first votes:
   `select country, count(*) from public.ballots group by country;` If every row is
   empty, the header does not arrive and the count stays hidden.
-- **An admin page, for admins only.** `music-admin.html` lists every ballot, adds ballots
+- **An admin page, for admins only.** `admin/` (`public/admin/index.html`) lists every ballot, adds ballots
   (say for votes that came by email, checked like online ones) and deletes them, and opens
   or closes voting. Admins sign in with an email and password. Being signed in is not
   enough, since every voter is signed in too: each admin function checks that the account
@@ -381,7 +381,7 @@ Setup:
    variables → Actions → Variables**) named `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the
    build writes them into the pages' meta tags. For `npm start`, which serves the pages
    unbuilt, fill in the `flaky-supabase-*` meta tags in both `public/music.html` and
-   `public/music-admin.html`, or try it as in "To try it locally" below. Both values are
+   `public/admin/index.html`, or try it as in "To try it locally" below. Both values are
    public by design.
 4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for your Pages host
    (for example `kertal.github.io`, and `localhost` to test), enter its secret key in Supabase under **Authentication →
@@ -400,7 +400,8 @@ Setup:
    insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
    ```
 
-   Open `music-admin.html` and sign in. To remove an admin, delete their row from
+   Open `admin/` (with the slash; the old address `music-admin.html` still works with
+   `npm start`) and sign in. To remove an admin, delete their row from
    `public.admins`. Anyone else who signs in there, or signs up, gets no admin rights.
 
 To close voting: the admin page's **Close voting**, or
@@ -441,7 +442,7 @@ with the values in the environment, and serve the build:
 
 ```sh
 SUPABASE_URL=https://YOUR-PROJECT.supabase.co SUPABASE_ANON_KEY=YOUR-ANON-KEY scripts/build-pages.sh
-npx --yes serve _site   # then open /music.html
+npx --yes serve _site   # then open /music.html, and /admin/ for the admin page
 ```
 
 ## Notes

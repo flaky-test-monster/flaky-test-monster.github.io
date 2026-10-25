@@ -1,11 +1,11 @@
 /**
- * The QR codes section of the admin page (music-admin.html): makes codes that open a page of
+ * The QR codes section of the admin page (admin/index.html): makes codes that open a page of
  * the site with ?qr=<slug>, shows each code with its scans (counted by qr-track.js on the
  * pages, see supabase/migrations/), and saves it as SVG or PNG for print. Everything that comes
  * from the database goes on the page as text only.
  */
 
-import { encodeQr, qrSvg, QUIET_ZONE } from './qr.js';
+import { encodeQr, qrSvg, QUIET_ZONE } from '../js/qr.js';
 
 const $ = (id) => document.getElementById(id);
 /** Pixels per module of a saved PNG: 37 modules of a typical link make a 1,320 px square. */
@@ -25,8 +25,8 @@ const COPY_NOTE_MS = 2000;
 const REVOKE_MS = 1000;
 const PAGE_NAMES = { '': 'Music page', 'about.html': 'About page', 'spooky.html': 'From Failure to Fun', 'flakifier.html': 'Flakifier app' };
 
-/** The site the links point at: the folder this admin page is in. */
-const base = new URL('./', location.href);
+/** The site the links point at: the folder above admin/, where this page is. */
+const base = new URL('../', location.href);
 base.search = '';
 base.hash = '';
 

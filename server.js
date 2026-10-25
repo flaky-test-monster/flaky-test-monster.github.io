@@ -285,9 +285,18 @@ async function serveMusic(req, res) {
   await sendFile(res, path.join(PUBLIC_DIR, 'music.html'), STATIC_TYPES['.html']);
 }
 
-/** GET /music-admin.html or /music-admin */
+/** GET /admin/ or /admin/index.html: the admin page of the music vote */
 async function serveMusicAdmin(req, res) {
-  await sendFile(res, path.join(PUBLIC_DIR, 'music-admin.html'), STATIC_TYPES['.html']);
+  await sendFile(res, path.join(PUBLIC_DIR, 'admin', 'index.html'), STATIC_TYPES['.html']);
+}
+
+/**
+ * GET /admin, or the page's old address /music-admin(.html): sends the browser to /admin/.
+ * The page links its assets relatively, so it only works with the trailing slash.
+ */
+async function redirectToAdmin(req, res) {
+  res.writeHead(301, { Location: '/admin/' });
+  res.end();
 }
 
 /** GET /about.html or /about */
@@ -388,11 +397,13 @@ async function jobFileRoute(req, res, url, [, id, name]) {
 }
 
 // Pages also answer without .html, as GitHub Pages does. No trailing slash: the pages
-// link their assets relatively, which only resolves from the site root.
+// link their assets relatively, which only resolves from the site root. The admin page is the
+// one in a folder, and so only answers with the slash; without it, it redirects, as Pages does.
 const ROUTES = [
   { pattern: /^\/(music(\.html)?)?$/, handlers: { GET: serveMusic } },
   { pattern: /^\/flakifier(\.html)?$/, handlers: { GET: serveApp } },
-  { pattern: /^\/music-admin(\.html)?$/, handlers: { GET: serveMusicAdmin } },
+  { pattern: /^\/admin\/(index\.html)?$/, handlers: { GET: serveMusicAdmin } },
+  { pattern: /^\/(admin|music-admin(\.html)?)$/, handlers: { GET: redirectToAdmin } },
   { pattern: /^\/about(\.html)?$/, handlers: { GET: serveAbout } },
   { pattern: /^\/spooky(\.html)?$/, handlers: { GET: serveSpooky } },
   { pattern: /^\/public\/(.+)$/, handlers: { GET: serveStatic } },

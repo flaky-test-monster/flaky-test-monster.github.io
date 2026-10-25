@@ -56,7 +56,9 @@ lib/
 public/
   flakifier.html        main app page (import map for Three.js lives here)
   music.html            music page, also the start page (/); optional Supabase vote (meta tags)
-  music-admin.html      admin page of the vote: sign in, list, add and delete ballots, QR codes
+  admin/                admin page of the vote, served at /admin/: index.html (sign in, list,
+                        add and delete ballots, QR codes), admin.js, admin-qr.js (the QR
+                        codes), admin.css; imports the shared modules with '../js/x.js'
   about.html            about page: the monster's story, a timeline with photos (media/about/)
   spooky.html           “From Failure to Fun”, two Halloween stories for Syntax (spooky.css)
   css/                  header.css (the header all pages share), style.css (app), music.css
@@ -67,7 +69,7 @@ public/
     relief.js           mask + depth → watertight relief STL; runs in browser and Node (no DOM)
     caricature.js       face warp and monster parts for the relief
     monster-*.js        live face tracking and the monster score
-    music-*.js          music page modules (music-admin-qr.js: the admin's QR codes)
+    music-*.js          music page modules
     qr.js               QR code encoder (no DOM); qr-track.js counts scans of the codes
     viewer.js, zip.js   3D viewer, tiny zip writer
   media/                videos, songs, photos (copied as is into the Pages build)

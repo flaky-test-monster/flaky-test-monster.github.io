@@ -1,4 +1,4 @@
--- QR codes with counted scans, made on the admin page (public/music-admin.html). Each code
+-- QR codes with counted scans, made on the admin page (public/admin/index.html). Each code
 -- links to a page of the site with ?qr=<slug>, such as music.html?qr=happylab-poster; the
 -- page tells the database it was opened that way (public/js/qr-track.js), then drops the
 -- parameter from the address bar, so a reload or a shared link does not count again.
