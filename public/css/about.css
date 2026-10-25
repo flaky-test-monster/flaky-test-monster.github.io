@@ -1,28 +1,18 @@
 /* The about page: black and white, like a newspaper. The photos are black and white too,
- * except for the monster's green and red: the only colours on the page. */
+ * except for the monster's green and red: the only colours on the page. Each token holds its
+ * light and dark value side by side; color-scheme picks the one in use. */
 :root {
   color-scheme: light dark;
-  --paper: #fff;
-  --ink: #000;
-  --accent: #000;
-  --on-accent: #fff;
-  --muted: #555;
-  --border: #000;
-  --panel: #f2f2f2;
+  --paper: light-dark(#fff, #000);
+  --ink: light-dark(#000, #fff);
+  --accent: light-dark(#000, #fff);
+  --on-accent: light-dark(#fff, #000);
+  --muted: light-dark(#555, #aaa);
+  --border: light-dark(#000, #fff);
+  --panel: light-dark(#f2f2f2, #141414);
   --display: 'Bodoni MT', Didot, 'Times New Roman', serif;
   --body: Georgia, serif;
   --utility: 'Courier New', monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #000;
-    --ink: #fff;
-    --accent: #fff;
-    --on-accent: #000;
-    --muted: #aaa;
-    --border: #fff;
-    --panel: #141414;
-  }
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--paper); font: 1rem/1.6 var(--body); }
@@ -109,13 +99,13 @@ h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
   scrollbar-width: thin;
   border-radius: 8px;
 }
-.slide { position: relative; flex: 0 0 100%; margin: 0; overflow: hidden; border-radius: 8px; scroll-snap-align: start; }
+.slide { position: relative; flex: 0 0 100%; margin: 0; overflow: clip; border-radius: 8px; scroll-snap-align: start; }
 /* Portrait and landscape photos share one 4:3 frame, shown whole; tall screens don't stretch it. */
 .slide img {
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
-  max-height: min(80vh, 600px);
+  max-height: min(80svh, 600px);
   object-fit: contain;
   background: var(--gallery-bg);
 }
@@ -123,7 +113,6 @@ h3 { font: italic 700 1.5rem/1.2 var(--display); margin: 4px 0 8px; }
 @supports selector(::scroll-marker) {
   /* With the buttons and dots there, the scrollbar is only clutter. */
   .slides { scrollbar-width: none; scroll-marker-group: after; }
-  .slides::-webkit-scrollbar { display: none; }
   .slides::scroll-marker-group {
     position: absolute;
     bottom: 8px;
@@ -170,10 +159,10 @@ footer { margin-top: 40px; text-align: center; font-size: 0.9375rem; }
 footer p { margin: 8px 0 0; }
 .back { font: 0.8125rem var(--utility); }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .container { width: calc(100% - 32px); padding-top: 32px; }
 }
-@media (max-width: 720px) {
+@media (width <= 720px) {
   .hero { grid-template-columns: 1fr; padding-top: 24px; }
   .timeline { padding-left: 20px; }
   .event::before { left: -29px; }

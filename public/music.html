@@ -66,7 +66,8 @@
           <h2 id="songs-title">Songs</h2>
           <p class="intro">You're the jury. Distribute the points. The winner might get an enhanced deslopification procedure.</p>
             <form id="vote-form" data-email="ankertal+flaky@gmail.com" novalidate>
-              <ul class="song-list">
+              <!-- role="list": Safari drops the list semantics of a list without bullets. -->
+              <ul class="song-list" role="list">
               <li class="song" data-song="international">
                 <h3>From Flaky With Love: the international version</h3>
                 <p>In English. No risk, less fun. Suitable for the UK, Ireland, Texas, Utah, Canada… maybe it should be picked by Australia to ensure their first win. Great <a href="https://buildkite.com/home/">CI software</a> comes from there too. A home match for the monster.</p>
@@ -184,7 +185,7 @@
               </div>
               <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
               <div id="vote-captcha" class="vote-captcha" hidden></div>
-              <output id="vote-status" class="helper vote-status" role="status"></output>
+              <output id="vote-status" class="helper vote-status"></output>
               <!-- Where the votes show for copying by hand, when the browser cannot copy them. -->
               <label id="vote-copy-field" class="vote-copy-field" hidden>
                 <span>Your votes, to copy</span>
@@ -203,7 +204,7 @@
           <p class="intro">Vote first, then peek: the points so far might sway you. Only the totals are shown; who gave what stays secret.</p>
           <details id="scoreboard-details" class="scoreboard-details">
             <summary>Show the scoreboard</summary>
-            <ol id="scoreboard-list" class="scoreboard-list"></ol>
+            <ol id="scoreboard-list" class="scoreboard-list" role="list"></ol>
             <div class="scoreboard-actions">
               <p id="scoreboard-status" class="helper scoreboard-status" role="status">Counting the votes…</p>
               <button type="button" id="scoreboard-refresh" class="scoreboard-refresh">Refresh</button>
@@ -243,12 +244,14 @@
 
         <section class="video" aria-labelledby="video-title">
           <h2 id="video-title">Karaoke</h2>
-          <p class="intro" id="video-note" role="status">
+          <p class="intro">
             Here is a very flaky karaoke video. You need to learn the lyrics, since currently they are not in the video.
             The young video editor demanded more pocket money for adding subtitles "for such a slop".
             Negotiations are ongoing.
           </p>
-        
+          <!-- Says so when the video cannot be loaded (music-video.js). -->
+          <p id="video-note" class="helper" role="status"></p>
+
           <!-- The controls sit over the video and fade out while it plays; hover or keyboard focus brings them back (music.css). -->
           <div class="stage" id="video-stage">
             <video id="music-video" class="stage-video" src="public/media/from-flaky-with-love.mp4" loop playsinline preload="metadata"></video>
@@ -306,7 +309,7 @@
         <section class="thanks" aria-labelledby="thanks-title">
           <h2 id="thanks-title">Thanks</h2>
           <p>Valentin, Frieda &amp; Katharina Polman, <a href="https://www.happylab.at">Happylab</a>, Werner Mayer, Friedrich Manseder, and lots of fearless flaky test fighters, past, present and future:</p>
-          <ul class="thanks-list">
+          <ul class="thanks-list" role="list">
             <li><a href="https://github.com/akowalska622"><img src="public/media/thanks/akowalska622.jpg" width="16" height="16" alt="" loading="lazy">akowalska622</a></li>
             <li><a href="https://github.com/AlexGPlay"><img src="public/media/thanks/AlexGPlay.png" width="16" height="16" alt="" loading="lazy">AlexGPlay</a></li>
             <li><a href="https://github.com/alexmarhaba"><img src="public/media/thanks/alexmarhaba.jpg" width="16" height="16" alt="" loading="lazy">alexmarhaba</a></li>
@@ -328,7 +331,9 @@
             <li><a href="https://github.com/streamich"><img src="public/media/thanks/streamich.png" width="16" height="16" alt="" loading="lazy">streamich</a></li>
           </ul>
           <p>And many, many more at Elastic</p>
-           <h2 id="thanks-title">Credits</h2>
+        </section>
+        <section class="thanks" aria-labelledby="credits-title">
+          <h2 id="credits-title">Credits</h2>
           <p>Built and maintained, lyrics and lead melody by <a href="https://github.com/kertal">@kertal</a>, with an orchestra of insane genies out of several bottles.</p>
         </section>
       </main>

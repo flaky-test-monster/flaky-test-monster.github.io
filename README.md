@@ -317,9 +317,9 @@ the first deploy.
 
 The site works from any account: the workflows build it for this repository's own Pages
 address, `https://<owner>.github.io/<repo>/`, which the absolute links need (the music
-page's link preview image). If the site is served somewhere else, such as a custom domain
-or a `<owner>.github.io` repository served at the root, set the repository variable
-`SITE_URL` (**Settings → Secrets and variables → Actions → Variables**) to that address,
+page's link preview image). A repository named `<owner>.github.io` is served at the root,
+`https://<owner>.github.io/`, and the workflows build for that. If the site is served
+somewhere else, such as a custom domain, set the repository variable `SITE_URL` (**Settings → Secrets and variables → Actions → Variables**) to that address,
 for example `https://flaky.example.com/`. To build locally for another address, run
 `SITE_URL=https://<owner>.github.io/<repo>/ scripts/build-pages.sh`.
 
