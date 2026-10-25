@@ -1,4 +1,4 @@
-// Three.js viewer for the generated GLB or STL. Loaded from a CDN via the import map in index.html.
+// Three.js viewer for the generated GLB or STL. Loaded from a CDN via the import map in flakifier.html.
 const VIEWER_FOV = 40;
 const AUTO_ROTATE_SPEED = 1.2;
 const FRAME_PADDING = 1.1;

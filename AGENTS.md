@@ -18,14 +18,16 @@ backend of its own; its jury vote and scoreboard can optionally run on a Supabas
   `dependencies` and must stay that way. Use Node built-ins (`node:http`, `node:fs/promises`,
   `node:crypto`, ...) and browser APIs. The only exceptions:
   - Browser libraries loaded from jsDelivr by URL with a pinned version (Three.js via the
-    import map in `public/index.html`, Transformers.js in `public/js/browser-worker.js`).
+    import map in `public/flakifier.html`, Transformers.js in `public/js/browser-worker.js`).
   - Build tools pinned in `scripts/build-pages.sh` and fetched by `npx` at build time.
   - The music page's optional online vote: supabase-js from jsDelivr, pinned, in
     `public/js/music-online.js`, against a Supabase project. Its schema lives in
     `supabase/migrations/`; the tables are closed to the browser and reached only through
     the functions there, which check every input. Keep it that way, and keep the email
-    vote working when no project is configured.
-  - GoatCounter page-view counting (`gc.zgo.at/count.js`) on `index.html` and `music.html`.
+    vote working when no project is configured. The same project counts QR code scans:
+    `public/js/qr-track.js`, on every public page, calls `track_qr_scan` with a plain
+    `fetch` (no library) and must never affect the page when it fails or is not set up.
+  - GoatCounter page-view counting (`gc.zgo.at/count.js`) on `flakifier.html`, `music.html` and `about.html`.
     It is optional by nature: nothing may depend on it loading.
 - **Node 22+, ES modules only** (`"type": "module"`). Use `import.meta.dirname`, top-level
   `await`, `process.loadEnvFile()`; no CommonJS.
@@ -52,21 +54,26 @@ lib/
   stl.js                GLB → binary STL converter
   jobs.js               jobs/<uuid>/ storage; the only module-level state on the server
 public/
-  index.html            main app page (import map for Three.js lives here)
-  music.html            music page; optional Supabase vote (meta tags)
-  music-admin.html      admin page of the vote: sign in, list, add and delete ballots
-  css/                  style.css (app), music.css (music page)
+  flakifier.html        main app page (import map for Three.js lives here)
+  music.html            music page, also the start page (/); optional Supabase vote (meta tags)
+  music-admin.html      admin page of the vote: sign in, list, add and delete ballots, QR codes
+  about.html            about page: the monster's story, a timeline with photos (media/about/)
+  spooky.html           “From Failure to Fun”, two Halloween stories for Syntax (spooky.css)
+  css/                  header.css (the header all pages share), style.css (app), music.css
+                        (music page), about.css (about page), spooky.css
   js/                   ES modules, imported with relative './x.js' paths
     app.js              main UI controller
     browser-worker.js   in-browser pipeline worker (Transformers.js models)
     relief.js           mask + depth → watertight relief STL; runs in browser and Node (no DOM)
     caricature.js       face warp and monster parts for the relief
     monster-*.js        live face tracking and the monster score
-    music-*.js          music page modules
+    music-*.js          music page modules (music-admin-qr.js: the admin's QR codes)
+    qr.js               QR code encoder (no DOM); qr-track.js counts scans of the codes
     viewer.js, zip.js   3D viewer, tiny zip writer
   media/                videos, songs, photos (copied as is into the Pages build)
 supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard,
-                        and the admin_* functions, open to the users in public.admins only
+                        and the admin_* functions, open to the users in public.admins only;
+                        QR codes and their scans (track_qr_scan, admin_*_qr_link*)
 figures/                reference images for figure presets (see figures/README.md)
 scripts/
   install.sh            macOS installer (Node, plus local pipeline unless --cloud-only)

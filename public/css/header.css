@@ -1,0 +1,72 @@
+/* The header every page shares: the mascot on the left, and to its right the page's title and
+ * the links between the pages. One row when both fit; otherwise the links move to a second row
+ * under the title, still right of the mascot, and the title gets the first row to itself, ending
+ * in an ellipsis only if even that is too narrow.
+ * Layout only: each page's own stylesheet, loaded after this one, gives it its colours through
+ * these properties:
+ *   --nav-fg, --nav-bg, --nav-border          the links
+ *   --nav-hover                               a link under the pointer
+ *   --nav-current-fg, --nav-current-bg,
+ *   --nav-current-border                      the link to this page
+ *   --nav-font                                the links' font family
+ *   --mascot-border, --mascot-hover, --mascot-bg
+ */
+/* The row breaks where the full title and the links stop fitting side by side: wrapping goes by
+ * each item's full width, before the title would shrink. With space-between, the links stay at
+ * the right on one row and start under the title on a row of their own. The mascot sits in the
+ * padding on the left, centred on however many rows there are. */
+.site-bar {
+  --mascot-size: 56px;
+  --mascot-gap: 14px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  min-height: var(--mascot-size);
+  padding-left: calc(var(--mascot-size) + var(--mascot-gap));
+}
+.site-nav { display: flex; flex: none; gap: 8px; }
+.site-nav a {
+  padding: 5px 12px;
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+  background: var(--nav-bg, transparent);
+  color: var(--nav-fg);
+  font-family: var(--nav-font, inherit);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.site-nav a:hover { border-color: var(--nav-hover); color: var(--nav-hover); }
+.site-nav a[aria-current="page"] {
+  border-color: var(--nav-current-border);
+  background: var(--nav-current-bg, transparent);
+  color: var(--nav-current-fg);
+}
+
+.masthead { display: flex; align-items: center; min-width: 0; color: inherit; text-decoration: none; border-radius: 8px; }
+/* Still inside the link, so clicking the mascot goes home as before. */
+.mascot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--mascot-size);
+  height: var(--mascot-size);
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--mascot-border);
+  background: var(--mascot-bg, transparent);
+}
+.masthead:hover .mascot { border-color: var(--mascot-hover); }
+/* The title of the music and about pages; the start page has its own, a shell prompt. */
+.wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display, serif); white-space: nowrap; text-overflow: ellipsis; }
+
+@media (width <= 640px) {
+  .site-bar { --mascot-size: 44px; --mascot-gap: 10px; gap: 10px; }
+  .site-nav { gap: 6px; }
+  .site-nav a { padding: 4px 10px; }
+}

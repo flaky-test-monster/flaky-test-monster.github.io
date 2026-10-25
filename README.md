@@ -118,7 +118,8 @@ This starts the local 3D server in the background when the local pipeline is ins
 stops both. A 3D server you already started yourself is reused and left running.
 `node server.js` still works when you only use the cloud pipelines.
 
-Open <http://localhost:3000>. Take a photo, choose how to make it and a figure, and click
+Open <http://localhost:3000/flakifier> (the start page, <http://localhost:3000>, is the music
+page). Take a photo, choose how to make it and a figure, and click
 **Flakify**. The stepper lights up as each stage finishes, the styled image
 appears as soon as it is ready, and the final screen shows the model in a rotating 3D
 viewer with download buttons for the STL, the styled image and the original photo, plus
@@ -314,6 +315,14 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 **Deploy from a branch**, branch `gh-pages`, folder `/ (root)`. The branch is created by
 the first deploy.
 
+The site works from any account: the workflows build it for this repository's own Pages
+address, `https://<owner>.github.io/<repo>/`, which the absolute links need (the music
+page's link preview image). A repository named `<owner>.github.io` is served at the root,
+`https://<owner>.github.io/`, and the workflows build for that. If the site is served
+somewhere else, such as a custom domain, set the repository variable `SITE_URL` (**Settings → Secrets and variables → Actions → Variables**) to that address,
+for example `https://flaky.example.com/`. To build locally for another address, run
+`SITE_URL=https://<owner>.github.io/<repo>/ scripts/build-pages.sh`.
+
 ## Music page vote and scoreboard
 
 The music page (`public/music.html`) lets visitors give the songs Eurovision points (12, 10,
@@ -374,8 +383,8 @@ Setup:
    unbuilt, fill in the `flaky-supabase-*` meta tags in both `public/music.html` and
    `public/music-admin.html`, or try it as in "To try it locally" below. Both values are
    public by design.
-4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for `kertal.github.io`
-   (and `localhost`, to test), enter its secret key in Supabase under **Authentication →
+4. Recommended: add a captcha. Create a Cloudflare Turnstile widget for your Pages host
+   (for example `kertal.github.io`, and `localhost` to test), enter its secret key in Supabase under **Authentication →
    Attack Protection**. The site key of the project's widget is already in the
    `flaky-captcha-sitekey` meta tags of both pages; a repository variable
    `TURNSTILE_SITE_KEY` replaces it, say for a widget of your own. Supabase then asks for
@@ -397,6 +406,35 @@ Setup:
 To close voting: the admin page's **Close voting**, or
 `update public.contest set open = false;` (and `true` to open it again). The scoreboard
 keeps showing the final totals.
+
+### QR codes with counted scans
+
+The admin page also makes QR codes, say for a poster, a flyer or a slide. Give the code a
+description, a short name (filled in from the description; it goes into the link and cannot
+change once printed) and the page it opens: the music page, the about page, the spooky story
+or the app. The code links to that page with `?qr=<short name>`, for example
+`https://kertal.github.io/flakifier/?qr=happylab-poster`. Each code shows its link, its scans
+in all and in the last 7 days, the last scan, a bar for each of the last 30 days (UTC) and
+the countries the scans came from, and can be saved as SVG (for print) or PNG.
+
+- **What is counted.** When a page is opened with `?qr=`, it calls `track_qr_scan` once and
+  takes the parameter out of the address bar, so a reload or a shared link does not count
+  again. Each scan keeps the time and the two-letter country from `CF-IPCountry`, as the
+  ballots do: no IP address and no user. Unknown short names are ignored.
+- **Counts are a good guess, not proof.** Anyone can call `track_qr_scan` by hand, so a
+  count can be inflated; at most 60 scans a minute count per code, which keeps the table
+  small. A phone that opens the link twice, or a link preview in a chat, can count too.
+- **Make codes for print on the main site.** The links point at the site the admin page is
+  on. The admin page warns when that is a PR preview or `localhost`.
+- **Deleting a code** deletes its scans too; printed copies still open the page, uncounted.
+
+Setup: run `supabase/migrations/20261020000000_qr_links.sql` after the vote's migration, in
+the SQL editor or with `supabase db push`. It can be run again. The pages that count scans
+(`music.html`, `about.html`, `spooky.html`, `flakifier.html`) get the project from the same
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` repository variables; for `npm start`, fill in their
+`flaky-supabase-*` meta tags. Without a project, the codes cannot be made and the pages just
+ignore `?qr=`. To see the raw numbers:
+`select slug, count(*) from public.qr_scans group by slug;`
 
 To try it locally without touching the pages, build the site the way Pages does,
 with the values in the environment, and serve the build:

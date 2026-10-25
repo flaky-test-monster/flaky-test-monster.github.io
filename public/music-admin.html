@@ -8,6 +8,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#f5ead5">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/css/header.css">
   <link rel="stylesheet" href="public/css/music.css">
   <!-- The same Supabase project as the music page (see music.html); filled in by the Pages build. -->
   <meta name="flaky-supabase-url" content="">
@@ -35,8 +36,8 @@
         <h1 class="visually-hidden">Jury admin</h1>
         <!-- music-admin.js shows one of these: no project set up, the vote server out of reach,
              the sign-in, or the admin tools. -->
-        <div id="admin-error" class="admin-section" role="alert" hidden>
-          <p id="admin-error-text" class="intro"></p>
+        <div id="admin-error" class="admin-section" hidden>
+          <p id="admin-error-text" class="intro" role="alert"></p>
           <button type="button" id="admin-retry" class="admin-button">Try again</button>
         </div>
         <p id="admin-off" class="intro" hidden>The online vote is not set up for this page, so there is nothing to manage here. See “Music page vote and scoreboard” in the README.</p>
@@ -56,7 +57,7 @@
             <button type="submit" class="primary">Sign in</button>
             <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
             <div id="signin-captcha" class="vote-captcha" hidden></div>
-            <output id="signin-status" class="helper admin-status" role="status"></output>
+            <output id="signin-status" class="helper admin-status"></output>
           </form>
         </section>
 
@@ -85,7 +86,7 @@
                 <div id="add-songs" class="admin-songs"></div>
               </fieldset>
               <button type="submit" class="primary">Add the ballot</button>
-              <output id="add-status" class="helper admin-status" role="status"></output>
+              <output id="add-status" class="helper admin-status"></output>
             </form>
           </section>
 
@@ -95,8 +96,43 @@
               <p id="ballots-count" class="admin-state"></p>
               <button type="button" id="ballots-refresh" class="admin-button">Refresh</button>
             </div>
-            <output id="ballots-status" class="helper admin-status" role="status"></output>
-            <ol id="ballots-list" class="admin-ballots"></ol>
+            <output id="ballots-status" class="helper admin-status"></output>
+            <ol id="ballots-list" class="admin-ballots" role="list"></ol>
+          </section>
+
+          <section class="admin-section" aria-labelledby="qr-title">
+            <h2 id="qr-title">QR codes</h2>
+            <p class="intro">A code for a poster, a flyer or a slide: it opens a page of the site, and every scan is counted, with the day and the country, never who scanned it.</p>
+            <!-- Where the links point: this copy of the site. music-admin-qr.js warns when that is a preview or localhost. -->
+            <p id="qr-base" class="helper"></p>
+            <form id="qr-form" class="admin-form" novalidate>
+              <label class="admin-field">
+                <span>What it is for</span>
+                <input id="qr-label" type="text" maxlength="80" autocomplete="off" placeholder="Poster at the Happylab">
+              </label>
+              <label class="admin-field">
+                <span>Short name, in the link</span>
+                <input id="qr-slug" type="text" autocomplete="off" aria-describedby="qr-slug-help">
+                <span id="qr-slug-help" class="helper">Lower-case letters, digits and dashes. It cannot be changed later, as printed codes keep it.</span>
+              </label>
+              <label class="admin-field">
+                <span>Page it opens</span>
+                <select id="qr-target" class="admin-select">
+                  <option value="">Music page (start page)</option>
+                  <option value="about.html">About page</option>
+                  <option value="spooky.html">From Failure to Fun</option>
+                  <option value="flakifier.html">Flakifier app</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Make the code</button>
+              <output id="qr-status" class="helper admin-status" role="status"></output>
+            </form>
+            <div class="admin-bar">
+              <p id="qr-count" class="admin-state"></p>
+              <button type="button" id="qr-refresh" class="admin-button">Refresh</button>
+            </div>
+            <output id="qr-list-status" class="helper admin-status" role="status"></output>
+            <ol id="qr-list" class="admin-ballots" role="list"></ol>
           </section>
         </div>
       </main>

@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0e100d" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/jpeg" href="public/monster.jpg">
+  <link rel="stylesheet" href="public/css/header.css">
   <link rel="stylesheet" href="public/css/style.css">
   <script type="importmap">
     {
@@ -20,18 +21,24 @@
   <!-- Page-view counts (GoatCounter: no cookies, no personal data). -->
   <script data-goatcounter="https://kertal.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
+  <!-- The Supabase project of the music page, for counting QR code scans (qr-track.js); filled in by the Pages build. -->
+  <meta name="flaky-supabase-url" content="">
+  <meta name="flaky-supabase-key" content="">
+  <!-- Counts a scan when the page was opened from a QR code made on the admin page. -->
+  <script type="module" src="public/js/qr-track.js"></script>
 </head>
 <body>
   <div class="app">
     <header class="site-header">
       <div class="site-bar">
-        <a class="masthead" id="home-link" href="./" aria-label="flakifier: back to the start">
+        <a class="masthead" id="home-link" href="flakifier.html" aria-label="flakifier: back to the start">
           <img class="mascot" src="public/monster.jpg" width="56" height="56" alt="">
           <h1 class="title">flakifier</h1>
         </a>
         <nav class="site-nav" aria-label="Pages">
-          <a href="./" aria-current="page">flakifier</a>
           <a href="music.html">music</a>
+          <a href="flakifier.html" aria-current="page">flakifier</a>
+          <a href="about.html">about</a>
         </nav>
       </div>
       <p class="tagline"><span class="tag tag-pass">human</span> <span class="arrow"><span aria-hidden="true">→</span><span class="visually-hidden">becomes</span></span> <span class="tag tag-flaky">flaky test monster</span></p>
@@ -71,7 +78,7 @@
               </div>
             </div>
           </div>
-          <ul id="scan-photo-strip" class="scan-photo-strip" aria-label="Monster photos: a photo is taken at 100, at most every 5 seconds, and the last 6 are kept" hidden></ul>
+          <ul id="scan-photo-strip" class="scan-photo-strip" role="list" aria-label="Monster photos: a photo is taken at 100, at most every 5 seconds, and the last 6 are kept" hidden></ul>
         </div>
         <p id="camera-error" class="camera-error" role="alert" hidden>The camera is blocked or missing. Allow camera access for this page in your browser and try again.</p>
         <div class="camera-actions">
@@ -80,18 +87,18 @@
         </div>
         <p class="hint scan-hint">The monster scan runs in your browser with a local face tracker; the video never leaves this device.</p>
         <p id="scan-status" class="hint scan-status" role="status"></p>
-        <span class="card-label">camera</span>
+        <span class="card-label" aria-hidden="true">camera</span>
       </div>
       <div id="recent" class="recent" hidden>
         <h2 class="section-title">Recent runs</h2>
-        <ul id="recent-list" class="recent-list"></ul>
+        <ul id="recent-list" class="recent-list" role="list"></ul>
         <button type="button" id="recent-more" class="link-button" hidden>Show all</button>
       </div>
       <section class="made-for" aria-labelledby="made-for-title">
         <h2 class="section-title" id="made-for-title">At Happylab</h2>
         <p class="made-for-text">Built for the makers' exhibition at the <a href="https://www.happylab.at/en/20jahre">20th anniversary</a> of <a href="https://www.happylab.at">Happylab</a>, Austria's first makerspace. The exhibit turned a 2D photo into a 3D-printable file in three ways: a pipeline of frontier models in the cloud, open models running locally on a Mac, and transformer models running right in the browser. In the end the simplest trick was the most popular: the webcam tracks your mouth, and the wider you open it, the harsher the picture gets, until it turns green, monster eyes appear and the camera takes your photo.</p>
         <p class="made-for-text">A nice side effect: a new large-format printer in the lab, for prints up to A0, and a demo of an LLM translating a song into Mandarin, started the monster's next goal: <a href="music.html">music for a European Monster Song Contest</a>.</p>
-        <ul class="made-for-photos">
+        <ul class="made-for-photos" role="list">
           <li class="made-for-tall"><img src="public/media/happylab/happylab-booth.jpg" width="768" height="1024" loading="lazy" alt="The flakifier booth at Happylab: a laptop running the monster scan under two signs, The Flaky Test Monster and Human to Monster Converter, with 3D-printed monster figures lined up on top of the wall."></li>
           <li><img src="public/media/happylab/happylab-1.jpg" width="1148" height="720" loading="lazy" alt="Three visitors turned into flaky test monsters by the monster scan: green faces, googly eyes and wide open red mouths."></li>
           <li><img src="public/media/happylab/happylab-2.jpg" width="1148" height="720" loading="lazy" alt="Two visitors as flaky test monsters, one with glasses and a cap, the other grinning with mismatched googly eyes."></li>
@@ -128,7 +135,8 @@
 
     <section id="step-progress" class="step" data-step="progress" aria-label="Progress" tabindex="-1" hidden>
       <h2 id="progress-name" class="result-name" hidden></h2>
-      <ol class="stepper" id="stepper">
+      <!-- role="list": Safari drops the list semantics of a list without bullets. -->
+      <ol class="stepper" id="stepper" role="list">
         <li data-stage="input">Input</li>
         <li data-stage="image">Figure</li>
         <li data-stage="model">3D model</li>
@@ -145,22 +153,30 @@
 
     <section id="step-result" class="step" data-step="result" aria-label="Result" tabindex="-1" hidden>
       <h2 id="result-name" class="result-name" hidden></h2>
-      <ol class="stages">
-        <li class="stage-card">
-          <span class="stage-label">Original</span>
-          <img id="stage-original" class="stage-media" alt="Your original photo">
+      <ol class="stages" role="list">
+        <li>
+          <figure class="stage-card">
+            <figcaption class="stage-label">Original</figcaption>
+            <img id="stage-original" class="stage-media" alt="Your original photo">
+          </figure>
         </li>
-        <li class="stage-card">
-          <span class="stage-label" id="stage-image-label">Figure</span>
-          <img id="stage-image" class="stage-media" alt="The restyled image">
+        <li>
+          <figure class="stage-card">
+            <figcaption class="stage-label" id="stage-image-label">Figure</figcaption>
+            <img id="stage-image" class="stage-media" alt="The restyled image">
+          </figure>
         </li>
-        <li class="stage-card">
-          <span class="stage-label">3D model <span class="stage-note">drag to rotate</span></span>
-          <div id="viewer" class="stage-media viewer" role="img" aria-label="Rotating 3D model of the figure"></div>
+        <li>
+          <figure class="stage-card">
+            <figcaption class="stage-label">3D model <span class="stage-note">drag to rotate</span></figcaption>
+            <div id="viewer" class="stage-media viewer" role="img" aria-label="Rotating 3D model of the figure"></div>
+          </figure>
         </li>
-        <li class="stage-card">
-          <span class="stage-label">Final 3D figure</span>
-          <img id="stage-final" class="stage-media" alt="Render of the finished printable model">
+        <li>
+          <figure class="stage-card">
+            <figcaption class="stage-label">Final 3D figure</figcaption>
+            <img id="stage-final" class="stage-media" alt="Render of the finished printable model">
+          </figure>
         </li>
       </ol>
       <div class="downloads">
@@ -178,8 +194,8 @@
     </main>
 
     <footer class="footer">
-      <span>exit code: it depends</span>
-      <span>retries: 3</span>
+      <p>exit code: it depends</p>
+      <p>retries: 3</p>
     </footer>
   </div>
   <script type="module" src="public/js/app.js"></script>
