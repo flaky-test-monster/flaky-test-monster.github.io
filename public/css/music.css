@@ -135,6 +135,9 @@ h2::before { content: "// "; content: "// " / ""; }
 .song h3 { margin: 0; font: italic 700 1.1875rem/1.25 var(--display); }
 .song.playing h3 { color: var(--red); }
 .song p { margin: 2px 0 0; font: 0.75rem/1.5 var(--utility); color: var(--muted); }
+/* Under the title, which is the monster's name and the song's title in the song's language,
+ * the version says which language that is; votes and the scoreboard name the song by it. */
+.song .song-version { margin: 0; font: bold 0.6875rem/1.5 var(--utility); letter-spacing: .04em; text-transform: uppercase; }
 .player audio { display: block; width: 100%; margin-top: 8px; }
 /* With our controls, the play button takes the left column, beside the title and note, and the
  * points the right; the player's boxes step aside so these line up in the song's grid. */

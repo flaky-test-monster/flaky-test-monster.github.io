@@ -137,7 +137,7 @@ function showNameError(message) {
 /** The song with the douze points, as chosen next to the songs, or null. Read from the choices
     themselves, which are up to date even before music-vote.js has marked the song. */
 const winner = () => [...document.querySelectorAll('.song-vote select')]
-  .find((select) => select.value === '12')?.closest('.song').querySelector('h3').textContent.trim() ?? null;
+  .find((select) => select.value === '12')?.closest('.song').querySelector('.song-version').textContent.trim() ?? null;
 
 /** Sets the largest font, up to size, at which text fits in maxWidth, and returns that size. */
 function fit(text, maxWidth, size, font) {
