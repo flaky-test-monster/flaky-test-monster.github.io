@@ -83,9 +83,23 @@ function ballot() {
   return [`Good evening Flaky Test Monster, this is ${juryName()} from the jury.`, '', ...lines, ''].join('\n');
 }
 
-/** Shows a message under the votes. */
-function say(message) {
+/**
+ * Shows a message under the votes, as a box that stands out: plain while something is under
+ * way, marked when the votes went out, red when something is missing or did not work.
+ * @param {string} message
+ * @param {'info' | 'success' | 'error'} [tone]
+ * @param {{ passive?: boolean }} [options] passive: not an answer to a click, so it neither
+ *   flashes nor scrolls the page away from what the visitor is reading.
+ */
+function say(message, tone = 'info', { passive = false } = {}) {
   status.textContent = message;
+  status.dataset.tone = tone;
+  if (!message || passive) return;
+  // Restart the flash, so a message repeated by a second click still catches the eye.
+  status.classList.remove('vote-status-flash');
+  void status.offsetWidth;
+  status.classList.add('vote-status-flash');
+  status.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
 /** The email for the votes, once the name and the points are ready; otherwise null, and why. */
@@ -93,11 +107,11 @@ function readyBallot() {
   if (nameError()) {
     // The name field is right above the button, and its error says what to do.
     $('vote-name').focus();
-    say('The votes were not sent: the jury name needs fixing.');
+    say('The votes were not sent: the jury name needs fixing.', 'error');
     return null;
   }
   const body = ballot();
-  if (!body) say('Give at least one song some points first: the choice is next to each song.');
+  if (!body) say('Give at least one song some points first: the choice is next to each song.', 'error');
   return body;
 }
 
@@ -107,6 +121,12 @@ form.addEventListener('submit', (event) => {
   if (!body) return;
   if (online) cast();
   else email(body);
+});
+
+// Online, the menu offers the direct vote too, the default: the same as the main button.
+// Not while a vote is on its way, which disables the main button.
+$('vote-cast').addEventListener('click', () => {
+  if (!submit.disabled) form.requestSubmit();
 });
 
 // Online, email stays a choice next to the online vote; offline, it is the main button.
@@ -174,14 +194,14 @@ $('vote-copy').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(text);
     hideCopy();
-    say(to ? `Copied. Paste your votes into an email to ${to}.` : 'Copied. Paste your votes into an email.');
+    say(to ? `Copied. Paste your votes into an email to ${to}.` : 'Copied. Paste your votes into an email.', 'success');
   } catch {
     // No clipboard here (an older browser, or a page not served over HTTPS): show the votes to copy by hand.
     $('vote-text').value = text;
     $('vote-copy-field').hidden = false;
     $('vote-text').focus();
     $('vote-text').select();
-    say('Copying did not work in this browser. Your votes are selected below: copy them with Ctrl+C or ⌘C.');
+    say('Copying did not work in this browser. Your votes are selected below: copy them with Ctrl+C or ⌘C.', 'error');
   }
 });
 
@@ -199,11 +219,11 @@ async function cast() {
   try {
     await castBallot(ballot.jury, ballot.votes, $('vote-captcha'));
     lock(ballot);
-    say('Your votes are in, thank you! Votes are final, so these are the ones that count.');
+    say('Your votes are in, thank you! Votes are final, so these are the ones that count.', 'success');
     document.dispatchEvent(new CustomEvent('flaky:voted'));
   } catch (error) {
     submit.disabled = false;
-    say(error.message);
+    say(error.message, 'error');
     // Voted already, say in another tab: show the votes that count instead of these.
     if (error.alreadyVoted) showCast().catch(() => {});
   }
@@ -229,6 +249,7 @@ function lock(ballot) {
   $('vote-name-hint').hidden = true;
   submit.textContent = 'Votes cast';
   submit.disabled = true;
+  $('vote-cast').hidden = true;
 }
 
 /** Shows this browser's ballot, when it has cast one; resolves to whether it has. */
@@ -245,7 +266,7 @@ function email(body) {
   // @ and + stay as they are: some email apps do not decode %40 or %2B in the address.
   const to = encodeURIComponent(form.dataset.email ?? '').replace(/%40/g, '@').replace(/%2B/g, '+');
   location.href = `mailto:${to}?${params}`;
-  say(form.dataset.email ? `Your email app should open with your votes. No email app? Send them to ${form.dataset.email} from your webmail.` : 'Your email app should open with your votes.');
+  say(form.dataset.email ? `Your email app should open with your votes. No email app? Send them to ${form.dataset.email} from your webmail.` : 'Your email app should open with your votes.', 'success');
 }
 
 /** Whether this browser can share an image, through the share sheet of the phone or computer. */
@@ -284,10 +305,11 @@ $('photo-share').addEventListener('click', share);
 /** Online, the button says so, and a jury that voted before from this browser sees its votes. */
 async function goOnline() {
   submit.textContent = 'Cast my votes';
+  $('vote-cast').hidden = false;
   $('vote-email').hidden = false;
   $('vote-privacy').hidden = false;
   try {
-    if (await showCast()) say('Welcome back, jury. These are the votes you cast, and votes are final.');
+    if (await showCast()) say('Welcome back, jury. These are the votes you cast, and votes are final.', 'success', { passive: true });
   } catch {
     // Not knowing the earlier votes is fine: the database turns a second ballot away anyway.
   }
