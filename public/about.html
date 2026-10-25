@@ -57,9 +57,10 @@
 
       <section class="timeline-section" aria-labelledby="timeline-title">
         <h2 id="timeline-title">Timeline</h2>
-        <ol class="timeline">
+        <!-- role="list": Safari drops the list semantics of a list without bullets. -->
+        <ol class="timeline" role="list">
           <li class="event">
-            <p class="when">27 October 2023 · Kibana 8.11 / 8.12</p>
+            <p class="when"><time datetime="2023-10-27">27 October 2023</time> · Kibana 8.11 / 8.12</p>
             <h3>A suspect in the chat</h3>
             <p>A teammate notices that while <a href="https://github.com/kertal">kertal</a> was on holiday, fewer flaky tests came in. Suspicious: is kertal the flaky test monster? AI guessed what a flaky test monster looks like. There were similarities in the picture it returned, no question, but when the monster was turned into a 3D print two years later, it was clear: the monster was its own entity.</p>
             <figure class="photos photos-1">
@@ -67,7 +68,7 @@
             </figure>
           </li>
           <li class="event">
-            <p class="when">20 July 2025 · <a href="https://github.com/elastic/kibana/issues/228706">Kibana issue #228706</a></p>
+            <p class="when"><time datetime="2025-07-20">20 July 2025</time> · <a href="https://github.com/elastic/kibana/issues/228706">Kibana issue #228706</a></p>
             <h3>A flaky postcard from Italy and Austria</h3>
             <p>The monster opened a Kibana issue of its own, labeled <code>test-failure-flaky</code>: on holiday with kertal in Italy and the Austrian Alps, it passed out on the way to the post office and woke up with an arm missing. <q>Have flaky test fixers become violent? HELP!</q> The team offered it to <q>resume vacationing indefinitely</q>. Confession: the arm broke off during a photo shoot for its Instagram career. The monster was promised a sturdier body with a steel skeleton. Its answer: <q>I’ll be back (with 2 hands)!</q></p>
             <div class="slideshow" role="region" aria-roledescription="slideshow" aria-label="Photos from the flaky postcard">
@@ -121,7 +122,7 @@
             </ul>
           </li>
           <li class="event event-now">
-            <p class="when">October 2026</p>
+            <p class="when"><time datetime="2026-10">October 2026</time></p>
             <h3>Monster at Happylab</h3>
             <p>On 9 October the goblin from the CI pipeline entered the physical world again as one of the makers’ exhibits at the 20th anniversary of the <strong>Happylab</strong> makerspace in Vienna. The monster refused to stay there, and the flakiness continued unabated.</p>
             <figure class="photos photos-1">

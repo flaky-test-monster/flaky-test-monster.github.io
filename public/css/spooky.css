@@ -26,7 +26,8 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--paper); font: 1.0625rem/1.65 var(--body); }
-.page { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; }
+/* The poster is clipped, not scrolled: clip keeps the page from becoming a scroll container. */
+.page { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; }
 /* Decorative: the poster, the ghost on the right; the left is plain paper for the title.
  * Capped and kept at the right edge on wide screens; its left edge fades into the paper, and
  * its bottom too, so the story below runs on plain paper. */
@@ -100,7 +101,7 @@ cite { font-style: italic; }
 
 /* The video keeps 16:9 at any width. */
 .video { margin: 20px 0 24px; }
-.video-frame { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--ink); }
+.video-frame { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 8px; overflow: clip; background: var(--ink); }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 figcaption { margin-top: 8px; font: 0.875rem var(--utility); color: var(--muted); }
 
@@ -108,7 +109,8 @@ figcaption { margin-top: 8px; font: 0.875rem var(--utility); color: var(--muted)
 .photo img { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--cream); }
 .photo-right { float: right; width: min(42%, 280px); margin: 4px 0 12px 24px; }
 .photo-right img { aspect-ratio: 1; object-fit: cover; }
-.chapter::after { content: ''; display: table; clear: both; }
+/* Each chapter contains its floated photo (no clearfix needed). */
+.chapter { display: flow-root; }
 
 .cta { margin-top: 20px; }
 .button {
@@ -129,7 +131,7 @@ figcaption { margin-top: 8px; font: 0.875rem var(--utility); color: var(--muted)
 .moral > p:last-child { margin-bottom: 0; }
 
 /* Narrow screens: the poster under the header, the title under the ghost. */
-@media (max-width: 720px) {
+@media (width <= 720px) {
   /* Below the header, which takes two rows here. */
   :root { --poster-top: 128px; }
   .container { width: calc(100% - 32px); padding-top: 32px; }

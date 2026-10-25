@@ -1,34 +1,24 @@
-/* Monster palette: green body, black hair, white teeth, red tongue. */
+/* Monster palette: green body, black hair, white teeth, red tongue. Each token holds its light
+ * and dark value side by side; color-scheme picks the one in use. */
 :root {
   color-scheme: light dark;
   /* Text colors meet WCAG AA (4.5:1) on --bg and --surface; --field-border meets 3:1. */
-  --bg: #f5f4ee;
-  --fg: #141613;
-  --muted: #62675e;
-  --border: #dad9cf;
-  --field-border: #868b80;
-  --surface: #fcfcf8;
-  --accent: #237a23;
-  --accent-fg: #ffffff;
-  --pass: #237a23;
-  --danger: #c4213d;
+  --bg: light-dark(#f5f4ee, #0e100d);
+  --fg: light-dark(#141613, #e6ebe3);
+  --muted: light-dark(#62675e, #8a9286);
+  --border: light-dark(#dad9cf, #252a22);
+  --field-border: light-dark(#868b80, #626c5e);
+  --surface: light-dark(#fcfcf8, #141812);
+  --accent: light-dark(#237a23, #4fc24f);
+  --accent-fg: light-dark(#ffffff, #071107);
+  --pass: light-dark(#237a23, #4fc24f);
+  --danger: light-dark(#c4213d, #ff5b72);
+  /* Over the black video, the same in both colour schemes: the dark palette's colours. */
+  --video-accent: #4fc24f;
+  --video-accent-fg: #071107;
+  --video-danger: #ff5b72;
   --radius: 6px;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e100d;
-    --fg: #e6ebe3;
-    --muted: #8a9286;
-    --border: #252a22;
-    --field-border: #626c5e;
-    --surface: #141812;
-    --accent: #4fc24f;
-    --accent-fg: #071107;
-    --pass: #4fc24f;
-    --danger: #ff5b72;
-  }
 }
 
 * { box-sizing: border-box; }
@@ -174,9 +164,10 @@ body {
 }
 .section-title::before { content: "// "; content: "// " / ""; }
 
-/* Steps fade in when shown. */
-.step { opacity: 0; transition: opacity 0.3s ease; }
-.step.is-visible { opacity: 1; }
+/* Steps fade in when shown: the starting style is where the transition begins the moment a
+   step stops being hidden. Browsers without it show the step at once. */
+.step { transition: opacity 0.3s ease; }
+@starting-style { .step { opacity: 0; } }
 /* Steps take focus when shown so keyboard and screen reader users land in the new content. */
 .step:focus { outline: none; }
 
@@ -217,7 +208,7 @@ body {
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: 4px;
-  overflow: hidden;
+  overflow: clip;
   background: #000;
 }
 
@@ -328,13 +319,13 @@ body {
   border: 2px solid currentColor;
   border-radius: 3px;
 }
-.camera-score[data-verdict="monster"] .camera-score-check { background: #ff5b72; border-color: #ff5b72; }
+.camera-score[data-verdict="monster"] .camera-score-check { background: var(--video-danger); border-color: var(--video-danger); }
 .camera-score[data-verdict="monster"] .camera-score-check::after { content: "✓"; font-size: 0.8em; font-weight: 700; line-height: 1; }
-.camera-score-bonus { margin-left: 8px; padding: 0 6px; font-weight: 700; color: #071107; background: #4fc24f; border-radius: 3px; }
+.camera-score-bonus { margin-left: 8px; padding: 0 6px; font-weight: 700; color: var(--video-accent-fg); background: var(--video-accent); border-radius: 3px; }
 .camera-score-bonus[hidden] { display: none; }
 .camera-score-hint { margin-top: 2px; font-size: 0.8rem; opacity: 0.9; }
 .camera-score-hint:empty { display: none; }
-.camera-score[data-verdict="monster"] .camera-score-value { color: #ff5b72; }
+.camera-score[data-verdict="monster"] .camera-score-value { color: var(--video-danger); }
 .camera-stage:fullscreen .camera-score { bottom: 24px; left: 24px; padding: 12px 20px; }
 .camera-stage:fullscreen .camera-score-value { display: block; font-size: clamp(2.5rem, 6vw, 4.5rem); }
 .camera-stage:fullscreen .camera-score-max { font-size: 0.4em; }
@@ -400,7 +391,7 @@ body {
   pointer-events: none;
 }
 .camera-counts[hidden] { display: none; }
-#camera-monsters { color: #ff5b72; }
+#camera-monsters { color: var(--video-danger); }
 .camera-stage:fullscreen .camera-counts { top: 80px; left: 16px; padding: 6px 14px; font-size: 1rem; }
 
 .camera-stage:fullscreen .camera-score-hint { margin-top: 6px; font-size: 1rem; }
@@ -464,7 +455,7 @@ body {
   font-size: 5rem;
   font-weight: 700;
   color: #fff;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgb(0 0 0 / 35%);
 }
 
 /* Monster scan: its score is on the camera preview, this panel holds the photos */
@@ -529,7 +520,7 @@ body {
 /* Portrait photos fill two rows beside the landscape ones; positioned so their height doesn't stretch the rows. */
 .made-for-tall { grid-row: span 2; position: relative; }
 .made-for-tall img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .made-for-photos { grid-template-columns: 1fr; }
   .made-for-tall { grid-row: auto; }
   .made-for-tall img { position: static; height: auto; aspect-ratio: 768 / 1024; }
@@ -777,7 +768,7 @@ body {
   counter-reset: stage;
 }
 
-.stage-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stage-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; }
 
 .stage-label { font-size: 0.8125rem; font-weight: 600; }
 .stage-label::before {
@@ -797,7 +788,7 @@ body {
   background: var(--surface);
 }
 
-.viewer { overflow: hidden; }
+.viewer { overflow: clip; }
 
 .viewer canvas { display: block; }
 .viewer:not(:has(canvas)) { padding: 16px; color: var(--muted); font-size: 0.8125rem; }
@@ -816,6 +807,7 @@ body {
   font-size: 0.75rem;
   color: var(--muted);
 }
+.footer p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .title::after, .tag-flaky, .tag-flaky::before, .stepper li.active::before { animation: none; }
@@ -823,7 +815,7 @@ body {
   .camera-frame video, .camera-frame::after { transition: none; }
 }
 
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .app { padding: 32px 16px 48px; }
   .stages { grid-template-columns: 1fr; }
   .downloads .btn { flex: 1 1 45%; }

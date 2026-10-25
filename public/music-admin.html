@@ -36,8 +36,8 @@
         <h1 class="visually-hidden">Jury admin</h1>
         <!-- music-admin.js shows one of these: no project set up, the vote server out of reach,
              the sign-in, or the admin tools. -->
-        <div id="admin-error" class="admin-section" role="alert" hidden>
-          <p id="admin-error-text" class="intro"></p>
+        <div id="admin-error" class="admin-section" hidden>
+          <p id="admin-error-text" class="intro" role="alert"></p>
           <button type="button" id="admin-retry" class="admin-button">Try again</button>
         </div>
         <p id="admin-off" class="intro" hidden>The online vote is not set up for this page, so there is nothing to manage here. See “Music page vote and scoreboard” in the README.</p>
@@ -57,7 +57,7 @@
             <button type="submit" class="primary">Sign in</button>
             <!-- The monster check (Cloudflare Turnstile), under the button that asked for it. -->
             <div id="signin-captcha" class="vote-captcha" hidden></div>
-            <output id="signin-status" class="helper admin-status" role="status"></output>
+            <output id="signin-status" class="helper admin-status"></output>
           </form>
         </section>
 
@@ -86,7 +86,7 @@
                 <div id="add-songs" class="admin-songs"></div>
               </fieldset>
               <button type="submit" class="primary">Add the ballot</button>
-              <output id="add-status" class="helper admin-status" role="status"></output>
+              <output id="add-status" class="helper admin-status"></output>
             </form>
           </section>
 
@@ -96,8 +96,8 @@
               <p id="ballots-count" class="admin-state"></p>
               <button type="button" id="ballots-refresh" class="admin-button">Refresh</button>
             </div>
-            <output id="ballots-status" class="helper admin-status" role="status"></output>
-            <ol id="ballots-list" class="admin-ballots"></ol>
+            <output id="ballots-status" class="helper admin-status"></output>
+            <ol id="ballots-list" class="admin-ballots" role="list"></ol>
           </section>
 
           <section class="admin-section" aria-labelledby="qr-title">

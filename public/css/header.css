@@ -65,7 +65,7 @@
 /* The title of the music and about pages; the start page has its own, a shell prompt. */
 .wordmark { min-width: 0; overflow: hidden; font: italic 700 clamp(1.25rem, 1rem + 1.5vw, 2rem)/1.2 var(--display, serif); white-space: nowrap; text-overflow: ellipsis; }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .site-bar { --mascot-size: 44px; --mascot-gap: 10px; gap: 10px; }
   .site-nav { gap: 6px; }
   .site-nav a { padding: 4px 10px; }

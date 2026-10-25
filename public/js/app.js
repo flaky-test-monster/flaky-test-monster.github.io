@@ -99,17 +99,15 @@ let runCounter = 0;
 let availabilityCheck = 0;
 
 /**
- * Reveals one step section with a fade and hides the rest. Moves focus into the new step
- * so keyboard and screen reader users are not left on a control that just disappeared.
+ * Reveals one step section and hides the rest; the fade-in is CSS (@starting-style on .step).
+ * Moves focus into the new step so keyboard and screen reader users are not left on a control
+ * that just disappeared.
  */
 function showStep(name, { focus = true } = {}) {
   for (const step of document.querySelectorAll('.step')) {
     const active = step.dataset.step === name;
     step.hidden = !active;
-    step.classList.toggle('is-visible', false);
-    if (!active) continue;
-    requestAnimationFrame(() => requestAnimationFrame(() => step.classList.add('is-visible')));
-    if (focus) step.focus({ preventScroll: true });
+    if (active && focus) step.focus({ preventScroll: true });
   }
 }
 
@@ -555,6 +553,7 @@ function resetProgress() {
   const labels = ui.stageLabels ?? STAGE_LABELS;
   document.querySelectorAll('#stepper li').forEach((li, i) => {
     li.classList.remove('done', 'active');
+    li.removeAttribute('aria-current');
     li.textContent = labels[i];
   });
 }
@@ -564,7 +563,9 @@ function showError(message) {
   $('error-text').textContent = message;
   $('error').hidden = false;
   $('progress-hint').hidden = true;
-  document.querySelector('#stepper li.active')?.classList.remove('active');
+  const active = document.querySelector('#stepper li.active');
+  active?.classList.remove('active');
+  active?.removeAttribute('aria-current');
 }
 
 /**
@@ -578,6 +579,9 @@ function renderStages(stages, imageUrl = stages.image && `/api/jobs/${state.jobI
     const done = Boolean(stages[li.dataset.stage]);
     li.classList.toggle('done', done);
     li.classList.toggle('active', !done && nextPending);
+    // The running step is marked for assistive tech too, not just by the class the CSS lights up.
+    if (!done && nextPending) li.setAttribute('aria-current', 'step');
+    else li.removeAttribute('aria-current');
     if (!done && nextPending) {
       const message = `Running: ${li.textContent}`;
       if ($('progress-status').textContent !== message) $('progress-status').textContent = message;

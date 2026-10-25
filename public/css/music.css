@@ -33,7 +33,8 @@
   border: 0;
 }
 body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); }
-.page { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; }
+/* The singer is clipped, not scrolled: clip keeps the page from becoming a scroll container. */
+.page { position: relative; isolation: isolate; min-height: 100svh; overflow: clip; }
 /* Decorative: the parchment, the red disk and the singer on the right; the left stays free for text.
  * Capped and kept at the right edge on wide screens, so the singer does not outgrow the page;
  * its left edge fades into the plain paper. The Klingon singer (::after) lies over it, framed the same. */
@@ -83,7 +84,7 @@ h1 .line { display: block; }
 
 /* The video and the jury photo sit in the frame the design kit draws around the camera,
  * with dark glass for what lies over the picture. */
-.stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
+.stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: clip; --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
 .stage :focus-visible { outline-color: var(--cream); outline-offset: 2px; }
 .stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
 .stage-video:fullscreen { cursor: auto; }
@@ -155,11 +156,11 @@ h2::before { content: "// "; content: "// " / ""; }
 
 /* Too narrow for text and singer side by side: the singer fades behind the text, from the top
  * and across the whole width (at least 680px wide, so it never shrinks too small on phones). */
-@media (max-width: 960px) {
+@media (width <= 960px) {
   .page::before, .page::after { width: 100%; mask-image: none; background-size: max(100%, 680px) auto; background-position: 38% 0; }
   .page::before { opacity: .28; }
 }
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .container { width: calc(100% - 32px); padding-top: 32px; }
   .hero, .about { width: 100%; }
   .hero { padding-top: 32px; }
@@ -183,7 +184,16 @@ h2::before { content: "// "; content: "// " / ""; }
 .song-vote select option { background: var(--paper); color: var(--ink); }
 /* The vote, under the songs: send, and what happened. */
 .vote-form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.vote-status { display: block; margin: 0; }
+/* What happened to the votes, in a box that stands out from the helper text around it: plain
+ * while under way, a red mark when they went out, solid red when something is missing or broke. */
+.vote-status { display: block; margin: 0; padding: 12px 14px; border: 2px solid var(--border); border-radius: 6px; background: var(--paper); color: var(--ink); font: bold 0.9375rem/1.5 var(--utility); }
+.vote-status[data-tone="success"] { border-color: var(--ink); border-left: 8px solid var(--red); }
+.vote-status[data-tone="success"]::before { content: "✓ "; content: "✓ " / ""; color: var(--red); }
+.vote-status[data-tone="error"] { border-color: var(--red); background: var(--red); color: var(--cream); }
+.vote-status[data-tone="error"]::before { content: "! "; content: "! " / ""; }
+.vote-status-flash { animation: vote-status-flash .5s ease-out; }
+@keyframes vote-status-flash { from { transform: scale(1.03); box-shadow: 0 0 0 6px rgb(146 31 26 / .3); } }
+@media (prefers-reduced-motion: reduce) { .vote-status-flash { animation: none; } }
 .vote-privacy { margin: 0; }
 /* The jury name, in the title type, right above the vote button. Until a name is
  * typed it shows the monster name the jury goes by, muted so a typed name stands out from it. */
@@ -206,8 +216,13 @@ h2::before { content: "// "; content: "// " / ""; }
 .vote-more svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
 .vote-more[aria-expanded="true"] svg { transform: rotate(180deg); }
 .vote-menu { position: absolute; z-index: 2; top: calc(100% + 4px); right: 0; display: flex; flex-direction: column; min-width: 240px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 32px rgb(23 19 14 / .2); }
-.vote-menu button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font-size: 0.875rem; text-align: left; }
+.vote-menu button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font-size: 0.875rem; text-align: start; }
 .vote-menu button:is(:hover, :focus-visible) { background: var(--red); color: var(--cream); outline-offset: -3px; }
+/* The default way to send, named on its own line under the item. */
+.vote-menu-note { display: block; font-size: 0.75rem; opacity: .75; }
+/* Full strength on the red highlight: faded, the small note is too faint there. */
+.vote-menu button:is(:hover, :focus-visible) .vote-menu-note { opacity: 1; }
+#vote-cast { padding-block: 6px; }
 /* Cast, the votes are final: the main button stays in place, faded, and no longer looks clickable. */
 .vote-main:disabled { opacity: .65; cursor: default; }
 .vote-main:disabled:hover { background: var(--red); }
@@ -231,7 +246,11 @@ h2::before { content: "// "; content: "// " / ""; }
 .scoreboard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
 .scoreboard-status { flex: 1 1 240px; margin: 0; color: var(--muted); }
 .scoreboard-refresh { min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--ink); font-size: 0.875rem; }
-.scoreboard-refresh:hover { border-color: var(--red); color: var(--red); }
+.scoreboard-refresh:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.scoreboard-refresh:disabled { opacity: .5; cursor: progress; }
+/* While the scores load, a small red ring turns in front of the status line. */
+.scoreboard-loading .scoreboard-status::before { content: ''; display: inline-block; width: 0.9em; height: 0.9em; margin-right: 8px; vertical-align: -0.1em; border: 2px solid var(--rule); border-top-color: var(--red); border-radius: 50%; animation: scoreboard-spin .8s linear infinite; }
+@keyframes scoreboard-spin { to { rotate: 1turn; } }
 /* Closed, the scoreboard and the lyrics are a single bar to open, on the same parchment as their content. */
 :is(.scoreboard-details, .lyrics) > summary { padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); font: bold 0.875rem var(--utility); cursor: pointer; }
 :is(.scoreboard-details, .lyrics) > summary:hover { border-color: var(--red); color: var(--red); }
@@ -280,12 +299,12 @@ h2::before { content: "// "; content: "// " / ""; }
 .qr-days ul { padding-left: 20px; }
 .qr-actions { margin-top: 4px; }
 .qr-actions .admin-button { min-height: 32px; }
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .admin-ballots { padding: 0 16px; }
   .qr-code { grid-template-columns: minmax(0, 1fr); }
 }
 /* Narrow: the points stay beside the title, the note takes the width under it. */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .song:has(.player-controls:not([hidden])) { align-items: start; }
   .song:has(.player-controls:not([hidden])) > p { grid-column: 2 / -1; }
   .song-play { width: 36px; height: 36px; }
@@ -330,7 +349,7 @@ h2::before { content: "// "; content: "// " / ""; }
 .swap-klingon { opacity: 0; }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-usual { opacity: 0; }
 :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .swap-klingon { opacity: 1; }
-@media (max-width: 960px) {
+@media (width <= 960px) {
   /* Faint behind the text, like the parchment singer, which gives way to it. */
   .page::before { transition: opacity var(--fade); }
   :root:has(.song-klingon:is(:hover, :focus-within, .playing)) .page::before { opacity: 0; }
@@ -346,7 +365,10 @@ h2::before { content: "// "; content: "// " / ""; }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
   .video-controls, .stage-label, .video-button, .song-play, .photo-take::before { transition: none; }
+  /* A still ring that pulses slowly instead of turning. */
+  .scoreboard-loading .scoreboard-status::before { animation: scoreboard-pulse 1.6s ease-in-out infinite alternate; }
 }
+@keyframes scoreboard-pulse { to { opacity: .3; } }
 
 /* The jury photo: drawn on a canvas, wide like a webcam picture, in the video's frame and glass,
  * with its round buttons over the picture. */
@@ -355,7 +377,10 @@ h2::before { content: "// "; content: "// " / ""; }
 /* Start the camera: a pill in the middle of the dark preview, with a camera dot. */
 .photo-start { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; background: var(--glass-red); color: var(--cream); font-size: 0.8125rem; white-space: nowrap; box-shadow: 0 6px 18px rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s, scale .15s; }
 .photo-start::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 0 3px rgb(255 90 122 / .3); }
-.photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
+/* Only where there is a pointer to hover with: on touch screens the grown state would stick after a tap. */
+@media (hover: hover) {
+  .photo-start:hover { background: rgb(116 23 19 / .95); scale: 1.04; }
+}
 .photo-countdown { position: absolute; inset: 0; display: grid; place-items: center; color: var(--cream); background: rgb(23 19 14 / .25); font: italic 900 6rem/1 var(--display); text-shadow: 0 4px 24px rgb(0 0 0 / .6); pointer-events: none; }
 /* Bottom right, beside the name panel the canvas draws on the left (music-photo.js). */
 .photo-controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; }
@@ -381,8 +406,8 @@ h2::before { content: "// "; content: "// " / ""; }
 .field-error::before { content: "! "; content: "! " / ""; }
 .photo-status { margin: 8px 0 0; }
 /* Live regions stay in the page, but take no room while they have nothing to say. */
-.photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; }
-@media (max-width: 640px) {
+.photo-status:empty, .vote-status:empty { display: block; height: 0; margin: -4px 0 0; padding: 0; border: 0; }
+@media (width <= 640px) {
   .photo-controls { right: 8px; bottom: 8px; }
   /* A column up the right edge: a row this wide would reach into the name panel. */
   .photo-actions { flex-direction: column; gap: 6px; }
