@@ -87,7 +87,29 @@ h1 .line { display: block; }
 .stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: clip; --scrim: rgb(23 19 14 / .55); --glass-red: rgb(146 31 26 / .85); --glass-edge: rgb(255 248 237 / .45); }
 .stage :focus-visible { outline-color: var(--cream); outline-offset: 2px; }
 .stage-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--ink); cursor: pointer; }
-.stage-video:fullscreen { cursor: auto; }
+/* Full screen is the whole stage, so the lyrics and the controls stay over the video. */
+.stage:fullscreen { display: grid; place-items: center; border: 0; border-radius: 0; background: var(--ink); }
+.stage:fullscreen .stage-video { width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain; }
+.stage:fullscreen .video-lyrics { bottom: 12%; font-size: clamp(1.25rem, 2.4cqw, 3rem); }
+/* The lyrics over the video, classic karaoke: the line being sung lit up (.lit, a touch before
+ * it starts), and the next line dim under it. The panel is a two-row grid; its lines all sit in
+ * the first row and are moved into the rows by --slot (-1 above, 0 sung, 1 next, 2 below), so a
+ * line change rolls them up with a transition and the rows outside are clipped. The sizer line, the longest one
+ * of the song, keeps the panel at one width; the lines never wrap. The panel fades in just
+ * before a sung part and out after it, so the instrumental parts have no lyrics. The text
+ * scales with the stage (cqw), so it keeps its proportion in full screen; it sits above the
+ * controls, which fade while playing. */
+#video-stage { container-type: inline-size; }
+.video-lyrics { position: absolute; left: 50%; bottom: 64px; display: grid; grid-template-rows: repeat(2, 1.35em); max-width: calc(100% - 24px); padding: 6px 18px; border-radius: 8px; overflow: hidden; background: var(--scrim); color: var(--cream); translate: -50%; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); font: 700 clamp(0.75rem, 2.4cqw, 1.5rem)/1.35 var(--body); text-align: center; white-space: nowrap; opacity: 0; transition: opacity .4s; pointer-events: none; }
+.video-lyrics.visible { opacity: 1; }
+.lyrics-line { grid-area: 1 / 1; margin: 0; color: color-mix(in srgb, var(--cream) 50%, transparent); transform: translateY(calc(var(--slot, 2) * 100%)); opacity: var(--shown, 0); transition: transform .5s cubic-bezier(.2, .7, .2, 1), opacity .5s, color .2s; }
+.lyrics-line.lit { color: var(--cream); }
+/* The spare line takes its place below without a transition, then rolls in with the others. */
+.lyrics-line.jump { transition: none; }
+.lyrics-sizer { visibility: hidden; }
+/* The browser's own subtitles, where the video plays in the iPhone's player: the same glass.
+ * Plain values: the cue box is the player's own and may not see the page's custom properties. */
+video::cue { color: #fff8ed; background: rgb(23 19 14 / .75); font: 700 1em/1.3 Georgia, serif; }
 .stage-label { position: absolute; left: 12px; top: 12px; color: var(--cream); background: var(--scrim); pointer-events: none; transition: opacity .25s; }
 /* The player's controls, over the bottom of the video on a dark fade: round see-through buttons
  * like the songs' play button, which they share the play and pause icon with. */
@@ -98,7 +120,7 @@ h1 .line { display: block; }
 .video-button:not(:disabled):hover { border-color: var(--red); background: var(--red); }
 .video-button:disabled { opacity: .5; cursor: default; }
 .video-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.video-play, .video-repeat[aria-pressed="true"] { border-color: var(--red); background: var(--glass-red); }
+.video-play, .video-button[aria-pressed="true"] { border-color: var(--red); background: var(--glass-red); }
 .video-stop::before { content: ''; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
 /* Full screen on the right, apart from the playing buttons. */
 .video-fullscreen { margin-left: auto; }
@@ -169,6 +191,7 @@ h2::before { content: "// "; content: "// " / ""; }
   .hero { padding-top: 32px; }
   h1 { max-width: 420px; font-size: clamp(3.625rem, 15vw, 5.625rem); }
   .video-controls { gap: 6px; padding: 24px 8px 8px; }
+  .video-lyrics { bottom: 56px; max-width: calc(100% - 16px); padding: 4px 10px; }
   .song-list, .scoreboard-list, .lyrics-text { padding: 0 16px; }
   .score { column-gap: 10px; }
   .song:has(.player-controls:not([hidden])) { column-gap: 10px; }
@@ -315,11 +338,12 @@ h2::before { content: "// "; content: "// " / ""; }
 @media (forced-colors: active) {
   :is(.song-play, .video-button)::before { forced-color-adjust: none; color: ButtonText; }
   :is(.song-play, .video-button):disabled::before { color: GrayText; }
-  .video-repeat[aria-pressed="true"] { forced-color-adjust: none; border-color: Highlight; background: Highlight; color: HighlightText; }
+  .video-button[aria-pressed="true"] { forced-color-adjust: none; border-color: Highlight; background: Highlight; color: HighlightText; }
+  .video-lyrics { forced-color-adjust: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --fade: 0s; }
-  .video-controls, .stage-label, .video-button, .song-play, .photo-take::before { transition: none; }
+  .video-controls, .stage-label, .video-button, .video-lyrics, .lyrics-line, .song-play, .photo-take::before { transition: none; }
   /* A still ring that pulses slowly instead of turning. */
   .scoreboard-loading .scoreboard-status::before { animation: scoreboard-pulse 1.6s ease-in-out infinite alternate; }
 }

@@ -449,6 +449,16 @@ npx --yes serve _site   # then open /music.html, and /admin/ for the admin page
 
 - **The songs on the music page play as a playlist.** When a song ends, the next one in
   the list starts, skipping any song that cannot be loaded; after the last song it stops.
+- **The karaoke video shows the lyrics.** They are a WebVTT file next to the video
+  (`public/media/from-flaky-with-love.vtt`), one cue per line, timed to the music, with the
+  stanza and line as the cue id (`3.2`). The page shows the line being sung over the video,
+  lit up a touch before it starts, with the next line dim under it, classic karaoke; the
+  lines roll up when the next one starts. The panel fades in just before a sung part and
+  out after it, so the instrumental parts have none. The Lyrics button hides them. In the
+  iPhone's own player (full screen) they show as the player's subtitles. The times are the
+  sung notes of the song's vocal MIDI (from the Suno stems of the international version),
+  shifted to where the music sits in the video, whose own audio has no vocals. Retime the
+  file if the video is cut again.
 - **Webcam access only works on `localhost` or over HTTPS.** Browsers block
   `getUserMedia` on plain `http://` for any other host. If camera permission is denied
   or there is no camera, the camera card says so and **Take photo** stays disabled;

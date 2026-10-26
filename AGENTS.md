@@ -72,7 +72,7 @@ public/
     music-*.js          music page modules
     qr.js               QR code encoder (no DOM); qr-track.js counts scans of the codes
     viewer.js, zip.js   3D viewer, tiny zip writer
-  media/                videos, songs, photos (copied as is into the Pages build)
+  media/                videos, songs, photos, the video's lyrics (WebVTT); copied as is into the Pages build
 supabase/migrations/    music vote schema: tables, RLS, cast_ballot / my_ballot / scoreboard,
                         and the admin_* functions, open to the users in public.admins only;
                         QR codes and their scans (track_qr_scan, admin_*_qr_link*)
